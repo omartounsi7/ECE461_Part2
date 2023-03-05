@@ -8,12 +8,12 @@ import base64
 import logging
 
 def getRestData(owner, repo):
-
   token = os.getenv("GITHUB_TOKEN") #authentication 
 
   #making REST request
   url = "https://api.github.com/repos/{}/{}".format(owner, repo)
   headers = {'Authorization': f'Bearer {token}', 'Accept': 'application/json'}
+
   response = requests.get(url, headers=headers)
 
   response.raise_for_status()
@@ -115,6 +115,7 @@ def getRestData(owner, repo):
 
 def getGqlData(owner, repo):
   token = os.getenv("GITHUB_TOKEN")   # get personal github api token
+
   headers = {"Authorization": "Token {}".format(token)}
 
   # Use the RequestsHTTPTransport class to send the GraphQL query with the headers
