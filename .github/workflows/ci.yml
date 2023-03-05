@@ -23,8 +23,6 @@ jobs:
         python3 - m pip install PyGithub
         python3 - m pip install requests_toolbelt
         python3 - m pip install coverage
-      env:
-        CI: true
     - name: Build and Test
       run: |
         cd grrs/src/test
