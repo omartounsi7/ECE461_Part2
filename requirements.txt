@@ -1,8 +1,0 @@
-numpy==latest
-pandas==latest
-gql==latest
-requests==latest
-regex==latest
-PyGithub==latest
-requests_toolbelt==latest
-coverage==latest
