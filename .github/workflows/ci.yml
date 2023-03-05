@@ -16,7 +16,7 @@ jobs:
         packages: |
           numpy==latest
           pandas==latest
-          gql==latest
+          gql>=3.4.0
           requests==latest
           regex==latest
           PyGithub==latest
