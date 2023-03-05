@@ -25,7 +25,7 @@ jobs:
     - name: Build and Test
       run: |
         cd grrs/src/test
-        python3 -m coverage run -m unittest
+        python3 -m unittest discover -v
   rust:
     name: Rust Build and Test
     runs-on: ubuntu-latest
