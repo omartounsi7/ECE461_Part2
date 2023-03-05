@@ -32,6 +32,7 @@ jobs:
         python-version: 3.9
     - name: Build and Test
       run: |
+        cd grrs
         python -m unittest discover -v
   rust:
     needs: install
