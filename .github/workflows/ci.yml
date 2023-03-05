@@ -9,14 +9,14 @@ jobs:
     steps:
     - name: Install dependencies
       run: |
-        pip install numpy
-        pip install pandas
-        pip install gql
-        pip install requests
-        pip install regex
-        pip install PyGithub
-        pip install requests_toolbelt
-        pip install coverage
+        pip3 install numpy
+        pip3 install pandas
+        pip3 install gql
+        pip3 install requests
+        pip3 install regex
+        pip3 install PyGithub
+        pip3 install requests_toolbelt
+        pip3 install coverage
       env:
         CI: true
   python:
@@ -32,8 +32,8 @@ jobs:
         python-version: 3.9
     - name: Build and Test
       run: |
-        cd grrs
-        python -m unittest discover -v
+        cd grrs/src/test
+        python3 -m coverage run -m unittest
   rust:
     needs: install
     name: Rust Build and Test
@@ -48,5 +48,6 @@ jobs:
     - name: Build and Test
       run: |
         cd grrs
-        cargo build --verbose
+        cargo clean
+        cargo build
         cargo test --verbose
