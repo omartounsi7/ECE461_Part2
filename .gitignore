@@ -17,3 +17,10 @@ grrs/target/debug/run
 
 *.log
 *.profraw
+.idea/
+.venv/
+__pycache__/
+target/
+*.dll
+.env
+.bat
