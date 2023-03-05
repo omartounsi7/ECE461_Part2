@@ -13,15 +13,18 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.9
-        packages: |
-          numpy==latest
-          pandas==latest
-          gql>=3.4.0
-          requests==latest
-          regex==latest
-          PyGithub==latest
-          requests_toolbelt==latest
-          coverage==latest
+    - name: Install dependencies
+      run: |
+        python3 - m pip install numpy
+        python3 - m pip install pandas
+        python3 - m pip install gql
+        python3 - m pip install requests
+        python3 - m pip install regex
+        python3 - m pip install PyGithub
+        python3 - m pip install requests_toolbelt
+        python3 - m pip install coverage
+      env:
+        CI: true
     - name: Build and Test
       run: |
         cd grrs/src/test
