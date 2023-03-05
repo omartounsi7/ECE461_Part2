@@ -9,10 +9,12 @@ jobs:
     steps:
     - name: Install dependencies
       run: |
+        ls
         pip install -r requirements.txt
       env:
         CI: true
   python:
+    needs: install
     name: Python Build and Test
     runs-on: ubuntu-latest
     steps:
@@ -26,6 +28,7 @@ jobs:
       run: |
         python -m unittest discover -v
   rust:
+    needs: install
     name: Rust Build and Test
     runs-on: ubuntu-latest
     steps:
