@@ -11,7 +11,7 @@ import sys
 def getRestData(owner, repo):
 
   token = os.getenv("GITHUB_TOKEN") #authentication 
-  print(GITHUB_TOKEN)
+  print(token)
   
   #making REST request
   url = "https://api.github.com/repos/{}/{}".format(owner, repo)
