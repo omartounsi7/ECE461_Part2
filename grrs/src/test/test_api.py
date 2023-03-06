@@ -12,13 +12,6 @@ def getRestData(owner, repo):
 
   token = os.getenv("GITHUB_TOKEN") #authentication 
   
-  hjfsdkhfdh = os.getenv("ENVAR")
-
-  print("start")
-  print(len(hjfsdkhfdh))
-  print(hjfsdkhfdh)
-  print("over")
-  
   #making REST request
   url = "https://api.github.com/repos/{}/{}".format(owner, repo)
   headers = {'Authorization': f'Bearer {token}', 'Accept': 'application/json'}
