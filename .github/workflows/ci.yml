@@ -25,7 +25,7 @@ jobs:
         #cd grrs/src/test
         export tester=${secrets.TOKEN}
         echo $tester
-        export bruh=${secrets.nana}
+        export bruh=${secrets.KEVIN}
         echo $bruh
         echo "hell"
         #python3 -m unittest discover -v
