@@ -15,13 +15,13 @@ jobs:
         python-version: 3.9
     - name: Build and Test
       run: |
-        pip install multidict
-        pip install gql
-        pip install requests
-        pip install regex
-        pip install PyGithub
-        pip install requests_toolbelt
-        pip install coverage
+        pip3 install multidict
+        pip3 install gql
+        pip3 install requests
+        pip3 install regex
+        pip3 install PyGithub
+        pip3 install requests_toolbelt
+        pip3 install coverage
         cd grrs/src/test
         python3 -m unittest discover -v
   rust:
@@ -38,5 +38,6 @@ jobs:
       run: |
         cd grrs
         cargo clean
+        cargo install grcov
         cargo build
         cargo test --verbose
