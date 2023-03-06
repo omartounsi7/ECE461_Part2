@@ -15,16 +15,16 @@ jobs:
         python-version: 3.9
     - name: Build and Test
       run: |
-        #pip3 install multidict
-        #pip3 install gql
-        #pip3 install requests
-        #pip3 install regex
-        #pip3 install PyGithub
-        #pip3 install requests_toolbelt
-        #pip3 install coverage
-        #cd grrs/src/test
-        echo ${{secrets.KEVIN}}
-        #python3 -m unittest discover -v
+        pip3 install multidict
+        pip3 install gql
+        pip3 install requests
+        pip3 install regex
+        pip3 install PyGithub
+        pip3 install requests_toolbelt
+        pip3 install coverage
+        cd grrs/src/test
+        export ENVAR = ${{secrets.KEVIN}}
+        python3 -m unittest discover -v
   rust:
     name: Rust Build and Test
     runs-on: ubuntu-latest
