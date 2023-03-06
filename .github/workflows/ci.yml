@@ -23,9 +23,9 @@ jobs:
         #pip3 install requests_toolbelt
         #pip3 install coverage
         #cd grrs/src/test
-        export tester="${{secrets.TOKEN}}"
+        export tester=${secrets.TOKEN}
         echo $tester
-        export bruh=${{secrets.NANA}}
+        export bruh=${secrets.nana}
         echo $bruh
         echo "hell"
         #python3 -m unittest discover -v
