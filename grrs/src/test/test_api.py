@@ -6,13 +6,16 @@ import os
 import re
 import requests
 import base64
+import sys
 
 def getRestData(owner, repo):
 
   token = os.getenv("GITHUB_TOKEN") #authentication 
-  
+
+  print(os.getenv("ENVAR"))  
   print(os.getenv("BURRITO"))
   print(os.getenv("TOKEN"))
+  print(os.getenv("KEVIN"))
 
   #making REST request
   url = "https://api.github.com/repos/{}/{}".format(owner, repo)
