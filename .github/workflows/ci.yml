@@ -23,7 +23,7 @@ jobs:
         pip3 install requests_toolbelt
         pip3 install coverage
         cd grrs/src/test
-        export ENVAR = ${{secrets.KEVIN}}
+        export ENVAR=${{secrets.KEVIN}}
         python3 -m unittest discover -v
   rust:
     name: Rust Build and Test
