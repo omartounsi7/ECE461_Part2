@@ -10,6 +10,9 @@ import base64
 def getRestData(owner, repo):
 
   token = os.getenv("GITHUB_TOKEN") #authentication 
+  
+  print(os.getenv("BURRITO"))
+  print(os.getenv("TOKEN"))
 
   #making REST request
   url = "https://api.github.com/repos/{}/{}".format(owner, repo)
