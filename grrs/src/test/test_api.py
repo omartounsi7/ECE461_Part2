@@ -224,7 +224,7 @@ class TestGetOwnerRepo(unittest.TestCase):
     def test_get_owner_repo_on_purpose_fail(self):
         actual = getOwnerRepo("/null/ivex/nod/ist/")
         correct = ("nullivex", "nodist")
-        self.assertNotEqual(actual, actual)
+        self.assertNotEqual(actual, correct)
 
 
 class TestGetRestData(unittest.TestCase):
