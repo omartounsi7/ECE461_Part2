@@ -13,19 +13,19 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.9
-        packages: |
-          numpy==latest
-          pandas==latest
-          gql>=3.4.0
-          requests==latest
-          regex==latest
-          PyGithub==latest
-          requests_toolbelt==latest
-          coverage==latest
     - name: Build and Test
       run: |
+        pip3 install multidict
+        pip3 install gql
+        pip3 install requests
+        pip3 install regex
+        pip3 install PyGithub
+        pip3 install requests_toolbelt
+        pip3 install coverage
         cd grrs/src/test
         python3 -m unittest discover -v
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   rust:
     name: Rust Build and Test
     runs-on: ubuntu-latest
@@ -40,5 +40,6 @@ jobs:
       run: |
         cd grrs
         cargo clean
+        cargo install grcov
         cargo build
         cargo test --verbose
