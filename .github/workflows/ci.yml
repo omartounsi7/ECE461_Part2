@@ -1,0 +1,45 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  python:
+    name: Python Build and Test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Build and Test
+      run: |
+        pip3 install multidict
+        pip3 install gql
+        pip3 install requests
+        pip3 install regex
+        pip3 install PyGithub
+        pip3 install requests_toolbelt
+        pip3 install coverage
+        cd grrs/src/test
+        python3 -m unittest discover -v
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  rust:
+    name: Rust Build and Test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+    - name: Build and Test
+      run: |
+        cd grrs
+        cargo clean
+        cargo install grcov
+        cargo build
+        cargo test --verbose
