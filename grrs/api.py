@@ -167,17 +167,44 @@ def getGqlData(owner, repo):
 }}
 """.format(owner, repo)
 
+
   query = gql.gql(bus_query)
   bus_result = client.execute(query)
+
+  bus_query_main_backup ="""
+  {{
+  repository(owner:"{}", name:"{}") {{
+    object(expression:"main") {{
+      ... on Commit {{
+        history {{
+          totalCount
+        }}
+      }}
+    }}
+  }}
+}}
+""".format(owner, repo)
+
+  query = gql.gql(bus_query_main_backup)
+  bus_result_backup = client.execute(query)
+
+  total_commits = None
+  if bus_result["repository"]["object"]:
+    total_commits = bus_result["repository"]["object"]["history"]["totalCount"]
+  elif bus_result_backup["repository"]["object"]:
+    total_commits = bus_result_backup["repository"]["object"]["history"]["totalCount"]
+  else:
+    total_commits = None
 
   #format data
   data = {
     "open_issues": response_result["repository"]["open"]["totalCount"],
     "closed_issues": response_result["repository"]["closed"]["totalCount"],
-    "total_commits": bus_result["repository"]["object"]["history"]["totalCount"]
+    "total_commits":  total_commits
   }
 
   return data
+
 
 def getOwnerRepo(url):
   parts = re.split("/", url)
@@ -203,6 +230,8 @@ def getData(owner_repo):
     data["bus_commits"] = busTeamCommits
     data["correctness_score"] = test_score
     data["license_score"] = license_score
+    if data["total_commits"] == None: data["total_commits"] = busTeamCommits
+    
     return json.dumps(data)
 
 def config_logging():
