@@ -15,6 +15,12 @@ pub fn main(){
 
     let args: Vec<String> = env::args().collect(); //returns an iterator
 
+    // Check the number of arguments
+    if args.len() != 4 {
+        println!("Usage: ./run task log_path log_level");
+        return
+    }
+
     let task = &args[1]; //stores what instruction will be run
     let log_path = &args[2]; //stores what instruction will be run
     let temp = &args[3]; //stores what instruction will be run
