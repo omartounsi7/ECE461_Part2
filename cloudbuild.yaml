@@ -1,0 +1,25 @@
+steps:
+  # Checkout the repository
+  - name: "gcr.io/cloud-builders/git"
+    args: ["clone", "https://github.com/omartounsi7/ECE461_Part2", "app"]
+  # Build the Docker image
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "-t"
+      - "gcr.io/ece-461/app:$COMMIT_SHA"
+      - "./app"
+  # Push the Docker image to Container Registry
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "gcr.io/ece-461/app:$COMMIT_SHA"
+  # Deploy the app to Cloud Run
+  - name: "gcr.io/cloud-builders/gcloud"
+    args:
+      - "run"
+      - "deploy"
+      - "app"
+      - "--image=gcr.io/ece-461/app:$COMMIT_SHA"
+      - "--region=us-central1"
+      - "--platform=managed"
