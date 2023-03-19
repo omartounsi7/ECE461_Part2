@@ -4,4 +4,4 @@ steps:
   args:
   - '-c'
   - |
-    gcloud app deploy ts-server/app.yaml --project=YOUR_PROJECT_ID
+    gcloud app deploy ts-server/app.yaml --project=ece-461
