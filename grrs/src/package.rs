@@ -32,6 +32,7 @@ pub struct MetricJSON {
     pub bus_commits: i32,
 
     pub correctness_score: f32,
+    pub code_review: f32
 }
 
 #[allow(non_snake_case)]
@@ -44,6 +45,7 @@ pub struct PackageJSON {
     pub BusFactor: f32,
     pub ResponsiveMaintainer: f32,
     pub License: f32,
+    pub CodeReview: f32
 }
 
 impl PackageJSON {
@@ -56,6 +58,7 @@ impl PackageJSON {
             BusFactor: (*package.bus_factor * 100.0).round() / 100.0,
             ResponsiveMaintainer: (*package.responsiveness * 100.0).round() / 100.0,
             License: (*package.license * 100.0).round() / 100.0,
+            CodeReview: (*package.review * 100.0).round() / 100.0
         }
     }
 }
@@ -68,6 +71,7 @@ pub struct Package {
     pub bus_factor: OrderedFloat<f32>,
     pub responsiveness: OrderedFloat<f32>,
     pub license: OrderedFloat<f32>,
+    pub review: OrderedFloat<f32>,
     pub url: URLHandler,
 }
 
@@ -80,7 +84,8 @@ impl Package {
             bus_factor: OrderedFloat(-1.0),
             responsiveness: OrderedFloat(-1.0),
             license: OrderedFloat(-1.0),
-            url: URLHandler::new(url),
+            review: OrderedFloat(-1.0),
+            url: URLHandler::new(url)
         }
     }
 
@@ -92,18 +97,21 @@ impl Package {
         debug!("Bus Factor:             {}", self.bus_factor);
         debug!("ResponsiveMaintainer:   {}", self.responsiveness);
         debug!("Correctness:            {}", self.correctness);
+        debug!("Code Review:            {}", self.review);
         debug!("Ramp Up Time:           {}", self.ramp_up);
         debug!("License Compatibility:  {}", self.license);
         debug!("");
     }
 
     pub fn calc_metrics(&mut self, json_in: &String){
+        // we deserialize our json object into MetricJSON struct
         let json: MetricJSON = serde_json::from_str(json_in).expect("Unable to parse JSON");
         self.bus_factor = OrderedFloat(calc_bus_factor(&json));
         self.responsiveness = OrderedFloat(calc_responsiveness(&json));
         self.correctness = OrderedFloat(json.correctness_score);
         self.ramp_up = OrderedFloat(calc_ramp_up_time(&json));
         self.license = OrderedFloat(json.license_score);
+        self.review = OrderedFloat(json.code_review);
         self.net_score = OrderedFloat(0.4) * self.bus_factor + OrderedFloat(0.15) * (self.responsiveness + self.correctness + self.ramp_up + self.license)
     }
 
