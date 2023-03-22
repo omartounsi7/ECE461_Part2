@@ -462,6 +462,7 @@ def fraction_reviewed_changes(owner, repo):
     return fraction_reviewed
 
 
+
 def getOwnerRepo(url):
   parts = re.split("/", url)
   len_parts = len(parts)
