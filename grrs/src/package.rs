@@ -38,24 +38,24 @@ pub struct MetricJSON {
 #[derive(Serialize, Deserialize)]
 pub struct PackageJSON {
     pub URL: String,
-    pub NetScore: f32,
-    pub RampUp: f32,
-    pub Correctness: f32,
-    pub BusFactor: f32,
-    pub ResponsiveMaintainer: f32,
-    pub License: f32,
+    pub NET_SCORE: f32,
+    pub RAMP_UP_SCORE: f32,
+    pub CORRECTNESS_SCORE: f32,
+    pub BUS_FACTOR_SCORE: f32,
+    pub RESPONSIVE_MAINTAINER_SCORE: f32,
+    pub LICENSE_SCORE: f32,
 }
 
 impl PackageJSON {
     pub fn new(package: &Package) -> PackageJSON {
         PackageJSON {
             URL: package.url.get_url(),
-            NetScore: (*package.net_score * 100.0).round() / 100.0,
-            RampUp: (*package.ramp_up * 100.0).round() / 100.0,
-            Correctness: (*package.correctness * 100.0).round() / 100.0,
-            BusFactor: (*package.bus_factor * 100.0).round() / 100.0,
-            ResponsiveMaintainer: (*package.responsiveness * 100.0).round() / 100.0,
-            License: (*package.license * 100.0).round() / 100.0,
+            NET_SCORE: (*package.net_score * 100.0).round() / 100.0,
+            RAMP_UP_SCORE: (*package.ramp_up * 100.0).round() / 100.0,
+            CORRECTNESS_SCORE: (*package.correctness * 100.0).round() / 100.0,
+            BUS_FACTOR_SCORE: (*package.bus_factor * 100.0).round() / 100.0,
+            RESPONSIVE_MAINTAINER_SCORE: (*package.responsiveness * 100.0).round() / 100.0,
+            LICENSE_SCORE: (*package.license * 100.0).round() / 100.0,
         }
     }
 }
