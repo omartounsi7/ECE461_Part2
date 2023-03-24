@@ -32,6 +32,7 @@ pub struct MetricJSON {
     pub bus_commits: i32,
 
     pub correctness_score: f32,
+    pub code_review: f32
 }
 
 #[allow(non_snake_case)]
@@ -44,6 +45,7 @@ pub struct PackageJSON {
     pub BUS_FACTOR_SCORE: f32,
     pub RESPONSIVE_MAINTAINER_SCORE: f32,
     pub LICENSE_SCORE: f32,
+    pub CODE_REVIEW: f32
 }
 
 impl PackageJSON {
@@ -56,6 +58,7 @@ impl PackageJSON {
             BUS_FACTOR_SCORE: (*package.bus_factor * 100.0).round() / 100.0,
             RESPONSIVE_MAINTAINER_SCORE: (*package.responsiveness * 100.0).round() / 100.0,
             LICENSE_SCORE: (*package.license * 100.0).round() / 100.0,
+            CODE_REVIEW: (*package.review * 100.0).round() / 100.0
         }
     }
 }
@@ -68,6 +71,7 @@ pub struct Package {
     pub bus_factor: OrderedFloat<f32>,
     pub responsiveness: OrderedFloat<f32>,
     pub license: OrderedFloat<f32>,
+    pub review: OrderedFloat<f32>,
     pub url: URLHandler,
 }
 
@@ -80,7 +84,8 @@ impl Package {
             bus_factor: OrderedFloat(-1.0),
             responsiveness: OrderedFloat(-1.0),
             license: OrderedFloat(-1.0),
-            url: URLHandler::new(url),
+            review: OrderedFloat(-1.0),
+            url: URLHandler::new(url)
         }
     }
 
@@ -92,18 +97,21 @@ impl Package {
         debug!("Bus Factor:             {}", self.bus_factor);
         debug!("ResponsiveMaintainer:   {}", self.responsiveness);
         debug!("Correctness:            {}", self.correctness);
+        debug!("Code Review:            {}", self.review);
         debug!("Ramp Up Time:           {}", self.ramp_up);
         debug!("License Compatibility:  {}", self.license);
         debug!("");
     }
 
     pub fn calc_metrics(&mut self, json_in: &String){
+        // we deserialize our json object into MetricJSON struct
         let json: MetricJSON = serde_json::from_str(json_in).expect("Unable to parse JSON");
         self.bus_factor = OrderedFloat(calc_bus_factor(&json));
         self.responsiveness = OrderedFloat(calc_responsiveness(&json));
         self.correctness = OrderedFloat(json.correctness_score);
         self.ramp_up = OrderedFloat(calc_ramp_up_time(&json));
         self.license = OrderedFloat(json.license_score);
+        self.review = OrderedFloat(json.code_review);
         self.net_score = OrderedFloat(0.4) * self.bus_factor + OrderedFloat(0.15) * (self.responsiveness + self.correctness + self.ramp_up + self.license)
     }
 
@@ -207,6 +215,7 @@ mod tests {
             license_score: 0.5,
             open_issues: 20,
             closed_issues: 20,
+            code_review: 0.0,
             total_commits: 20,
             bus_commits: 30,
             correctness_score: 0.3,
@@ -223,6 +232,7 @@ mod tests {
             has_readme: false,
             license_score: 0.5,
             open_issues: 20,
+            code_review: 0.0,
             closed_issues: 20,
             total_commits: 20,
             bus_commits: 30,
@@ -241,6 +251,7 @@ mod tests {
             bus_commits: 30,
             correctness_score: 0.3,
             license_score: 0.5,
+            code_review: 0.0,
             has_wiki: true,
             has_discussions: false,
             has_pages: true,
@@ -258,6 +269,7 @@ mod tests {
             bus_commits: 30,
             correctness_score: 0.3,
             license_score: 0.5,
+            code_review: 0.0,
             has_wiki: true,
             has_discussions: false,
             has_pages: true,
@@ -274,6 +286,7 @@ mod tests {
             closed_issues: 200,
             correctness_score: 0.3,
             license_score: 0.5,
+            code_review: 0.0,
             has_wiki: true,
             has_discussions: false,
             has_pages: true,
@@ -289,6 +302,7 @@ mod tests {
             bus_commits: 50,
             open_issues: 100,
             closed_issues: 200,
+            code_review: 0.0,
             correctness_score: 0.3,
             license_score: 0.5,
             has_wiki: true,

@@ -1,3 +1,5 @@
+from tempfile import TemporaryDirectory
+import subprocess
 import gql
 import json
 from gql.transport.requests import RequestsHTTPTransport
@@ -6,6 +8,11 @@ import re
 import requests
 import base64
 import logging
+from github import Github
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import tarfile
+import gzip
 
 def getRestData(owner, repo):
   token = os.getenv("GITHUB_TOKEN") #authentication 
@@ -111,8 +118,6 @@ def getRestData(owner, repo):
 
   return test_score, license_score, hasWiki, hasDiscussions, hasPages, hasREADME, commits_sum
 
- 
-
 def getGqlData(owner, repo):
   token = os.getenv("GITHUB_TOKEN")   # get personal github api token
 
@@ -207,6 +212,258 @@ def getGqlData(owner, repo):
   return data
 
 
+# OK WORKS
+def is_code_file(filename):
+    """
+    Check if the file is a code file based on its extension.
+    """
+    code_extensions = [".py", ".c", ".cpp", ".java", ".js", ".html", ".css", ".php", ".rb", ".ejs"]
+    comment_extensions = [".md", ".txt"]
+    _, extension = os.path.splitext(filename)
+    return extension in code_extensions and extension not in comment_extensions
+
+# OK WORKS BUT A LOT OF API CALLS WAISTED
+def count_lines_of_code(owner, repo, path=''):
+    # Authenticate with the GitHub API using an access token
+    token = os.getenv("GITHUB_TOKEN")
+    headers = {"Authorization": f"Bearer {token}", 'Accept': 'application/json'}
+
+    # Get the root directory of the repository
+    root_url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
+    root_resp = requests.get(root_url, headers=headers)
+    root_resp.raise_for_status()
+    print(f"count_lines_of_code 1: {root_resp.status_code}")
+    root_contents = json.loads(root_resp.text)
+
+    # Recursively process all files in the repository
+    lines_of_code = 0
+    for item in root_contents:
+      if item['type'] == 'file':
+        if is_code_file(item['name']):
+          # Get the contents of the file
+          file_resp = requests.get(item["download_url"], headers=headers)
+          file_resp.raise_for_status()
+          print(f"count_lines_of_code 2: {file_resp.status_code}")
+          content = file_resp.text
+          lines_of_code += len(content.splitlines())
+      elif item["type"] == "dir":
+        # Recursively process subdirectories
+        lines_of_code += count_lines_of_code(owner, repo, item['path'])
+
+    return lines_of_code
+
+# WORKS and NEEDED
+def count_lines_of_code_git(owner, repo, file_extensions=None):
+    if file_extensions is None:
+        file_extensions = ['.py', '.c', '.cpp', '.java', '.js', '.html', '.css', '.php', '.rb', '.ejs']
+
+    # Clone the repository into a temporary directory
+    with TemporaryDirectory() as temp_dir:
+        repo_url = f'https://github.com/{owner}/{repo}.git'
+        subprocess.run(['git', 'clone', repo_url, temp_dir], check=True)
+
+        # Count the total number of lines of code in the master branch
+        lines_of_code = 0
+        for root, _, files in os.walk(temp_dir):
+            for filename in files:
+                if any(filename.endswith(ext) for ext in file_extensions):
+                    file_path = os.path.join(root, filename)
+
+                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+                        content = file.read()
+
+                        # Remove comments from the file content
+                        content = remove_comments(content, filename)
+
+                        lines_of_code += len(content.splitlines())
+
+    return lines_of_code
+
+# Remove comments from the file content WORKS and NEEDED
+def remove_comments(content, filename):
+  if filename.endswith('.py'):
+      content = re.sub(r'#.*|""".*?"""|\'\'\'.*?\'\'\'', '', content, flags=re.DOTALL)
+  elif filename.endswith(('.c', '.cpp', '.java')):
+      content = re.sub(r'//.*|/\*.*?\*/', '', content, flags=re.DOTALL)
+  elif filename.endswith(('.js', '.html', '.css', '.php')):
+      content = re.sub(r'//.*|/\*(?:.|\n)*?\*/', '', content)
+  elif filename.endswith('.rb'):
+      content = re.sub(r'#.*|=begin(?:.|\n)*?=end', '', content, flags=re.DOTALL)
+  elif filename.endswith('.ejs'):
+      content = re.sub(r'<!--.*?-->|#.*', '', content, flags=re.DOTALL)
+  return content
+
+# WORKS and NEEDED
+def get_pull_request_data1(pull_number, owner, repo, headers, retries=5, backoff_factor=1):
+  pull_url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pull_number}"
+
+  for i in range(retries):
+      pr_resp = requests.get(pull_url, headers=headers)
+      time.sleep(1)
+      print(f"get_pull_request_data: {pr_resp.status_code}")
+
+      if pr_resp.status_code == 200:
+          pr_data = json.loads(pr_resp.text)
+          reviews_url = pr_data["url"] + "/reviews"
+          # Moved the reviews_resp status code check into a separate loop, which will ensure that the 
+          # reviews API call is retried properly in case it fails. Now, the function will handle resubmissions 
+          # for both pull request data and reviews data when an API call doesn't work. 
+          for j in range(retries):
+            reviews_resp = requests.get(reviews_url, headers=headers)
+            print(reviews_resp.status_code)
+            if reviews_resp.status_code == 200:
+                reviews_data = json.loads(reviews_resp.text)
+                # If reviews are available
+                if len(reviews_data) > 0:
+                  any_review_approved_or_changes_requested = any(review["state"] in ["APPROVED"] for review in reviews_data)
+                  if (any_review_approved_or_changes_requested):
+                      return (pr_data.get("additions") - pr_data.get("deletions"))
+                  # Reviews are there but no one approved them
+                  else:
+                    print("Reviews are there but no one approved them ok")
+                    return 0
+                # If no reviews are available
+                else:
+                    try:
+                      if (pr_data["review_comments"] > 0) or (pr_data["comments"] > 0):
+                          return (pr_data.get("additions") - pr_data.get("deletions"))
+                      print("No Reviews or comments are available")
+                      return 0
+                    except KeyError:
+                      return 0
+
+            else:
+                pr_data = reviews_resp.json()
+                if reviews_resp.status_code == 403 and "secondary rate limit" in pr_data.get("message", "").lower():
+                    wait_time = backoff_factor * (2 ** j)
+                    print(f"Hit secondary rate limit 1. Retrying in {wait_time} seconds.")
+                    time.sleep(wait_time)
+                else:
+                    print(f"Error while fetching reviews: {reviews_resp.status_code}")
+                    print(reviews_resp.text)
+                    return 0
+      else:
+          pr_data = pr_resp.json()
+          if pr_resp.status_code == 403 and "secondary rate limit" in pr_data.get("message", "").lower():
+              wait_time = backoff_factor * (2 ** i)
+              print(f"Hit secondary rate limit 2. Retrying in {wait_time} seconds.")
+              time.sleep(wait_time)
+          else:
+              print(f"Error while fetching pull request data: {pr_resp.status_code}")
+              print(pr_resp.text)
+              return 0
+  print("NOO")
+  return 0
+
+# Testing (PLAN B)
+def fraction_reviewed_changes1(owner, repo):
+    token = os.getenv("GITHUB_TOKEN")  # authentication
+    headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github+json"}
+
+    # Make a request for merged pull requests
+    pr_url = f"https://api.github.com/search/issues?q=is:pr is:merged is:closed repo:{owner}/{repo}&per_page=100&sort=created&order=desc"
+    pr_resp = requests.get(pr_url, headers=headers)
+    print(f"fraction_reviewed_changes: {pr_resp.status_code}")
+    pr_resp.raise_for_status()
+
+    # Retrieve all paginated results
+    pr_data = []
+    while pr_resp.status_code == 200 and len(pr_resp.json()["items"]) > 0:
+        pr_data += pr_resp.json()["items"]
+        next_url = None
+        for link in pr_resp.headers.get("Link", "").split(","):
+            if "rel=\"next\"" in link:
+                next_url = link.split(";")[0].strip()[1:-1]
+                print(next_url)
+        if next_url:
+            pr_resp = requests.get(next_url, headers=headers)
+        else:
+            break
+
+    # Count the number of merged pull requests that have at least one approving review
+    reviewed_prs = 0
+    for pr in pr_data:
+        reviews_url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr['number']}/reviews"
+        reviews_resp = requests.get(reviews_url, headers=headers)
+        reviews_resp.raise_for_status()
+        reviews = reviews_resp.json()
+        for review in reviews:
+            if review["state"] == "APPROVED":
+                reviewed_prs += 1
+                break
+
+    # Compute the fraction of merged pull requests that have at least one approving review
+    # Ratio of the number of reviewed pull requests to the total number of merged pull requests in the pr_data list. 
+    total_prs = len(pr_data)
+    fraction_reviewed = 0
+    if total_prs > 0:
+        print(reviewed_prs)
+        print(total_prs)
+        fraction_reviewed = reviewed_prs / total_prs
+    return fraction_reviewed
+
+# WORKS and NEEDED
+def fraction_reviewed_changes(owner, repo):
+    """Computes the fraction of project code that was introduced through pull requests with a code review.
+    Args:
+        owner (str): The owner of the repository.
+        repo (str): The name of the repository.
+    Returns:
+        float: The fraction of project code that was introduced through pull requests with a code review.
+    """
+    token = os.getenv("GITHUB_TOKEN")  # authentication
+    headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github+json"}
+
+    # Make a request for merged pull requests into the master branch
+    pr_url = f"https://api.github.com/search/issues?q=is:pr is:merged is:closed repo:{owner}/{repo}+base:master&per_page=100&sort=created&order=desc"
+
+    pr_resp = requests.get(pr_url, headers=headers)
+    print(f"fraction_reviewed_changes: {pr_resp.status_code}")
+
+    if pr_resp.status_code != 200:
+      print(f"Error while fetching pull request data: {pr_resp.status_code}")
+      print(pr_resp.text)
+      return 0
+
+    # Retrieve all paginated results
+    pr_data = []
+    while pr_resp.status_code == 200 and len(pr_resp.json()["items"]) > 0:
+        pr_data += pr_resp.json()["items"]
+        next_url = None
+        for link in pr_resp.headers.get("Link", "").split(","):
+            if "rel=\"next\"" in link:
+                next_url = link.split(";")[0].strip()[1:-1]
+                print(next_url)
+        if next_url:
+            pr_resp = requests.get(next_url, headers=headers)
+            if pr_resp.status_code != 200:
+              print(f"Error while fetching pull request data: {pr_resp.status_code}")
+              print(pr_resp.text)
+              return 0
+        else:
+            break
+
+    total_lines_of_code = count_lines_of_code_git(owner, repo)
+    print(total_lines_of_code)
+    print(len(pr_data))
+
+    reviewed_additions = 0
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        futures = {executor.submit(get_pull_request_data1, pr["number"], owner, repo, headers): pr for pr in pr_data}
+
+        for future in as_completed(futures):
+            result = future.result()
+            if result:
+                reviewed_additions += result
+
+    fraction_reviewed = 0
+    if reviewed_additions > 0:
+        fraction_reviewed = min(reviewed_additions / total_lines_of_code, 1)
+    return fraction_reviewed
+
+
+
+
 def getOwnerRepo(url):
   parts = re.split("/", url)
   len_parts = len(parts)
@@ -231,6 +488,7 @@ def getData(owner_repo):
     data["bus_commits"] = busTeamCommits
     data["correctness_score"] = test_score
     data["license_score"] = license_score
+    data["code_review"] = fraction_reviewed_changes(owner, repo)
     if data["total_commits"] == None: data["total_commits"] = busTeamCommits
     
     return json.dumps(data)
