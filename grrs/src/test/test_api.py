@@ -8,6 +8,9 @@ import requests
 import base64
 import sys
 
+sys.path.append('../../')
+from api import calc_version_pinning_metric, get_dependencies_using_gql
+
 def getRestData(owner, repo):
 
   token = os.getenv("GITHUB_TOKEN") #authentication 
@@ -278,6 +281,19 @@ class TestGetData(unittest.TestCase):
         actual = getData("https://github.com/cloudinary/cloudinary_npm")
         expected = json.dumps({"open_issues": 11, "closed_issues": 241, "total_commits": 736, "has_readme": True, "has_wiki": False, "has_pages": False, "has_discussions": False, "bus_commits": 418, "correctness_score": 1.0, "license_score": 1.0})
         self.assertEqual(actual, actual) # PLEASE CHANGE THIS WHEN THE TIME COMES
+
+
+class testMetrics(unittest.TestCase):
+    def test_version_pinning_metric_success(self):
+      assert(len(get_dependencies_using_gql("cloudinary", "cloudinary_npm")) > 0)
+      assert(calc_version_pinning_metric("cloudinary", "cloudinary_npm") > 0)
+
+    def test_invalid_repose_failure(self):
+      try:
+         get_dependencies_using_gql("abc", "abc")
+         assert False
+      except:
+         pass
 
 if __name__ == '__main__':
     unittest.main()

@@ -8,7 +8,6 @@ import re
 import requests
 import base64
 import logging
-from github import Github
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import tarfile
