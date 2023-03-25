@@ -32,33 +32,33 @@ pub struct MetricJSON {
     pub bus_commits: i32,
 
     pub correctness_score: f32,
-    pub code_review: f32
+    pub version_pinning: f32
 }
 
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize)]
 pub struct PackageJSON {
     pub URL: String,
-    pub NET_SCORE: f32,
-    pub RAMP_UP_SCORE: f32,
-    pub CORRECTNESS_SCORE: f32,
-    pub BUS_FACTOR_SCORE: f32,
-    pub RESPONSIVE_MAINTAINER_SCORE: f32,
-    pub LICENSE_SCORE: f32,
-    pub CODE_REVIEW: f32
+    pub NetScore: f32,
+    pub RampUp: f32,
+    pub Correctness: f32,
+    pub BusFactor: f32,
+    pub ResponsiveMaintainer: f32,
+    pub License: f32,
+    pub VersionPinning: f32,
 }
 
 impl PackageJSON {
     pub fn new(package: &Package) -> PackageJSON {
         PackageJSON {
             URL: package.url.get_url(),
-            NET_SCORE: (*package.net_score * 100.0).round() / 100.0,
-            RAMP_UP_SCORE: (*package.ramp_up * 100.0).round() / 100.0,
-            CORRECTNESS_SCORE: (*package.correctness * 100.0).round() / 100.0,
-            BUS_FACTOR_SCORE: (*package.bus_factor * 100.0).round() / 100.0,
-            RESPONSIVE_MAINTAINER_SCORE: (*package.responsiveness * 100.0).round() / 100.0,
-            LICENSE_SCORE: (*package.license * 100.0).round() / 100.0,
-            CODE_REVIEW: (*package.review * 100.0).round() / 100.0
+            NetScore: (*package.net_score * 100.0).round() / 100.0,
+            RampUp: (*package.ramp_up * 100.0).round() / 100.0,
+            Correctness: (*package.correctness * 100.0).round() / 100.0,
+            BusFactor: (*package.bus_factor * 100.0).round() / 100.0,
+            ResponsiveMaintainer: (*package.responsiveness * 100.0).round() / 100.0,
+            License: (*package.license * 100.0).round() / 100.0,
+            VersionPinning: (*package.version_pinning * 100.0).round() / 100.0
         }
     }
 }
@@ -71,8 +71,8 @@ pub struct Package {
     pub bus_factor: OrderedFloat<f32>,
     pub responsiveness: OrderedFloat<f32>,
     pub license: OrderedFloat<f32>,
-    pub review: OrderedFloat<f32>,
     pub url: URLHandler,
+    pub version_pinning: OrderedFloat<f32>,
 }
 
 impl Package {
@@ -84,8 +84,8 @@ impl Package {
             bus_factor: OrderedFloat(-1.0),
             responsiveness: OrderedFloat(-1.0),
             license: OrderedFloat(-1.0),
-            review: OrderedFloat(-1.0),
-            url: URLHandler::new(url)
+            url: URLHandler::new(url),
+            version_pinning: OrderedFloat(-1.0),
         }
     }
 
@@ -97,22 +97,21 @@ impl Package {
         debug!("Bus Factor:             {}", self.bus_factor);
         debug!("ResponsiveMaintainer:   {}", self.responsiveness);
         debug!("Correctness:            {}", self.correctness);
-        debug!("Code Review:            {}", self.review);
         debug!("Ramp Up Time:           {}", self.ramp_up);
         debug!("License Compatibility:  {}", self.license);
+        debug!("Version pinning:  {}", self.version_pinning);
         debug!("");
     }
 
     pub fn calc_metrics(&mut self, json_in: &String){
-        // we deserialize our json object into MetricJSON struct
         let json: MetricJSON = serde_json::from_str(json_in).expect("Unable to parse JSON");
         self.bus_factor = OrderedFloat(calc_bus_factor(&json));
         self.responsiveness = OrderedFloat(calc_responsiveness(&json));
         self.correctness = OrderedFloat(json.correctness_score);
         self.ramp_up = OrderedFloat(calc_ramp_up_time(&json));
         self.license = OrderedFloat(json.license_score);
-        self.review = OrderedFloat(json.code_review);
-        self.net_score = OrderedFloat(0.4) * self.bus_factor + OrderedFloat(0.15) * (self.responsiveness + self.correctness + self.ramp_up + self.license)
+        self.net_score = OrderedFloat(0.4) * self.bus_factor + OrderedFloat(0.15) * (self.responsiveness + self.correctness + self.ramp_up + self.license);
+        self.version_pinning = OrderedFloat(json.version_pinning);
     }
 
 }
@@ -215,10 +214,10 @@ mod tests {
             license_score: 0.5,
             open_issues: 20,
             closed_issues: 20,
-            code_review: 0.0,
             total_commits: 20,
             bus_commits: 30,
             correctness_score: 0.3,
+            version_pinning: 0.3
         };
         let ramp_up_time = calc_ramp_up_time(&metric_json);
         assert_ne!(ramp_up_time, 1.0);
@@ -232,11 +231,11 @@ mod tests {
             has_readme: false,
             license_score: 0.5,
             open_issues: 20,
-            code_review: 0.0,
             closed_issues: 20,
             total_commits: 20,
             bus_commits: 30,
             correctness_score: 0.3,
+            version_pinning: 0.3
         };
 
         let result = calc_ramp_up_time(&json);
@@ -251,11 +250,11 @@ mod tests {
             bus_commits: 30,
             correctness_score: 0.3,
             license_score: 0.5,
-            code_review: 0.0,
             has_wiki: true,
             has_discussions: false,
             has_pages: true,
             has_readme: false,
+            version_pinning: 0.3
         };
         // This assert will fail because the expected value is not equal to the actual value of 0.375.
         assert_ne!(calc_responsiveness(&json), 0.4);
@@ -269,11 +268,11 @@ mod tests {
             bus_commits: 30,
             correctness_score: 0.3,
             license_score: 0.5,
-            code_review: 0.0,
             has_wiki: true,
             has_discussions: false,
             has_pages: true,
             has_readme: false,
+            version_pinning: 0.3
         };
         assert_eq!(calc_responsiveness(&json), 0.375);
     }
@@ -286,11 +285,11 @@ mod tests {
             closed_issues: 200,
             correctness_score: 0.3,
             license_score: 0.5,
-            code_review: 0.0,
             has_wiki: true,
             has_discussions: false,
             has_pages: true,
             has_readme: false,
+            version_pinning: 0.3
         };
         let result = calc_bus_factor(&json);
         assert_ne!(result, 2.0);
@@ -302,13 +301,13 @@ mod tests {
             bus_commits: 50,
             open_issues: 100,
             closed_issues: 200,
-            code_review: 0.0,
             correctness_score: 0.3,
             license_score: 0.5,
             has_wiki: true,
             has_discussions: false,
             has_pages: true,
             has_readme: false,
+            version_pinning: 0.3
         };
         let result = calc_bus_factor(&json);
         assert_eq!(result, 0.375);
@@ -330,6 +329,7 @@ mod tests {
     
 
 }
+
 
 
 
