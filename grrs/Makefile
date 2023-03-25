@@ -2,7 +2,7 @@ export LOG_FILE
 export LOG_LEVEL
 
 run:
-	./target/debug/metric ../URLs.txt $(LOG_FILE) $(LOG_LEVEL)
+	./target/debug/metric URLs.txt log_path 2
 
 build:
 	cargo build
