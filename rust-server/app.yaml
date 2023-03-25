@@ -1,0 +1,8 @@
+runtime: custom
+env: flex
+entrypoint: cargo run --example server --target x86_64-unknown-linux-gnu
+
+handlers:
+- url: /.*
+  script: auto
+
