@@ -32,7 +32,8 @@ pub struct MetricJSON {
     pub bus_commits: i32,
 
     pub correctness_score: f32,
-    pub code_review: f32
+    pub code_review: f32,
+    pub version_pinning: f32
 }
 
 #[allow(non_snake_case)]
@@ -45,7 +46,8 @@ pub struct PackageJSON {
     pub BUS_FACTOR_SCORE: f32,
     pub RESPONSIVE_MAINTAINER_SCORE: f32,
     pub LICENSE_SCORE: f32,
-    pub CODE_REVIEW: f32
+    pub CODE_REVIEW: f32,
+    pub Version_Pinning: f32,
 }
 
 impl PackageJSON {
@@ -58,7 +60,8 @@ impl PackageJSON {
             BUS_FACTOR_SCORE: (*package.bus_factor * 100.0).round() / 100.0,
             RESPONSIVE_MAINTAINER_SCORE: (*package.responsiveness * 100.0).round() / 100.0,
             LICENSE_SCORE: (*package.license * 100.0).round() / 100.0,
-            CODE_REVIEW: (*package.review * 100.0).round() / 100.0
+            CODE_REVIEW: (*package.review * 100.0).round() / 100.0,
+            Version_Pinning: (*package.version_pinning * 100.0).round() / 100.0
         }
     }
 }
@@ -73,6 +76,7 @@ pub struct Package {
     pub license: OrderedFloat<f32>,
     pub review: OrderedFloat<f32>,
     pub url: URLHandler,
+    pub version_pinning: OrderedFloat<f32>,
 }
 
 impl Package {
@@ -85,7 +89,8 @@ impl Package {
             responsiveness: OrderedFloat(-1.0),
             license: OrderedFloat(-1.0),
             review: OrderedFloat(-1.0),
-            url: URLHandler::new(url)
+            url: URLHandler::new(url),
+            version_pinning: OrderedFloat(-1.0),
         }
     }
 
@@ -100,6 +105,7 @@ impl Package {
         debug!("Code Review:            {}", self.review);
         debug!("Ramp Up Time:           {}", self.ramp_up);
         debug!("License Compatibility:  {}", self.license);
+        debug!("Version pinning:  {}", self.version_pinning);
         debug!("");
     }
 
@@ -112,7 +118,8 @@ impl Package {
         self.ramp_up = OrderedFloat(calc_ramp_up_time(&json));
         self.license = OrderedFloat(json.license_score);
         self.review = OrderedFloat(json.code_review);
-        self.net_score = OrderedFloat(0.4) * self.bus_factor + OrderedFloat(0.15) * (self.responsiveness + self.correctness + self.ramp_up + self.license)
+        self.net_score = OrderedFloat(0.4) * self.bus_factor + OrderedFloat(0.15) * (self.responsiveness + self.correctness + self.ramp_up + self.license);
+        self.version_pinning = OrderedFloat(json.version_pinning);
     }
 
 }
@@ -219,6 +226,7 @@ mod tests {
             total_commits: 20,
             bus_commits: 30,
             correctness_score: 0.3,
+            version_pinning: 0.2
         };
         let ramp_up_time = calc_ramp_up_time(&metric_json);
         assert_ne!(ramp_up_time, 1.0);
@@ -237,6 +245,7 @@ mod tests {
             total_commits: 20,
             bus_commits: 30,
             correctness_score: 0.3,
+            version_pinning: 0.2
         };
 
         let result = calc_ramp_up_time(&json);
@@ -256,6 +265,7 @@ mod tests {
             has_discussions: false,
             has_pages: true,
             has_readme: false,
+            version_pinning: 0.2
         };
         // This assert will fail because the expected value is not equal to the actual value of 0.375.
         assert_ne!(calc_responsiveness(&json), 0.4);
@@ -274,6 +284,7 @@ mod tests {
             has_discussions: false,
             has_pages: true,
             has_readme: false,
+            version_pinning: 0.2
         };
         assert_eq!(calc_responsiveness(&json), 0.375);
     }
@@ -291,6 +302,7 @@ mod tests {
             has_discussions: false,
             has_pages: true,
             has_readme: false,
+            version_pinning: 0.2
         };
         let result = calc_bus_factor(&json);
         assert_ne!(result, 2.0);
@@ -309,6 +321,7 @@ mod tests {
             has_discussions: false,
             has_pages: true,
             has_readme: false,
+            version_pinning: 0.2
         };
         let result = calc_bus_factor(&json);
         assert_eq!(result, 0.375);
@@ -330,7 +343,4 @@ mod tests {
     
 
 }
-
-
-
 

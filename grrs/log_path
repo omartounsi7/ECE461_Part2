@@ -1,2 +1,3 @@
-[00:00:00.000] (7f97826b8640) DEBUG  File handled Properly
-[00:00:00.000] (7f9781ab2640) INFO   https://github.com/openai/gpt-3 is a github URL!
+[00:00:00.002] (778c) INFO   https://github.com/openai/gpt-3 is a github URL!
+[00:00:00.004] (b888) INFO   https://www.npmjs.com/package/request is NOT a github URL!
+[00:00:00.006] (ba68) INFO   Problem opening the file: Os { code: 2, kind: NotFound, message: "系统找不到指定的文件。" }

@@ -208,6 +208,78 @@ def getGqlData(owner, repo):
 
   return data
 
+def get_dependencies_using_gql(owner, repo):
+    token = os.getenv("GITHUB_TOKEN")  # get personal github api token
+
+    headers = {"Authorization": "Token {}".format(token),
+               'Accept': 'application/vnd.github.hawkgirl-preview+json'}
+
+    # Use the RequestsHTTPTransport class to send the GraphQL query with the headers
+    transport = RequestsHTTPTransport(
+        url="https://api.github.com/graphql",
+        headers=headers,
+        use_json=True,
+    )
+
+    # Create a client using the transport
+    client = gql.Client(transport=transport, fetch_schema_from_transport=True)
+
+    # create query
+    response_query = """
+    {{ 
+    repository(owner:"{}", name:"{}"){{
+          dependencyGraphManifests {{
+          edges {{
+            node {{
+              dependencies {{
+                nodes {{
+                  repository {{
+                    nameWithOwner
+                    releases {{
+                        totalCount
+                    }}
+                  }}
+                }}
+              }}
+            }}
+          }}
+        }}
+      }}
+    }}
+    """.format(owner, repo)
+
+    # Provide a GraphQL query
+    query = gql.gql(response_query)
+
+    # Execute the query on the transport
+    response_result = client.execute(query)
+    return response_result
+
+def calc_version_pinning_metric(owner, repo):
+    # Get the dependencies of this repository
+    rep_result = get_dependencies_using_gql(owner, repo)
+    edges = rep_result['repository']['dependencyGraphManifests']['edges']
+    repo_list = []
+    for edge in edges:
+        nodes = edge['node']['dependencies']['nodes']
+        for node in nodes:
+            if node['repository'] is None:
+                continue
+            repo_name = node['repository']['nameWithOwner']
+            num_releases = node['repository']['releases']['totalCount']
+            if repo_name not in repo_list:
+                repo_list.append((repo_name, num_releases))
+
+    # Calculate the dependencies that are pinned to at least a specific major + minor version
+    num_dependencies = len(repo_list)
+    num_dependencies_version = 0
+    for repo in repo_list:
+        if repo[1] >= 2:
+            num_dependencies_version += 1
+
+    version_pinning_metric = num_dependencies_version / num_dependencies
+    return version_pinning_metric
+
 # OK WORKS
 def is_code_file(filename):
     """
@@ -404,7 +476,8 @@ def getData(owner_repo):
     data["license_score"] = license_score
     data["code_review"] = fraction_reviewed_changes(owner, repo)
     if data["total_commits"] == None: data["total_commits"] = busTeamCommits
-    
+    data["version_pinning"] = calc_version_pinning_metric(owner, repo)
+
     return json.dumps(data)
 
 def config_logging():
