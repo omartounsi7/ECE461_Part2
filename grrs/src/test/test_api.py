@@ -212,17 +212,17 @@ class TestGetOwnerRepo(unittest.TestCase):
     def test_get_owner_repo_success1(self):
         actual = getOwnerRepo("nullivex/nodist")
         expected = ("nullivex", "nodist")
-        self.assertEqual(actual, actual)
+        self.assertEqual(actual, expected)
     
     def test_get_owner_repo_success2(self):
         actual = getOwnerRepo("nullivex/nodist/")
         expected = ("nullivex", "nodist")
-        self.assertEqual(actual, actual)
+        self.assertEqual(actual, expected)
     
     def test_get_owner_repo_success3(self):
         actual = getOwnerRepo("/nullivex/nodist/")
         expected = ("nullivex", "nodist")
-        self.assertEqual(actual, actual)
+        self.assertEqual(actual, expected)
 
     def test_get_owner_repo_on_purpose_fail(self):
         actual = getOwnerRepo("/null/ivex/nod/ist/")
