@@ -275,12 +275,12 @@ class TestGetGqlData(unittest.TestCase):
 class TestGetData(unittest.TestCase):
     def test_get_data_success1(self):
         actual = getData("lodash/lodash")
-        expected = json.dumps({"open_issues": 312, "closed_issues": 3785, "total_commits": 8005, "has_readme": True, "has_wiki": True, "has_pages": False, "has_discussions": False, "bus_commits": 7434, "correctness_score": 1.0, "license_score": 0.0})
-        self.assertEqual(actual, actual)
+        #expected = json.dumps({"open_issues": 312, "closed_issues": 3785, "total_commits": 8005, "has_readme": True, "has_wiki": True, "has_pages": False, "has_discussions": False, "bus_commits": 7434, "correctness_score": 1.0, "license_score": 0.0})
+        self.assertIsNotNone(actual)
     def test_get_data_success2(self):
         actual = getData("https://github.com/cloudinary/cloudinary_npm")
-        expected = json.dumps({"open_issues": 11, "closed_issues": 241, "total_commits": 736, "has_readme": True, "has_wiki": False, "has_pages": False, "has_discussions": False, "bus_commits": 418, "correctness_score": 1.0, "license_score": 1.0})
-        self.assertEqual(actual, actual) # PLEASE CHANGE THIS WHEN THE TIME COMES
+        #expected = json.dumps({"open_issues": 11, "closed_issues": 241, "total_commits": 736, "has_readme": True, "has_wiki": False, "has_pages": False, "has_discussions": False, "bus_commits": 418, "correctness_score": 1.0, "license_score": 1.0})
+        self.assertIsNotNone(actual)
 
 
 class testMetrics(unittest.TestCase):
