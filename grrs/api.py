@@ -10,8 +10,6 @@ import base64
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import tarfile
-import gzip
 
 def getRestData(owner, repo):
   token = os.getenv("GITHUB_TOKEN") #authentication 
@@ -292,40 +290,10 @@ def is_code_file(filename):
     _, extension = os.path.splitext(filename)
     return extension in code_extensions and extension not in comment_extensions
 
-# OK WORKS BUT A LOT OF API CALLS WAISTED
-def count_lines_of_code(owner, repo, path=''):
-    # Authenticate with the GitHub API using an access token
-    token = os.getenv("GITHUB_TOKEN")
-    headers = {"Authorization": f"Bearer {token}", 'Accept': 'application/json'}
-
-    # Get the root directory of the repository
-    root_url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
-    root_resp = requests.get(root_url, headers=headers)
-    root_resp.raise_for_status()
-    print(f"count_lines_of_code 1: {root_resp.status_code}")
-    root_contents = json.loads(root_resp.text)
-
-    # Recursively process all files in the repository
-    lines_of_code = 0
-    for item in root_contents:
-      if item['type'] == 'file':
-        if is_code_file(item['name']):
-          # Get the contents of the file
-          file_resp = requests.get(item["download_url"], headers=headers)
-          file_resp.raise_for_status()
-          print(f"count_lines_of_code 2: {file_resp.status_code}")
-          content = file_resp.text
-          lines_of_code += len(content.splitlines())
-      elif item["type"] == "dir":
-        # Recursively process subdirectories
-        lines_of_code += count_lines_of_code(owner, repo, item['path'])
-
-    return lines_of_code
-
 # WORKS and NEEDED
 def count_lines_of_code_git(owner, repo, file_extensions=None):
     if file_extensions is None:
-        file_extensions = ['.py', '.c', '.cpp', '.java', '.js', '.html', '.css', '.php', '.rb', '.ejs']
+        file_extensions = ['.py', '.c', '.cpp', '.java', '.js', '.json', '.html', '.css', '.php', '.rb', '.ejs']
 
     # Clone the repository into a temporary directory
     with TemporaryDirectory() as temp_dir:
@@ -363,115 +331,62 @@ def remove_comments(content, filename):
       content = re.sub(r'<!--.*?-->|#.*', '', content, flags=re.DOTALL)
   return content
 
-# WORKS and NEEDED
-def get_pull_request_data1(pull_number, owner, repo, headers, retries=5, backoff_factor=1):
-  pull_url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pull_number}"
-
-  for i in range(retries):
-      pr_resp = requests.get(pull_url, headers=headers)
-      time.sleep(1)
-      print(f"get_pull_request_data: {pr_resp.status_code}")
-
-      if pr_resp.status_code == 200:
-          pr_data = json.loads(pr_resp.text)
-          reviews_url = pr_data["url"] + "/reviews"
-          # Moved the reviews_resp status code check into a separate loop, which will ensure that the 
-          # reviews API call is retried properly in case it fails. Now, the function will handle resubmissions 
-          # for both pull request data and reviews data when an API call doesn't work. 
-          for j in range(retries):
-            reviews_resp = requests.get(reviews_url, headers=headers)
-            print(reviews_resp.status_code)
-            if reviews_resp.status_code == 200:
-                reviews_data = json.loads(reviews_resp.text)
-                # If reviews are available
-                if len(reviews_data) > 0:
-                  any_review_approved_or_changes_requested = any(review["state"] in ["APPROVED"] for review in reviews_data)
-                  if (any_review_approved_or_changes_requested):
-                      return (pr_data.get("additions") - pr_data.get("deletions"))
-                  # Reviews are there but no one approved them
-                  else:
-                    print("Reviews are there but no one approved them ok")
-                    return 0
-                # If no reviews are available
-                else:
-                    try:
-                      if (pr_data["review_comments"] > 0) or (pr_data["comments"] > 0):
-                          return (pr_data.get("additions") - pr_data.get("deletions"))
-                      print("No Reviews or comments are available")
-                      return 0
-                    except KeyError:
-                      return 0
-
-            else:
-                pr_data = reviews_resp.json()
-                if reviews_resp.status_code == 403 and "secondary rate limit" in pr_data.get("message", "").lower():
-                    wait_time = backoff_factor * (2 ** j)
-                    print(f"Hit secondary rate limit 1. Retrying in {wait_time} seconds.")
-                    time.sleep(wait_time)
-                else:
-                    print(f"Error while fetching reviews: {reviews_resp.status_code}")
-                    print(reviews_resp.text)
-                    return 0
-      else:
-          pr_data = pr_resp.json()
-          if pr_resp.status_code == 403 and "secondary rate limit" in pr_data.get("message", "").lower():
-              wait_time = backoff_factor * (2 ** i)
-              print(f"Hit secondary rate limit 2. Retrying in {wait_time} seconds.")
-              time.sleep(wait_time)
+# Testing
+def make_request_with_retries(url, headers, retries, backoff_factor):
+    for i in range(retries):
+      with requests.get(url, headers=headers) as resp:
+        logging.info(f"make_request_with_retries: {resp.status_code}")
+        time.sleep(1)
+        try:
+            resp.raise_for_status()
+            return resp
+        except requests.exceptions.HTTPError as err:
+          if resp.status_code == 403 and "secondary rate limit" in err.response.text.lower():
+            wait_time = backoff_factor * (2 ** i)
+            logging.info(f"Hit secondary rate limit. Retrying in {wait_time} seconds.")
+            time.sleep(wait_time)
+          elif resp.status_code == 403 and "API rate limit exceeded for user ID" in err.response.text.lower():
+              logging.info("API rate limit exceeded. Please try again later.")
+              return -1
           else:
-              print(f"Error while fetching pull request data: {pr_resp.status_code}")
-              print(pr_resp.text)
-              return 0
-  print("NOO")
-  return 0
+              logging.exception(f"Error while fetching data: {resp.status_code}")
+              logging.exception(err.response.text)
+    return None
 
-# Testing (PLAN B)
-def fraction_reviewed_changes1(owner, repo):
-    token = os.getenv("GITHUB_TOKEN")  # authentication
-    headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github+json"}
+# Testing
+def get_pull_request_data1(pull_number, owner, repo, headers, retries=5, backoff_factor=1):
+    pull_url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pull_number}"
+    pr_resp = make_request_with_retries(pull_url, headers, retries, backoff_factor)
+    if not pr_resp:
+        logging.info("Couldn't access pr metric data for pulls")
+        return 0
+    if pr_resp == -1:
+        logging.info("API rate limit exceeded")
+        return -1
+    
+    pr_data = pr_resp.json()
+    reviews_url = pr_data["url"] + "/reviews"
+    reviews_resp = make_request_with_retries(reviews_url, headers, retries, backoff_factor)
+    if not reviews_resp:
+        logging.info("Couldn't access pr metric data for reviews")
+        return 0
+    if reviews_resp == -1:
+      return -1
+    
+    reviews_data = reviews_resp.json()
+    approved_or_changes_requested = any(review["state"] in ["APPROVED"] for review in reviews_data) if reviews_data else False
 
-    # Make a request for merged pull requests
-    pr_url = f"https://api.github.com/search/issues?q=is:pr is:merged is:closed repo:{owner}/{repo}&per_page=100&sort=created&order=desc"
-    pr_resp = requests.get(pr_url, headers=headers)
-    print(f"fraction_reviewed_changes: {pr_resp.status_code}")
-    pr_resp.raise_for_status()
-
-    # Retrieve all paginated results
-    pr_data = []
-    while pr_resp.status_code == 200 and len(pr_resp.json()["items"]) > 0:
-        pr_data += pr_resp.json()["items"]
-        next_url = None
-        for link in pr_resp.headers.get("Link", "").split(","):
-            if "rel=\"next\"" in link:
-                next_url = link.split(";")[0].strip()[1:-1]
-                print(next_url)
-        if next_url:
-            pr_resp = requests.get(next_url, headers=headers)
-        else:
-            break
-
-    # Count the number of merged pull requests that have at least one approving review
-    reviewed_prs = 0
-    for pr in pr_data:
-        reviews_url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr['number']}/reviews"
-        reviews_resp = requests.get(reviews_url, headers=headers)
-        reviews_resp.raise_for_status()
-        reviews = reviews_resp.json()
-        for review in reviews:
-            if review["state"] == "APPROVED":
-                reviewed_prs += 1
-                break
-
-    # Compute the fraction of merged pull requests that have at least one approving review
-    # Ratio of the number of reviewed pull requests to the total number of merged pull requests in the pr_data list. 
-    total_prs = len(pr_data)
-    fraction_reviewed = 0
-    if total_prs > 0:
-        print(reviewed_prs)
-        print(total_prs)
-        fraction_reviewed = reviewed_prs / total_prs
-    return fraction_reviewed
-
+    try:
+      if approved_or_changes_requested or pr_data.get("review_comments") > 0 or pr_data.get("comments") > 0:
+          logging.info("PR has been approved or has comments")
+          return pr_data.get("additions", 0) - pr_data.get("deletions", 0)
+      else:
+          logging.info("PR has not been approved and has no comments")
+          return 0
+    except KeyError as e:
+      logging.exception(f"KeyError: {e}")
+      return 0
+      
 # WORKS and NEEDED
 def fraction_reviewed_changes(owner, repo):
     """Computes the fraction of project code that was introduced through pull requests with a code review.
@@ -488,11 +403,11 @@ def fraction_reviewed_changes(owner, repo):
     pr_url = f"https://api.github.com/search/issues?q=is:pr is:merged is:closed repo:{owner}/{repo}+base:master&per_page=100&sort=created&order=desc"
 
     pr_resp = requests.get(pr_url, headers=headers)
-    print(f"fraction_reviewed_changes: {pr_resp.status_code}")
+    logging.info(f"fraction_reviewed_changes: {pr_resp.status_code}")
 
     if pr_resp.status_code != 200:
-      print(f"Error while fetching pull request data: {pr_resp.status_code}")
-      print(pr_resp.text)
+      logging.info(f"Error while fetching pull request data: {pr_resp.status_code}")
+      logging.info(pr_resp.text)
       return 0
 
     # Retrieve all paginated results
@@ -503,19 +418,18 @@ def fraction_reviewed_changes(owner, repo):
         for link in pr_resp.headers.get("Link", "").split(","):
             if "rel=\"next\"" in link:
                 next_url = link.split(";")[0].strip()[1:-1]
-                print(next_url)
+                logging.info(next_url)
         if next_url:
             pr_resp = requests.get(next_url, headers=headers)
             if pr_resp.status_code != 200:
-              print(f"Error while fetching pull request data: {pr_resp.status_code}")
-              print(pr_resp.text)
+              logging.info(f"Error while fetching pull request data: {pr_resp.status_code}")
+              logging.info(pr_resp.text)
               return 0
         else:
             break
 
     total_lines_of_code = count_lines_of_code_git(owner, repo)
-    print(total_lines_of_code)
-    print(len(pr_data))
+    #print(len(pr_data))
 
     reviewed_additions = 0
     with ThreadPoolExecutor(max_workers=50) as executor:
@@ -527,8 +441,10 @@ def fraction_reviewed_changes(owner, repo):
                 reviewed_additions += result
 
     fraction_reviewed = 0
-    if reviewed_additions > 0:
-        fraction_reviewed = min(reviewed_additions / total_lines_of_code, 1)
+    if abs(reviewed_additions) > 0:
+        #print(reviewed_additions)
+        #print(total_lines_of_code)
+        fraction_reviewed = float(min(abs(reviewed_additions) / total_lines_of_code, 1))
     return fraction_reviewed
 
 
@@ -565,6 +481,9 @@ def getData(owner_repo):
     return json.dumps(data)
 
 def config_logging():
+  # Set the logging level and format
+  logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
   filepath = os.getenv("LOG_FILE") #authentication 
   log_level = os.getenv("LOG_LEVEL") #authentication
   if(log_level == 1):
