@@ -233,8 +233,8 @@ class TestGetOwnerRepo(unittest.TestCase):
 class TestGetRestData(unittest.TestCase):
     def test_get_rest_data_success(self):
         actual = getRestData("cloudinary", "cloudinary_npm")
-        expected = (1.0, 1.0, False, False, False, True, 422)
-        self.assertEqual(actual, actual)  # PLEASE CHANGE THIS WHEN THE TIME COMES
+        #expected = (1.0, 1.0, False, False, False, True, 422)
+        self.assertIsNotNone(actual)
     
     def test_get_rest_data_exception_url(self):
         with self.assertRaises(requests.exceptions.HTTPError) as exception_context:
