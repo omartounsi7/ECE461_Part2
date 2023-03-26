@@ -212,17 +212,17 @@ class TestGetOwnerRepo(unittest.TestCase):
     def test_get_owner_repo_success1(self):
         actual = getOwnerRepo("nullivex/nodist")
         expected = ("nullivex", "nodist")
-        self.assertEqual(actual, actual)
+        self.assertEqual(actual, expected)
     
     def test_get_owner_repo_success2(self):
         actual = getOwnerRepo("nullivex/nodist/")
         expected = ("nullivex", "nodist")
-        self.assertEqual(actual, actual)
+        self.assertEqual(actual, expected)
     
     def test_get_owner_repo_success3(self):
         actual = getOwnerRepo("/nullivex/nodist/")
         expected = ("nullivex", "nodist")
-        self.assertEqual(actual, actual)
+        self.assertEqual(actual, expected)
 
     def test_get_owner_repo_on_purpose_fail(self):
         actual = getOwnerRepo("/null/ivex/nod/ist/")
@@ -233,8 +233,8 @@ class TestGetOwnerRepo(unittest.TestCase):
 class TestGetRestData(unittest.TestCase):
     def test_get_rest_data_success(self):
         actual = getRestData("cloudinary", "cloudinary_npm")
-        expected = (1.0, 1.0, False, False, False, True, 422)
-        self.assertEqual(actual, actual)  # PLEASE CHANGE THIS WHEN THE TIME COMES
+        #expected = (1.0, 1.0, False, False, False, True, 422)
+        self.assertIsNotNone(actual)
     
     def test_get_rest_data_exception_url(self):
         with self.assertRaises(requests.exceptions.HTTPError) as exception_context:
@@ -258,8 +258,8 @@ class TestGetRestData(unittest.TestCase):
 class TestGetGqlData(unittest.TestCase):
     def test_get_gql_data_success(self):
         actual = getGqlData("cloudinary", "cloudinary_npm")
-        expected = {'open_issues': 11, 'closed_issues': 244, 'total_commits': 749}
-        self.assertEqual(actual, actual) # PLEASE CHANGE THIS WHEN THE TIME COMES
+        #expected = {'open_issues': 11, 'closed_issues': 244, 'total_commits': 749}
+        self.assertIsNotNone(actual)
 
     def test_get_gql_data_on_purpose_fail(self):
         # actual = getGqlData("cloudinary", "lodash")
@@ -275,12 +275,12 @@ class TestGetGqlData(unittest.TestCase):
 class TestGetData(unittest.TestCase):
     def test_get_data_success1(self):
         actual = getData("lodash/lodash")
-        expected = json.dumps({"open_issues": 312, "closed_issues": 3785, "total_commits": 8005, "has_readme": True, "has_wiki": True, "has_pages": False, "has_discussions": False, "bus_commits": 7434, "correctness_score": 1.0, "license_score": 0.0})
-        self.assertEqual(actual, actual)
+        #expected = json.dumps({"open_issues": 312, "closed_issues": 3785, "total_commits": 8005, "has_readme": True, "has_wiki": True, "has_pages": False, "has_discussions": False, "bus_commits": 7434, "correctness_score": 1.0, "license_score": 0.0})
+        self.assertIsNotNone(actual)
     def test_get_data_success2(self):
         actual = getData("https://github.com/cloudinary/cloudinary_npm")
-        expected = json.dumps({"open_issues": 11, "closed_issues": 241, "total_commits": 736, "has_readme": True, "has_wiki": False, "has_pages": False, "has_discussions": False, "bus_commits": 418, "correctness_score": 1.0, "license_score": 1.0})
-        self.assertEqual(actual, actual) # PLEASE CHANGE THIS WHEN THE TIME COMES
+        #expected = json.dumps({"open_issues": 11, "closed_issues": 241, "total_commits": 736, "has_readme": True, "has_wiki": False, "has_pages": False, "has_discussions": False, "bus_commits": 418, "correctness_score": 1.0, "license_score": 1.0})
+        self.assertIsNotNone(actual)
 
 
 class testMetrics(unittest.TestCase):
