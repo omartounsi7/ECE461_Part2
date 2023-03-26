@@ -23,5 +23,6 @@ __pycache__/
 target/
 *.dll
 .env
-.bat
+*.bat
 node_modules
+.env
