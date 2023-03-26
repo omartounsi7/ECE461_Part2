@@ -258,8 +258,8 @@ class TestGetRestData(unittest.TestCase):
 class TestGetGqlData(unittest.TestCase):
     def test_get_gql_data_success(self):
         actual = getGqlData("cloudinary", "cloudinary_npm")
-        expected = {'open_issues': 11, 'closed_issues': 244, 'total_commits': 749}
-        self.assertEqual(actual, actual) # PLEASE CHANGE THIS WHEN THE TIME COMES
+        #expected = {'open_issues': 11, 'closed_issues': 244, 'total_commits': 749}
+        self.assertIsNotNone(actual)
 
     def test_get_gql_data_on_purpose_fail(self):
         # actual = getGqlData("cloudinary", "lodash")
