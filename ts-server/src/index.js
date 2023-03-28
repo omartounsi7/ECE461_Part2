@@ -1,6 +1,4 @@
 "use strict";
-// authentication:
-// https://cloud.google.com/docs/authentication/provide-credentials-adc
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -14,146 +12,73 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-/*
- * imports
- */
 const express_1 = __importDefault(require("express"));
 const path_1 = __importDefault(require("path"));
-require('dotenv').config();
-const { Datastore } = require('@google-cloud/datastore');
-/*
- *
- * global variables
- *
- */
+const modules_1 = require("./datastore/modules");
+/* * * * * * * * * * *
+ * global variables  *
+ * * * * * * * * * * */
 const ASSETS_PATH = "../assets";
 const HTML_PATH = ASSETS_PATH + "/html";
 const app = (0, express_1.default)();
 const port = 8080;
-const datastore = new Datastore();
-// const projectId = process.env.PROJECT_ID;
-/*
- *
- * datastore functions
- *
- */
-const NAMESPACE = "ece461";
-/*
- * repos db functions
- */
-const REPO_KIND = "repo";
-function addRepo(name, url, version) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const ds_key = datastore.key({
-            namespace: NAMESPACE,
-            path: [REPO_KIND]
-        });
-        const repo = {
-            key: ds_key,
-            data: [
-                {
-                    name: "name",
-                    value: name
-                },
-                {
-                    name: "creation-date",
-                    value: new Date().toJSON(),
-                    excludeFromIndexes: true
-                },
-                {
-                    name: "url",
-                    value: url
-                },
-                {
-                    name: "version",
-                    value: version
-                }
-            ]
-        };
-        yield datastore.save(repo);
-    });
-}
-function updateRepo(repoID, newName) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const transaction = datastore.transaction();
-        const ds_key = datastore.key({
-            namespace: NAMESPACE,
-            path: [REPO_KIND, repoID],
-        });
-        try {
-            yield transaction.run();
-            const [selectedRepo] = yield transaction.get(ds_key);
-            selectedRepo.name = newName;
-            transaction.save({
-                key: ds_key,
-                data: selectedRepo
-            });
-            yield transaction.commit();
-        }
-        catch (err) {
-            yield transaction.rollback();
-            console.log(`Something went wrong while trying to update repo ${repoID}`);
-            console.log(err);
-        }
-    });
-}
-/*
- * users db functions
- */
-function addUser(name, hashedPassword) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const namespace = "ece461";
-        const kind = "users";
-        const ds_key = datastore.key({
-            namespace: namespace,
-            path: [kind]
-        });
-        const user = {
-            key: ds_key,
-            data: [
-                {
-                    name: "name",
-                    value: name
-                },
-                {
-                    name: "password",
-                    value: hashedPassword,
-                    excludeFromIndexes: true
-                }
-            ]
-        };
-        yield datastore.save(user);
-    });
-}
-function quickstart() {
-    return __awaiter(this, void 0, void 0, function* () {
-        // code from:
-        // https://www.npmjs.com/package/@google-cloud/datastore
-        const namespace = "ece461";
-        const kind = "repo";
-        const name = "new_item";
-        const taskKey = datastore.key([kind, name]);
-        const task = {
-            key: taskKey,
-            data: {
-                description: 'task description'
-            },
-        };
-        yield datastore.save(task);
-        console.log(`saved ${task.key.name}: ${task.data.description}`);
-    });
-}
-/*
- * Rest API endpoints
- */
-app.get('/packages', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.use(express_1.default.json());
+/* * * * * * * * * * * *
+ * Rest API endpoints  *
+ * * * * * * * * * * * */
+app.post('/packages', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("packages endpoint");
-    yield updateRepo(5634161670881280, "new_test2");
+    // Overview:
+    //  gets any package which fits the request
+    //  to enumerate all packages: provide an array with a single PackageQuery whose name is "*"
+    //  line # refers to the OpenAPI yml file
+    // request body (json): line 18, 720
+    //  [{name:str, version:str}]
+    //  name: line 688
+    //  version: line 712
+    // query param
+    //  offset: line 27, 732
+    // responses
+    //  default: line 35
+    //      Error: line 513
+    //          code (int32): line 515
+    //          message (str): line 516
+    //  200: line 41
+    //      headers:
+    //          offset (str): line 732
+    //      content (json): line 49
+    //          PackageMetadata: line 535
+    //              name
+    //              version
+    //              ID
+    //  400: line 65
+    //      missing field/ mailformed request
+    //  413: line 66
+    //      too many packages returned
+    // process request
+    let queries = req.body.PackageQuery;
+    console.log(`Got /package post request`);
+    // validate post request
+    if (typeof queries === undefined || queries.length === 0) {
+        // invalid request
+    }
+    else {
+        // there are 1 more more queries. The request is valid.
+        // check if an offset has been given. If not, default to 0
+        let offset = req.query.offset;
+        if (offset === undefined) {
+            offset = "0";
+        }
+        console.log(`offset: ${offset}`);
+        console.log(queries);
+        // do db actions
+    }
+    // response
 }));
 app.get('/reset', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("reset endpoint");
 }));
-app.get('/package', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post('/package', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("package endpoint");
 }));
 app.get('/package/:id', (req, res) => {
@@ -164,6 +89,8 @@ app.get('/package/:id/rate', (req, res) => {
 });
 app.get('/package/byName/:name', (req, res) => {
     res.send("package/byName/" + req.params.name + " endpoint");
+    // parameters
+    //  token: line 358
 });
 app.get('/package/byRegEx/:regex', (req, res) => {
     res.send("package/byRegEx/" + req.params.regex + " endpoint");
@@ -171,10 +98,23 @@ app.get('/package/byRegEx/:regex', (req, res) => {
 app.get('/authenticate', (req, res) => {
     res.send("authenticate endpoint");
 });
-app.get('/', (req, res) => {
+/* * * * * * * * * * * * * * *
+ * Website Serving endpoints *
+ * * * * * * * * * * * * * * */
+app.get("/packages", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // serve webpage
+    res.sendFile(path_1.default.join(__dirname, HTML_PATH + "/packages.html"));
+}));
+app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.sendFile(path_1.default.join(__dirname, HTML_PATH + "/index.html"));
     // res.send("index!");
-});
+    // await addRepo("yeet1", "yeet.com", "1.0");
+    // await addRepo("yeet_test", "google.com", "4.3.2");
+    // await addRepo("additional_repo","github", "1.2.2");
+    // await addRepo("hacker_man", "lit_hub", "4.20.69");
+    // await addRepo("fake_module", "mmm", "10.8.1");
+    yield (0, modules_1.findRepo)("yeet1");
+}));
 app.listen(port, () => {
     console.log("The application is listening on port " + port + "!");
 });
