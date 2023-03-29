@@ -75,40 +75,135 @@ app.post('/packages', (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
     // response
 }));
-app.get('/reset', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.delete('/reset', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("reset endpoint");
+    // get auth from header
+    // look into https://jwt.io/
+    //  let auth = req.header["X-Authorization"];
+    // return 200 when registry is reset
+    // return 400 for missing field/ invalid auth
+    // return 401 for not enough permissions
 }));
 app.post('/package', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("package endpoint");
+    // get req content as PackageData schema
+    // get auth from header
+    // 201
+    // respond with Package schema json object
+    // 400
+    // malformed json/ invalid auth
+    // 403
+    // auth failed (no permissions)
+    // 409
+    // package already exists
+    // 424
+    // package not uploaded due to disqualification
 }));
-app.get('/package/:id', (req, res) => {
+app.get('/package/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("package/" + req.params.id + " endpoint");
-});
+    // download package by ID
+    // default response:
+    // unexpected error (what error code do we return)
+    // code 200
+    // return package schema json object
+    //  includes: metadata and data
+    // code 404
+    // package DNE
+}));
+app.put('/package/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    res.send("package/" + req.params.id + " endpoint");
+    // get package schema from request body
+    // get id from path
+    // 200
+    // version is updated successfully
+    // the package contents from PackageData schema will replace previous contents
+    // 400
+    // malformed json/ invalid auth
+    // 404
+    // package DNE
+}));
+app.delete('/package/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    res.send("package/" + req.params.id + " endpoint");
+    // get package ID from path
+    // 200
+    // package successfully deleted
+    // 400
+    // malformed json/invalid auth
+    // 404
+    // package DNE
+}));
 app.get('/package/:id/rate', (req, res) => {
     res.send("package/" + req.params.id + "/rate endpoint");
+    // get req with PackageID and AuthenticationToken schema
+    // respond with content as PackageRating schema
+    // 400
+    // malformed json/ invalid auth
+    // 404
+    // package DNE
+    // 500
+    // package rating choked on at least one of the metrics
 });
 app.get('/package/byName/:name', (req, res) => {
     res.send("package/byName/" + req.params.name + " endpoint");
-    // parameters
-    //  token: line 358
+    // get auth token from header
+    // default
+    // respond with content as json formatted Error schema
+    // 200
+    // respond with PackageHistoryEntry in json schema
+    // 400
+    // maleformed json/ invalid auth
+    // 404
+    // package DNE
 });
-app.get('/package/byRegEx/:regex', (req, res) => {
+app.delete('/package/byName/:name', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // get package name from header
+    // get auth token from header
+    // 200
+    // package successfully deleted
+    // 400
+    // malformed json/ invalid auth
+    // 404
+    // package DNE
+}));
+app.post('/package/byRegEx/:regex', (req, res) => {
     res.send("package/byRegEx/" + req.params.regex + " endpoint");
+    // search package names and readme
+    // not sure which one is right since the OpenAPI specs say both
+    // get regex from url
+    // get regex from content as json
+    // get auth
+    // 200
+    // packages found
+    // respond with array of PackageMetadata schemas
+    // 400
+    // malformed json / invalid auth
+    // 404
+    // no package found that matches this regex
 });
-app.get('/authenticate', (req, res) => {
+app.put('/authenticate', (req, res) => {
     res.send("authenticate endpoint");
+    // get AuthenticationRequest schema
+    // 200
+    // returned auth token successfully
+    // 400
+    // malformed json / invalid auth
+    // 401
+    // username or password invalid
+    // 501
+    // this system does not support authentication
 });
 /* * * * * * * * * * * * * * *
  * Website Serving endpoints *
  * * * * * * * * * * * * * * */
 app.get("/packages", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     // serve webpage
+    console.log("hello world");
     res.sendFile(path_1.default.join(__dirname, HTML_PATH + "/packages.html"));
 }));
 app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.sendFile(path_1.default.join(__dirname, HTML_PATH + "/index.html"));
-    // res.send("index!");
-    // await addRepo("yeet1", "yeet.com", "1.0");
+    res.send("index!");
+    yield (0, modules_1.addRepo)("eeeeeeeee", "eeeeeeeeee.com", "1.1");
     // await addRepo("yeet_test", "google.com", "4.3.2");
     // await addRepo("additional_repo","github", "1.2.2");
     // await addRepo("hacker_man", "lit_hub", "4.20.69");

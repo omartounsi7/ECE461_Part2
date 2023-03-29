@@ -115,13 +115,15 @@ exports.searchRepos = searchRepos;
 // test function so I can figure out how to query stuff
 function findRepo(name) {
     return __awaiter(this, void 0, void 0, function* () {
-        const query = ds_config_1.datastore
-            .createQuery(ds_config_1.NAMESPACE, ds_config_1.MODULE_KIND)
-            .filter("name", "=", name);
-        // .order("priority");
-        const [modules] = yield ds_config_1.datastore.runQuery(query);
-        console.log("Modules:");
-        modules.forEach((module) => console.log(module));
+        // this works for querying on a single filter
+        // const query = datastore
+        //     .createQuery(NAMESPACE, MODULE_KIND)
+        //     .filter("name", "=", name);
+        //
+        // const [modules] = await datastore.runQuery(query);
+        // console.log("Modules:");
+        // modules.forEach((module: any) => console.log(module));
+        // --------------------------------------------------
     });
 }
 exports.findRepo = findRepo;

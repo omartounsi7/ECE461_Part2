@@ -132,4 +132,5 @@ async function deleteRepo(repoID: number) {
 
 }
 
+// functions to be used by the API endpoints
 export { addRepo, updateRepo , deleteRepo, searchRepos, findRepo };
