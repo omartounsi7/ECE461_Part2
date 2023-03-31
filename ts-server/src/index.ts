@@ -23,6 +23,7 @@ app.use(express.json());
  * Rest API endpoints  *
  * * * * * * * * * * * */
 
+// Fetch directory of packages
 app.post('/packages', async (req, res) => {
     res.send("packages endpoint");
 
@@ -84,6 +85,7 @@ app.post('/packages', async (req, res) => {
 
 });
 
+// Reset to default state
 app.delete('/reset', async (req, res) => {
     res.send("reset endpoint");
 
@@ -100,6 +102,7 @@ app.delete('/reset', async (req, res) => {
 
 })
 
+// Upload endpoint and module ingestion
 app.post('/package', async (req, res) => {
     res.send("package endpoint");
 
@@ -123,12 +126,11 @@ app.post('/package', async (req, res) => {
     // package not uploaded due to disqualification
 });
 
+// Download Endpoint
 app.get('/package/:id', async (req, res) => {
     res.send("package/" + req.params.id + " endpoint");
-    // download
 
     // download package by ID
-
 
     // default response:
     // unexpected error (what error code do we return)
@@ -137,13 +139,11 @@ app.get('/package/:id', async (req, res) => {
     // return package schema json object
     //  includes: metadata and data
 
-    // code 400
-    // package not found or bad auth
-
     // code 404
     // package DNE
 });
 
+// Update Endpoint
 app.put('/package/:id', async (req, res) => {
     res.send("package/" + req.params.id + " endpoint");
 
@@ -163,6 +163,7 @@ app.put('/package/:id', async (req, res) => {
 
 });
 
+// Delete endpoint
 app.delete('/package/:id', async (req, res) => {
     res.send("package/" + req.params.id + " endpoint");
 
@@ -178,6 +179,7 @@ app.delete('/package/:id', async (req, res) => {
     // package DNE
 });
 
+// Rate endpoint
 app.get('/package/:id/rate', (req, res) => {
     res.send("package/" + req.params.id + "/rate endpoint");
 
@@ -195,6 +197,7 @@ app.get('/package/:id/rate', (req, res) => {
 
 });
 
+// Fetch package history
 app.get('/package/byName/:name', (req, res) => {
     res.send("package/byName/" + req.params.name + " endpoint");
 
@@ -213,6 +216,7 @@ app.get('/package/byName/:name', (req, res) => {
     // package DNE
 });
 
+// Delete endpoint
 app.delete('/package/byName/:name', async (req, res) => {
 
     // get package name from header
@@ -228,8 +232,11 @@ app.delete('/package/byName/:name', async (req, res) => {
     // package DNE
 });
 
+// Fetch package with Regex
 app.post('/package/byRegEx/:regex', (req, res) => {
     res.send("package/byRegEx/" + req.params.regex + " endpoint");
+
+
 
     // search package names and readme
 
@@ -249,6 +256,7 @@ app.post('/package/byRegEx/:regex', (req, res) => {
     // no package found that matches this regex
 });
 
+// Username-password authentication
 app.put('/authenticate', (req, res) => {
     res.send("authenticate endpoint");
 
@@ -275,13 +283,14 @@ app.put('/authenticate', (req, res) => {
 
 app.get("/packages", async (req, res) => {
     // serve webpage
+    console.log("hello world");
     res.sendFile(path.join(__dirname, HTML_PATH + "/packages.html"));
 });
 
 app.get('/', async (req, res) => {
     res.sendFile(path.join(__dirname, HTML_PATH + "/index.html"));
-    // res.send("index!");
-    // await addRepo("yeet1", "yeet.com", "1.0");
+    res.send("index!");
+    await addRepo("eeeeeeeee", "eeeeeeeeee.com", "1.1");
     // await addRepo("yeet_test", "google.com", "4.3.2");
     // await addRepo("additional_repo","github", "1.2.2");
     // await addRepo("hacker_man", "lit_hub", "4.20.69");

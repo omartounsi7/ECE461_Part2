@@ -24,4 +24,5 @@ async function addUser(name: string, hashedPassword: string) {
     await datastore.save(user);
 }
 
+// functions to be used by the API endpoints
 export { addUser };
