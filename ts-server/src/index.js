@@ -26,6 +26,7 @@ app.use(express_1.default.json());
 /* * * * * * * * * * * *
  * Rest API endpoints  *
  * * * * * * * * * * * */
+// Fetch directory of packages
 app.post('/packages', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("packages endpoint");
     // Overview:
@@ -69,12 +70,13 @@ app.post('/packages', (req, res) => __awaiter(void 0, void 0, void 0, function* 
         if (offset === undefined) {
             offset = "0";
         }
-        console.log(`offset: ${offset}`);
-        console.log(queries);
+        // console.log(`offset: ${offset}`);
+        // console.log(queries);
         // do db actions
     }
     // response
 }));
+// Reset to default state
 app.delete('/reset', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("reset endpoint");
     // get auth from header
@@ -84,6 +86,7 @@ app.delete('/reset', (req, res) => __awaiter(void 0, void 0, void 0, function* (
     // return 400 for missing field/ invalid auth
     // return 401 for not enough permissions
 }));
+// Upload endpoint and module ingestion
 app.post('/package', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("package endpoint");
     // get req content as PackageData schema
@@ -99,6 +102,7 @@ app.post('/package', (req, res) => __awaiter(void 0, void 0, void 0, function* (
     // 424
     // package not uploaded due to disqualification
 }));
+// Download Endpoint
 app.get('/package/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("package/" + req.params.id + " endpoint");
     // download package by ID
@@ -110,6 +114,7 @@ app.get('/package/:id', (req, res) => __awaiter(void 0, void 0, void 0, function
     // code 404
     // package DNE
 }));
+// Update Endpoint
 app.put('/package/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("package/" + req.params.id + " endpoint");
     // get package schema from request body
@@ -122,6 +127,7 @@ app.put('/package/:id', (req, res) => __awaiter(void 0, void 0, void 0, function
     // 404
     // package DNE
 }));
+// Delete endpoint
 app.delete('/package/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("package/" + req.params.id + " endpoint");
     // get package ID from path
@@ -132,6 +138,7 @@ app.delete('/package/:id', (req, res) => __awaiter(void 0, void 0, void 0, funct
     // 404
     // package DNE
 }));
+// Rate endpoint
 app.get('/package/:id/rate', (req, res) => {
     res.send("package/" + req.params.id + "/rate endpoint");
     // get req with PackageID and AuthenticationToken schema
@@ -143,6 +150,7 @@ app.get('/package/:id/rate', (req, res) => {
     // 500
     // package rating choked on at least one of the metrics
 });
+// Fetch package history
 app.get('/package/byName/:name', (req, res) => {
     res.send("package/byName/" + req.params.name + " endpoint");
     // get auth token from header
@@ -155,6 +163,7 @@ app.get('/package/byName/:name', (req, res) => {
     // 404
     // package DNE
 });
+// Delete endpoint
 app.delete('/package/byName/:name', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     // get package name from header
     // get auth token from header
@@ -165,6 +174,7 @@ app.delete('/package/byName/:name', (req, res) => __awaiter(void 0, void 0, void
     // 404
     // package DNE
 }));
+// Fetch package with Regex
 app.post('/package/byRegEx/:regex', (req, res) => {
     res.send("package/byRegEx/" + req.params.regex + " endpoint");
     // search package names and readme
@@ -180,6 +190,7 @@ app.post('/package/byRegEx/:regex', (req, res) => {
     // 404
     // no package found that matches this regex
 });
+// Username-password authentication
 app.put('/authenticate', (req, res) => {
     res.send("authenticate endpoint");
     // get AuthenticationRequest schema
@@ -203,12 +214,7 @@ app.get("/packages", (req, res) => __awaiter(void 0, void 0, void 0, function* (
 app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.sendFile(path_1.default.join(__dirname, HTML_PATH + "/index.html"));
     res.send("index!");
-    yield (0, modules_1.addRepo)("eeeeeeeee", "eeeeeeeeee.com", "1.1");
-    // await addRepo("yeet_test", "google.com", "4.3.2");
-    // await addRepo("additional_repo","github", "1.2.2");
-    // await addRepo("hacker_man", "lit_hub", "4.20.69");
-    // await addRepo("fake_module", "mmm", "10.8.1");
-    yield (0, modules_1.findRepo)("yeet1");
+    yield (0, modules_1.addRepo)((0, modules_1.createRepoData)("repooooo", "1.43.34", new Date().toJSON(), "perl.gob"));
 }));
 app.listen(port, () => {
     console.log("The application is listening on port " + port + "!");

@@ -1,8 +1,18 @@
 import express from 'express';
 import path from 'path';
 
-import { addRepo, updateRepo, deleteRepo, findRepo } from "./datastore/modules";
+import {
+    addRepo,
+    updateRepo,
+    deleteRepo,
+    findReposByName,
+    findReposByNameAndVersion,
+    getAllReposPagenated,
+    createRepoData
+} from "./datastore/modules";
 import { addUser } from "./datastore/users";
+import {deleteEntity, doesIdExistInKind, resetKind} from "./datastore/datastore";
+import {MODULE_KIND} from "./datastore/ds_config";
 
 
 /* * * * * * * * * * *
@@ -74,8 +84,8 @@ app.post('/packages', async (req, res) => {
         if (offset === undefined) {
             offset = "0";
         }
-        console.log(`offset: ${offset}`);
-        console.log(queries);
+        // console.log(`offset: ${offset}`);
+        // console.log(queries);
 
         // do db actions
     }
@@ -290,13 +300,9 @@ app.get("/packages", async (req, res) => {
 app.get('/', async (req, res) => {
     res.sendFile(path.join(__dirname, HTML_PATH + "/index.html"));
     res.send("index!");
-    await addRepo("eeeeeeeee", "eeeeeeeeee.com", "1.1");
-    // await addRepo("yeet_test", "google.com", "4.3.2");
-    // await addRepo("additional_repo","github", "1.2.2");
-    // await addRepo("hacker_man", "lit_hub", "4.20.69");
-    // await addRepo("fake_module", "mmm", "10.8.1");
 
-    await findRepo("yeet1");
+    await addRepo(createRepoData("repooooo", "1.43.34", new Date().toJSON(), "perl.gob"));
+
 });
 
 app.listen(port, () => {
