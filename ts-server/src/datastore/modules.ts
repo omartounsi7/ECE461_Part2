@@ -14,6 +14,7 @@ import { getKey, deleteEntity } from "./datastore";
  * @param creation_date
  * @param url
  * @param version
+ * @param readme
  *
  * @example
  * To create a repo data object which only contains
@@ -208,8 +209,22 @@ async function deleteRepo(repoID: number): Promise<[{[key: string]: any}]> {
 }
 
 
+/**
+ * Gets all of the contents of a module given its id
+ * @param repoID
+ *
+ * @return
+ * The module as a base64 string
+ */
+async function downloadRepo(repoID: number): Promise<string> {
+    console.log("Unimplemented function 'downloadRepo' from './src/datastore/modules.ts' was called.");
+    return "";
+}
+
+
 // functions to be used by the API endpoints
 export { createRepoData, addRepo,
     updateRepo, deleteRepo,
     searchRepos, findReposByName,
-    findReposByNameAndVersion, getAllReposPagenated };
+    findReposByNameAndVersion, getAllReposPagenated,
+    downloadRepo };
