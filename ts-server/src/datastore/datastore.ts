@@ -53,8 +53,8 @@ async function doesIdExistInKind(kind: string, id: number): Promise<boolean> {
  * the ID of the entity
  *
  * @return
- * Returns information about the entity that was deleted or
- * returns an empty json object if no entity was deleted.
+ * List of entities which were deleted due to this command or list containing
+ * undefined if no entity was deleted.
  */
 async function deleteEntity(kind: string, entityID: number) {
     let key = getKey(NAMESPACE, kind, entityID);

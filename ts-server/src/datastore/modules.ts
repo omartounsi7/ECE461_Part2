@@ -1,7 +1,7 @@
 import { Key } from '@google-cloud/datastore';
 
 import {datastore, MODULE_KIND, NAMESPACE} from "./ds_config";
-import { getKey } from "./datastore";
+import { getKey, deleteEntity } from "./datastore";
 
 /* * * * * * * * * * *
  * Helper Functions  *
@@ -24,12 +24,13 @@ import { getKey } from "./datastore";
  * Returns repo data which can be passed in to other
  * functions to update or create a repo in gcp datastore.
  */
-function createRepoData(name?: string, version?: string, creation_date?: string, url?: string) {
+function createRepoData(name?: string, version?: string, creation_date?: string, url?: string, readme?:string) {
     let data: {[key: string]: any} = {};
     if(name !== undefined)          data["name"]          = name;
     if(version !== undefined)       data["version"]       = version;
     if(url !== undefined)           data["url"]           = url;
     if(creation_date !== undefined) data["creation-date"] = creation_date
+    if(readme !== undefined)        data["readme"]        = readme;
     return data;
 }
 
@@ -90,28 +91,43 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}): Promis
  *      version:    string
  *
  * @param package_count
- * The maximum number of packages to return
+ * The number of packages per page
  *
  * @param offset
  * The offset in the list of packages found
  * start index = offset * package_count
  * end index = (offset + 1) * package_count - 1
- * Example:
- *      if offset = 1 and package_count = 10
- *      and the number of packages found from the PackageQuery is 20:
- *      This function will return the packages at indices 10 to 19
+ *
+ * @example
+ * if offset = 1 and package_count = 10
+ * and the number of packages found from the PackageQuery is 20:
+ * This function will return the packages at indices 10 to 19
  *
  * @return
  * This function returns a list of packages as json objects
  */
 async function searchRepos(PackageQuery: Object, package_count: number, offset: number) {
     console.log("Unimplemented function 'searchRepos' from './src/datastore/modules.ts' was called.");
+    // create query object
+    let query = datastore.createQuery(NAMESPACE, MODULE_KIND)
+        .filter("name", "in", )
+        .filter("version");
+    // add all filters to query object
 
+    // set limit
+
+    // loop thru results offset number of times
+    for (let i =0; i < offset; i++) {
+
+    }
+    // return the last list of results
 }
+
 
 async function findReposByName(name: string) {
-
+    console.log("Unimplemented function 'findReposByName' from './src/datastore/modules.ts' was called.");
 }
+
 
 /**
  *
@@ -153,6 +169,7 @@ async function findReposByNameAndVersion(name: string, version: string) {
     }
 }
 
+
 /**
  *
  * @param reposPerPage
@@ -176,19 +193,19 @@ async function getAllReposPagenated(reposPerPage: number, endCursor?: string) {
     return await datastore.runQuery(query);
 }
 
+
 /**
  *
  * @param repoID
  * uuid of module to delete
  *
  * @return
- * This function returns a list of packages which were deleted due to this command
+ * List of packages which were deleted due to this command or list containing
+ * undefined if no package was deleted.
  */
-async function deleteRepo(repoID: number) {
-    console.log("Unimplemented function 'deleteRepo' from './src/datastore/modules.ts' was called.");
-
+async function deleteRepo(repoID: number): Promise<[{[key: string]: any}]> {
+    return await deleteEntity(MODULE_KIND, repoID);
 }
-
 
 
 // functions to be used by the API endpoints

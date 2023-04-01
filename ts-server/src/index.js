@@ -14,7 +14,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const path_1 = __importDefault(require("path"));
-const modules_1 = require("./datastore/modules");
 /* * * * * * * * * * *
  * global variables  *
  * * * * * * * * * * */
@@ -214,7 +213,6 @@ app.get("/packages", (req, res) => __awaiter(void 0, void 0, void 0, function* (
 app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.sendFile(path_1.default.join(__dirname, HTML_PATH + "/index.html"));
     res.send("index!");
-    yield (0, modules_1.addRepo)((0, modules_1.createRepoData)("repooooo", "1.43.34", new Date().toJSON(), "perl.gob"));
 }));
 app.listen(port, () => {
     console.log("The application is listening on port " + port + "!");

@@ -61,8 +61,8 @@ exports.doesIdExistInKind = doesIdExistInKind;
  * the ID of the entity
  *
  * @return
- * Returns information about the entity that was deleted or
- * returns an empty json object if no entity was deleted.
+ * List of entities which were deleted due to this command or list containing
+ * undefined if no entity was deleted.
  */
 function deleteEntity(kind, entityID) {
     return __awaiter(this, void 0, void 0, function* () {

@@ -301,8 +301,6 @@ app.get('/', async (req, res) => {
     res.sendFile(path.join(__dirname, HTML_PATH + "/index.html"));
     res.send("index!");
 
-    await addRepo(createRepoData("repooooo", "1.43.34", new Date().toJSON(), "perl.gob"));
-
 });
 
 app.listen(port, () => {

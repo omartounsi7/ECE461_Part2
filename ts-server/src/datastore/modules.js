@@ -32,7 +32,7 @@ const datastore_1 = require("./datastore");
  * Returns repo data which can be passed in to other
  * functions to update or create a repo in gcp datastore.
  */
-function createRepoData(name, version, creation_date, url) {
+function createRepoData(name, version, creation_date, url, readme) {
     let data = {};
     if (name !== undefined)
         data["name"] = name;
@@ -42,6 +42,8 @@ function createRepoData(name, version, creation_date, url) {
         data["url"] = url;
     if (creation_date !== undefined)
         data["creation-date"] = creation_date;
+    if (readme !== undefined)
+        data["readme"] = readme;
     return data;
 }
 exports.createRepoData = createRepoData;
@@ -57,7 +59,8 @@ function getModuleKey(id) {
  * @param repoData
  *
  * @return
- * returns the info of the repo that was just added
+ * the id of the repo that was just added or
+ * undefined if the repo could not be added.
  */
 function addRepo(repoData) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -68,7 +71,7 @@ function addRepo(repoData) {
             data: repoData
         };
         yield ds_config_1.datastore.save(repo);
-        console.log(key.id);
+        return key.id;
     });
 }
 exports.addRepo = addRepo;
@@ -98,16 +101,17 @@ exports.updateRepo = updateRepo;
  *      version:    string
  *
  * @param package_count
- * The maximum number of packages to return
+ * The number of packages per page
  *
  * @param offset
  * The offset in the list of packages found
  * start index = offset * package_count
  * end index = (offset + 1) * package_count - 1
- * Example:
- *      if offset = 1 and package_count = 10
- *      and the number of packages found from the PackageQuery is 20:
- *      This function will return the packages at indices 10 to 19
+ *
+ * @example
+ * if offset = 1 and package_count = 10
+ * and the number of packages found from the PackageQuery is 20:
+ * This function will return the packages at indices 10 to 19
  *
  * @return
  * This function returns a list of packages as json objects
@@ -115,11 +119,22 @@ exports.updateRepo = updateRepo;
 function searchRepos(PackageQuery, package_count, offset) {
     return __awaiter(this, void 0, void 0, function* () {
         console.log("Unimplemented function 'searchRepos' from './src/datastore/modules.ts' was called.");
+        // create query object
+        let query = ds_config_1.datastore.createQuery(ds_config_1.NAMESPACE, ds_config_1.MODULE_KIND)
+            .filter("name", "in")
+            .filter("version");
+        // add all filters to query object
+        // set limit
+        // loop thru results offset number of times
+        for (let i = 0; i < offset; i++) {
+        }
+        // return the last list of results
     });
 }
 exports.searchRepos = searchRepos;
 function findReposByName(name) {
     return __awaiter(this, void 0, void 0, function* () {
+        console.log("Unimplemented function 'findReposByName' from './src/datastore/modules.ts' was called.");
     });
 }
 exports.findReposByName = findReposByName;
@@ -196,11 +211,12 @@ exports.getAllReposPagenated = getAllReposPagenated;
  * uuid of module to delete
  *
  * @return
- * This function returns a list of packages which were deleted due to this command
+ * List of packages which were deleted due to this command or list containing
+ * undefined if no package was deleted.
  */
 function deleteRepo(repoID) {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log("Unimplemented function 'deleteRepo' from './src/datastore/modules.ts' was called.");
+        return yield (0, datastore_1.deleteEntity)(ds_config_1.MODULE_KIND, repoID);
     });
 }
 exports.deleteRepo = deleteRepo;
