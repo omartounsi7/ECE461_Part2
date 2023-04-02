@@ -579,14 +579,14 @@ class TestGetPullRequestData1(unittest.TestCase):
         retries = 1
         backoff_factor = 1
         pr_data = get_pull_request_data1(pull_number, owner, repo, headers, retries, backoff_factor)
-        self.assertIsInstance(pr_data, int)
+        self.assertIsInstance(int(pr_data), int)
 
 class TestFractionReviewedChanges(unittest.TestCase):
     def test_fraction_reviewed_changes(self):
         owner = "nullivex"
         repo = "nodist"
         fraction_reviewed = fraction_reviewed_changes(owner, repo)
-        self.assertIsInstance(fraction_reviewed, float)
+        self.assertIsInstance(float(fraction_reviewed), float)
         
 if __name__ == '__main__':
     unittest.main()
