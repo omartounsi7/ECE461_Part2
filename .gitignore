@@ -26,3 +26,4 @@ target/
 *.bat
 node_modules
 .env
+*.js

@@ -211,17 +211,17 @@ async function deleteRepo(repoID: number): Promise<[{[key: string]: any}]> {
 
 /**
  * Gets all of the contents of a module given its id
- * @param repoID
+ * @param id
+ * the id of the module to download
  *
  * @return
- * The module as a base64 string
+ * The module as a base64 string or a blank string if the
+ * id does not exist.
  */
-async function downloadRepo(repoID: number): Promise<string> {
+async function downloadRepo(id: number): Promise<string> {
     console.log("Unimplemented function 'downloadRepo' from './src/datastore/modules.ts' was called.");
-    const key = getKey(NAMESPACE, MODULE_KIND, repoID);
+    const key = getKey(NAMESPACE, MODULE_KIND, id);
     const [entity] = await datastore.get(key);
-    console.log(typeof(entity));
-    console.log(entity);
     return entity;
 }
 
