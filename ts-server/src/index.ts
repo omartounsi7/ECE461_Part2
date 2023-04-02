@@ -119,6 +119,7 @@ app.delete('/reset', async (req, res) => {
 })
 
 // Upload endpoint and module ingestion
+// (call logPackageAction) ACTION: CREATE 
 app.post('/package', async (req, res) => {
     res.send("package endpoint");
 
@@ -163,6 +164,7 @@ app.post('/package', async (req, res) => {
 });
 
 // Download Endpoint
+// (call logPackageAction) ACTION: DOWNLOAD
 app.get('/package/:id', async (req, res) => {
     console.log("package/" + req.params.id + " endpoint");
 
@@ -187,6 +189,7 @@ app.get('/package/:id', async (req, res) => {
 });
 
 // Update Endpoint
+// (call logPackageAction), ACTION: UPDATE
 app.put('/package/:id', async (req, res) => {
     res.send("package/" + req.params.id + " endpoint");
 
@@ -223,6 +226,7 @@ app.delete('/package/:id', async (req, res) => {
 });
 
 // Rate endpoint
+// (call logPackageAction), ACTION: RATE
 app.get('/package/:id/rate', (req, res) => {
     res.send("package/" + req.params.id + "/rate endpoint");
 
@@ -239,24 +243,82 @@ app.get('/package/:id/rate', (req, res) => {
     // package choked on one metric
 });
 
-// Fetch package history
-app.get('/package/byName/:name', (req, res) => {
-    res.send("package/byName/" + req.params.name + " endpoint");
+// Return the history of this package (all versions).
+app.get('/package/byName/:name', async (req, res) => {
+    try {
+      // get package name from header
+      const packageName = req.params.name;
 
-    // get auth token from header
+      // PackageName Schema
+      // - Names should only use typical "keyboard" characters.
+      // - The name "*" is reserved. See the `/packages` API for its meaning.
+      
+      // Check if the package name adheres to the naming conventions
+      const filter = /^[a-zA-Z0-9\-._~!$&'()*+,;=]+$/.test(packageName);
+      if (!filter || packageName === '*') {
+        // 400 - invalid package name
+        res.status(400).json({error: 'Invalid package name'});
+      } else {
+        // Retrieve all packages from the datastore with that package name
+        const allPackages = await findReposByName(packageName);
+    
+        if (allPackages.length === 0) {
+            // 404 - package does not exist
+            res.status(404).json({error: 'Package does not exist'});
+        } else {
+            // Combine the packageAction fields of all packages into a single array
+            const combinedActions = allPackages.reduce((acc: string | any[], pkg: { packageAction: any; }) => {
+                return acc.concat(pkg.packageAction);
+            }, []);
 
-    // default
-    // respond with content as json formatted Error schema
-
-    // 200
-    // respond with PackageHistoryEntry in json schema
-
-    // 400
-    // maleformed json/ invalid auth
-
-    // 404
-    // package DNE
+            // 200 - list of combined packageAction fields
+            res.status(200).json(combinedActions);
+        }
+      }
+    } catch (error) {
+      // 400 - malformed JSON or invalid authentiation
+      res.status(400).json({error: 'Bad request'});
+    }
 });
+
+
+/**
+ * Logs a package action in the repository for the given user and package.
+ *
+ * @param {string} userName - The name of the user performing the action.
+ * @param {boolean} isAdmin - Indicates if the user is an administrator.
+ * 
+ * @param {string} packageName - The name of the package being acted upon.
+ * @param {string} packageVersion - The version of the package being acted upon.
+ * The "packageName" and "packageVersion" are used as a unique identifier pair when uploading a package.
+ * 
+ * @param {string} packageID - The unique identifier of the package being acted upon.
+ *   This is used as an internal identifier for interacting with existing packages.
+ *   packageID is used with the /package/{id} endpoint.
+ * 
+ * @param {string} action - The action being performed on the package [ CREATE, UPDATE, DOWNLOAD, RATE ].
+ */
+
+// Follows the structure of the PackageHistoryEntry Schema
+async function logPackageAction(userName: string, isAdmin: boolean, packageName: string, packageVersion: string, packageID: string, action: string) {
+    const now = new Date();
+    const packageAction = {
+      User: {
+        name: userName,
+        isAdmin: isAdmin
+      },
+      Date: now,
+      PackageMetadata: {
+        Name: packageName,
+        Version: packageVersion,
+        ID: packageID
+      },
+      Action: action
+    };
+    // Updates the packageAction field of a package in the datastore for the given repository ID.
+    await updateRepoPackageAction(packageID, packageAction);
+}
+
 
 // Delete endpoint
 app.delete('/package/byName/:name', async (req, res) => {
