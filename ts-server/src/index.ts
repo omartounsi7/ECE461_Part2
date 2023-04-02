@@ -1,8 +1,19 @@
 import express from 'express';
 import path from 'path';
 
-import { addRepo, updateRepo, deleteRepo, findRepo } from "./datastore/modules";
+import {
+    addRepo,
+    updateRepo,
+    deleteRepo,
+    findReposByName,
+    findReposByNameAndVersion,
+    getAllReposPagenated,
+    createRepoData,
+    downloadRepo
+} from "./datastore/modules";
 import { addUser } from "./datastore/users";
+import {deleteEntity, doesIdExistInKind, resetKind} from "./datastore/datastore";
+import {MODULE_KIND} from "./datastore/ds_config";
 
 
 /* * * * * * * * * * *
@@ -74,8 +85,8 @@ app.post('/packages', async (req, res) => {
         if (offset === undefined) {
             offset = "0";
         }
-        console.log(`offset: ${offset}`);
-        console.log(queries);
+        // console.log(`offset: ${offset}`);
+        // console.log(queries);
 
         // do db actions
     }
@@ -87,13 +98,18 @@ app.post('/packages', async (req, res) => {
 
 // Reset to default state
 app.delete('/reset', async (req, res) => {
-    res.send("reset endpoint");
+    console.log("reset endpoint");
 
     // get auth from header
     // look into https://jwt.io/
     //  let auth = req.header["X-Authorization"];
+    if(!req.headers.authorization){
+        res.sendStatus(400);
+    }
 
     // return 200 when registry is reset
+    await resetKind(MODULE_KIND);
+    res.sendStatus(200);
 
     // return 400 for missing field/ invalid auth
 
@@ -128,10 +144,17 @@ app.post('/package', async (req, res) => {
 
 // Download Endpoint
 app.get('/package/:id', async (req, res) => {
-    res.send("package/" + req.params.id + " endpoint");
+    console.log("package/" + req.params.id + " endpoint");
+
+    let id = Number(req.params.id);
+    const result = await doesIdExistInKind(MODULE_KIND, id)
+    if(!result){
+        res.send("req.params.id doesn't exist in MODULE_KIND.");
+        return;
+    }
 
     // download package by ID
-
+    res.send(await downloadRepo(id));
     // default response:
     // unexpected error (what error code do we return)
 
@@ -290,13 +313,7 @@ app.get("/packages", async (req, res) => {
 app.get('/', async (req, res) => {
     res.sendFile(path.join(__dirname, HTML_PATH + "/index.html"));
     res.send("index!");
-    await addRepo("eeeeeeeee", "eeeeeeeeee.com", "1.1");
-    // await addRepo("yeet_test", "google.com", "4.3.2");
-    // await addRepo("additional_repo","github", "1.2.2");
-    // await addRepo("hacker_man", "lit_hub", "4.20.69");
-    // await addRepo("fake_module", "mmm", "10.8.1");
 
-    await findRepo("yeet1");
 });
 
 app.listen(port, () => {
