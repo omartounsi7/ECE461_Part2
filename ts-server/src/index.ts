@@ -123,9 +123,29 @@ app.post('/package', async (req, res) => {
     res.send("package endpoint");
 
     // get req content as PackageData schema
+    const packageData = req.body;
 
     // get auth from header
+    const auth = req.headers.authorization;
 
+    try {
+        // attempt to create and save new package to database
+        const newPackage = await addRepo(packageData.name, packageData.version, packageData.url);
+        res.status(201).json(newPackage);
+    } catch (error) {
+        if (error instanceof InvalidRequestError) {
+            res.status(400).send(error.message);
+        } else if (error instanceof AuthenticationError) {
+            res.status(403).send(error.message);
+        } else if (error instanceof PackageAlreadyExistsError) {
+            res.status(409).send(error.message);
+        } else if (error instanceof PackageDisqualificationError) {
+            res.status(424).send(error.message);
+        } else {
+            console.error(error);
+            res.status(500).send("Internal Server Error");
+        }
+    }
     // 201
     // respond with Package schema json object
 
@@ -216,8 +236,7 @@ app.get('/package/:id/rate', (req, res) => {
     // package DNE
 
     // 500
-    // package rating choked on at least one of the metrics
-
+    // package choked on one metric
 });
 
 // Fetch package history
