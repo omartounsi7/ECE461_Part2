@@ -11,6 +11,7 @@ COPY . /ts-server
 RUN npm install express
 RUN npm install path
 RUN npm install typescript ts-node @types/node @types/express --save-dev
+RUN npm install --save @google-cloud/datastore
 
 # Build the TypeScript application
 RUN npm run build
