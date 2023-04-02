@@ -1,7 +1,8 @@
 import { Key } from '@google-cloud/datastore';
 
 import {datastore, MODULE_KIND, NAMESPACE} from "./ds_config";
-import { getKey, deleteEntity } from "./datastore";
+import { getKey, deleteEntity } from "/Users/maxim/Downloads/ECE461_Part2-main/ts-server/src/datastore";
+
 
 /* * * * * * * * * * *
  * Helper Functions  *
@@ -14,7 +15,6 @@ import { getKey, deleteEntity } from "./datastore";
  * @param creation_date
  * @param url
  * @param version
- * @param readme
  *
  * @example
  * To create a repo data object which only contains
@@ -25,13 +25,14 @@ import { getKey, deleteEntity } from "./datastore";
  * Returns repo data which can be passed in to other
  * functions to update or create a repo in gcp datastore.
  */
-function createRepoData(name?: string, version?: string, creation_date?: string, url?: string, readme?:string) {
+function createRepoData(name?: string, version?: string, creation_date?: string, url?: string, readme?:string, packageAction?: any) {
     let data: {[key: string]: any} = {};
     if(name !== undefined)          data["name"]          = name;
     if(version !== undefined)       data["version"]       = version;
     if(url !== undefined)           data["url"]           = url;
     if(creation_date !== undefined) data["creation-date"] = creation_date
     if(readme !== undefined)        data["readme"]        = readme;
+    if(packageAction !== undefined) data["packageAction"] = packageAction;
     return data;
 }
 
@@ -74,9 +75,35 @@ async function addRepo(repoData: {[key: string]: any}): Promise<string | undefin
  * @param newData
  */
 async function updateRepo(repoID: number, newData: {[key: string]: any}): Promise<void> {
+    // Get the datastore key for the repository ID
     const key = getModuleKey(repoID);
+    // Get the entity associated with the datastore key
     const [entity] = await datastore.get(key);
+    // Merge the new data with the existing data of the entity
     Object.assign(entity, newData);
+    await datastore.save({
+        key: key,
+        data: entity
+    });
+}
+
+/**
+ * Updates the packageAction field of a package in the datastore for the given repository ID.
+ *
+ * @param {string} packageID - The ID of the repository whose package action is being updated.
+ * @param {any} newPackageAction - The new package action (dictionary type) to be added to the package actions.
+ */
+ async function updateRepoPackageAction(packageID: string, newPackageAction: any): Promise<void> {
+    // Get the datastore key for the repository ID
+    const key = getModuleKey(Number(packageID));
+    // Get the entity associated with the datastore key
+    const [entity] = await datastore.get(key);
+    // Get the existing package actions or create an empty array (in case the packageAction field is undefined or null)
+    const packageActions = entity.packageAction || [];
+    // Append the new package action to the existing package actions
+    packageActions.push(newPackageAction);
+    // Update the packageAction field of the entity with the new package actions
+    entity.packageAction = packageActions;
     await datastore.save({
         key: key,
         data: entity
@@ -123,11 +150,15 @@ async function searchRepos(PackageQuery: Object, package_count: number, offset: 
     }
     // return the last list of results
 }
-
-
 async function findReposByName(name: string) {
-    console.log("Unimplemented function 'findReposByName' from './src/datastore/modules.ts' was called.");
+    const query = datastore
+        .createQuery(NAMESPACE, MODULE_KIND)
+        .filter('name', '=', name);
+
+    const results = await datastore.runQuery(query);
+    return results[0];
 }
+
 
 
 /**
@@ -194,6 +225,16 @@ async function getAllReposPagenated(reposPerPage: number, endCursor?: string) {
     return await datastore.runQuery(query);
 }
 
+/**
+ * Retrieves all repositories from the datastore in one call.
+ *
+ * @return A promise that resolves to a list of all repositories.
+ */
+async function getAllRepos() {
+    const query = datastore.createQuery(NAMESPACE, MODULE_KIND);
+    const [repositories] = await datastore.runQuery(query);
+    return repositories;
+}
 
 /**
  *
@@ -227,8 +268,7 @@ async function downloadRepo(id: number): Promise<string> {
 
 
 // functions to be used by the API endpoints
-export { createRepoData, addRepo,
+export { createRepoData, addRepo, getModuleKey,
     updateRepo, deleteRepo,
     searchRepos, findReposByName,
-    findReposByNameAndVersion, getAllReposPagenated,
-    downloadRepo };
+    findReposByNameAndVersion, getAllReposPagenated, getAllRepos, updateRepoPackageAction};
