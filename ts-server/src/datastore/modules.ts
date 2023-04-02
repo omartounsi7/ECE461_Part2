@@ -250,6 +250,23 @@ async function deleteRepo(repoID: number): Promise<[{[key: string]: any}]> {
 }
 
 
+/**
+ * Gets all of the contents of a module given its id
+ * @param id
+ * the id of the module to download
+ *
+ * @return
+ * The module as a base64 string or a blank string if the
+ * id does not exist.
+ */
+async function downloadRepo(id: number): Promise<string> {
+    console.log("Unimplemented function 'downloadRepo' from './src/datastore/modules.ts' was called.");
+    const key = getKey(NAMESPACE, MODULE_KIND, id);
+    const [entity] = await datastore.get(key);
+    return entity;
+}
+
+
 // functions to be used by the API endpoints
 export { createRepoData, addRepo, getModuleKey,
     updateRepo, deleteRepo,

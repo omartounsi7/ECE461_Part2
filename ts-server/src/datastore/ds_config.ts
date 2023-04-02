@@ -2,8 +2,6 @@
 
 const {Datastore} = require("@google-cloud/datastore");
 
-require('dotenv').config();
-
 // const projectId = process.env.PROJECT_ID;
 
 

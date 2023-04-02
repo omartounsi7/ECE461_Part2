@@ -120,18 +120,30 @@ app.delete('/reset', async (req, res) => {
 })
 
 // Upload endpoint and module ingestion
+// (call logPackageAction) ACTION: CREATE 
 app.post('/package', async (req, res) => {
     res.send("package endpoint");
 
-    // get req content as PackageData schema
-    const packageData = req.body;
+    // get time
+    const now = new Date(); // creates a new Date object representing the current date and time
+    const currentTime = now.getTime(); // returns the number of milliseconds since January 1, 1970, 00:00:00 UTC
+
+
+    // get req content
+    const packageContents = req.body["data"]["Contents"];
+    const packageURL = req.body["data"]["URL"];
+    const packageName = req.body["metadata"]["Name"];
+    const packageVersion = req.body["metadata"]["Version"];
+    //const packageID = req.body["metadata"]["ID"];
 
     // get auth from header
-    const auth = req.headers.authorization;
+    
+
+    let data = createRepoData(packageName, packageVersion, currentTime.toString(), packageURL, undefined)
 
     try {
         // attempt to create and save new package to database
-        const newPackage = await addRepo(packageData.name, packageData.version, packageData.url);
+        const newPackage = await addRepo(data);
         res.status(201).json(newPackage);
     } catch (error) {
         if (error instanceof InvalidRequestError) {
@@ -147,23 +159,10 @@ app.post('/package', async (req, res) => {
             res.status(500).send("Internal Server Error");
         }
     }
-    // 201
-    // respond with Package schema json object
-
-    // 400
-    // malformed json/ invalid auth
-
-    // 403
-    // auth failed (no permissions)
-
-    // 409
-    // package already exists
-
-    // 424
-    // package not uploaded due to disqualification
 });
 
 // Download Endpoint
+// (call logPackageAction) ACTION: DOWNLOAD
 app.get('/package/:id', async (req, res) => {
     console.log("package/" + req.params.id + " endpoint");
 
@@ -188,6 +187,7 @@ app.get('/package/:id', async (req, res) => {
 });
 
 // Update Endpoint
+// (call logPackageAction), ACTION: UPDATE
 app.put('/package/:id', async (req, res) => {
     res.send("package/" + req.params.id + " endpoint");
 
@@ -224,6 +224,7 @@ app.delete('/package/:id', async (req, res) => {
 });
 
 // Rate endpoint
+// (call logPackageAction), ACTION: RATE
 app.get('/package/:id/rate', (req, res) => {
     res.send("package/" + req.params.id + "/rate endpoint");
 
@@ -240,24 +241,82 @@ app.get('/package/:id/rate', (req, res) => {
     // package choked on one metric
 });
 
-// Fetch package history
-app.get('/package/byName/:name', (req, res) => {
-    res.send("package/byName/" + req.params.name + " endpoint");
+// Return the history of this package (all versions).
+app.get('/package/byName/:name', async (req, res) => {
+    try {
+      // get package name from header
+      const packageName = req.params.name;
 
-    // get auth token from header
+      // PackageName Schema
+      // - Names should only use typical "keyboard" characters.
+      // - The name "*" is reserved. See the `/packages` API for its meaning.
+      
+      // Check if the package name adheres to the naming conventions
+      const filter = /^[a-zA-Z0-9\-._~!$&'()*+,;=]+$/.test(packageName);
+      if (!filter || packageName === '*') {
+        // 400 - invalid package name
+        res.status(400).json({error: 'Invalid package name'});
+      } else {
+        // Retrieve all packages from the datastore with that package name
+        const allPackages = await findReposByName(packageName);
+    
+        if (allPackages.length === 0) {
+            // 404 - package does not exist
+            res.status(404).json({error: 'Package does not exist'});
+        } else {
+            // Combine the packageAction fields of all packages into a single array
+            const combinedActions = allPackages.reduce((acc: string | any[], pkg: { packageAction: any; }) => {
+                return acc.concat(pkg.packageAction);
+            }, []);
 
-    // default
-    // respond with content as json formatted Error schema
-
-    // 200
-    // respond with PackageHistoryEntry in json schema
-
-    // 400
-    // maleformed json/ invalid auth
-
-    // 404
-    // package DNE
+            // 200 - list of combined packageAction fields
+            res.status(200).json(combinedActions);
+        }
+      }
+    } catch (error) {
+      // 400 - malformed JSON or invalid authentiation
+      res.status(400).json({error: 'Bad request'});
+    }
 });
+
+
+/**
+ * Logs a package action in the repository for the given user and package.
+ *
+ * @param {string} userName - The name of the user performing the action.
+ * @param {boolean} isAdmin - Indicates if the user is an administrator.
+ * 
+ * @param {string} packageName - The name of the package being acted upon.
+ * @param {string} packageVersion - The version of the package being acted upon.
+ * The "packageName" and "packageVersion" are used as a unique identifier pair when uploading a package.
+ * 
+ * @param {string} packageID - The unique identifier of the package being acted upon.
+ *   This is used as an internal identifier for interacting with existing packages.
+ *   packageID is used with the /package/{id} endpoint.
+ * 
+ * @param {string} action - The action being performed on the package [ CREATE, UPDATE, DOWNLOAD, RATE ].
+ */
+
+// Follows the structure of the PackageHistoryEntry Schema
+async function logPackageAction(userName: string, isAdmin: boolean, packageName: string, packageVersion: string, packageID: string, action: string) {
+    const now = new Date();
+    const packageAction = {
+      User: {
+        name: userName,
+        isAdmin: isAdmin
+      },
+      Date: now,
+      PackageMetadata: {
+        Name: packageName,
+        Version: packageVersion,
+        ID: packageID
+      },
+      Action: action
+    };
+    // Updates the packageAction field of a package in the datastore for the given repository ID.
+    await updateRepoPackageAction(packageID, packageAction);
+}
+
 
 // Delete endpoint
 app.delete('/package/byName/:name', async (req, res) => {
@@ -276,27 +335,44 @@ app.delete('/package/byName/:name', async (req, res) => {
 });
 
 // Fetch package with Regex
-app.post('/package/byRegEx/:regex', (req, res) => {
-    res.send("package/byRegEx/" + req.params.regex + " endpoint");
+app.post('/package/byRegEx', async (req, res) => {
+    // Check if the request has a JSON body
+    if (Object.keys(req.body).length === 0) {
+        return res.status(400).json({ message: 'Malformed JSON: Request must have a JSON body.' });
+    }
+    // Check if the 'regex' field is present in the request body
+    const { regex }: { regex: string } = req.body;
+    if (!regex) {
+        return res.status(400).json({ message: 'Malformed JSON: Request must include a regex field.' });
+    }
+    // Retrieve all packages from the datastore
+    const allPackages = await getAllRepos();
 
+    // Search for packages using regular expression over package names and READMEs.
+    const results = allPackages.filter((pkg: { name: string; readme: string; }) => {
+        return new RegExp(regex).test(pkg.name) || new RegExp(regex).test(pkg.readme);
+    });
 
+    //console.log(results)
 
-    // search package names and readme
+    // Extract the name and version of each matching package
+    const response = results.map((pkg: { name: any; version: any; }) => {
+        return {
+            Name: pkg.name,
+            Version: pkg.version
+        };
+    });
 
-    // not sure which one is right since the OpenAPI specs say both
-    // get regex from url
-    // get regex from content as json
-    // get auth
+    //console.log(response)
 
-    // 200
-    // packages found
-    // respond with array of PackageMetadata schemas
-
-    // 400
-    // malformed json / invalid auth
-
-    // 404
-    // no package found that matches this regex
+    // Return the search results
+    if (response.length > 0) {
+        // 200: Return a list of packages.
+        return res.status(200).json(response);
+    } else {
+        // 404 Error: No package found under this regex.
+        return res.status(404).json({ message: 'No packages found under this regex.' });
+    }
 });
 
 // Username-password authentication
