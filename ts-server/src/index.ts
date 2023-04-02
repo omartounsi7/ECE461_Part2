@@ -275,27 +275,44 @@ app.delete('/package/byName/:name', async (req, res) => {
 });
 
 // Fetch package with Regex
-app.post('/package/byRegEx/:regex', (req, res) => {
-    res.send("package/byRegEx/" + req.params.regex + " endpoint");
+app.post('/package/byRegEx', async (req, res) => {
+    // Check if the request has a JSON body
+    if (Object.keys(req.body).length === 0) {
+        return res.status(400).json({ message: 'Malformed JSON: Request must have a JSON body.' });
+    }
+    // Check if the 'regex' field is present in the request body
+    const { regex }: { regex: string } = req.body;
+    if (!regex) {
+        return res.status(400).json({ message: 'Malformed JSON: Request must include a regex field.' });
+    }
+    // Retrieve all packages from the datastore
+    const allPackages = await getAllRepos();
 
+    // Search for packages using regular expression over package names and READMEs.
+    const results = allPackages.filter((pkg: { name: string; readme: string; }) => {
+        return new RegExp(regex).test(pkg.name) || new RegExp(regex).test(pkg.readme);
+    });
 
+    //console.log(results)
 
-    // search package names and readme
+    // Extract the name and version of each matching package
+    const response = results.map((pkg: { name: any; version: any; }) => {
+        return {
+            Name: pkg.name,
+            Version: pkg.version
+        };
+    });
 
-    // not sure which one is right since the OpenAPI specs say both
-    // get regex from url
-    // get regex from content as json
-    // get auth
+    //console.log(response)
 
-    // 200
-    // packages found
-    // respond with array of PackageMetadata schemas
-
-    // 400
-    // malformed json / invalid auth
-
-    // 404
-    // no package found that matches this regex
+    // Return the search results
+    if (response.length > 0) {
+        // 200: Return a list of packages.
+        return res.status(200).json(response);
+    } else {
+        // 404 Error: No package found under this regex.
+        return res.status(404).json({ message: 'No packages found under this regex.' });
+    }
 });
 
 // Username-password authentication
