@@ -222,8 +222,6 @@ async function downloadRepo(id: number): Promise<string> {
     console.log("Unimplemented function 'downloadRepo' from './src/datastore/modules.ts' was called.");
     const key = getKey(NAMESPACE, MODULE_KIND, id);
     const [entity] = await datastore.get(key);
-    console.log(typeof(entity));
-    console.log(entity);
     return entity;
 }
 
