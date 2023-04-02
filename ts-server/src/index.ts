@@ -8,7 +8,8 @@ import {
     findReposByName,
     findReposByNameAndVersion,
     getAllReposPagenated,
-    createRepoData
+    createRepoData,
+    downloadRepo
 } from "./datastore/modules";
 import { addUser } from "./datastore/users";
 import {deleteEntity, doesIdExistInKind, resetKind} from "./datastore/datastore";
@@ -138,10 +139,17 @@ app.post('/package', async (req, res) => {
 
 // Download Endpoint
 app.get('/package/:id', async (req, res) => {
-    res.send("package/" + req.params.id + " endpoint");
+    console.log("package/" + req.params.id + " endpoint");
+
+    let id = Number(req.params.id);
+    const result = await doesIdExistInKind(MODULE_KIND, id)
+    if(!result){
+        res.send("req.params.id doesn't exist in MODULE_KIND.");
+        return;
+    }
 
     // download package by ID
-
+    res.send(downloadRepo(id));
     // default response:
     // unexpected error (what error code do we return)
 

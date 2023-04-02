@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllReposPagenated = exports.findReposByNameAndVersion = exports.findReposByName = exports.searchRepos = exports.deleteRepo = exports.updateRepo = exports.addRepo = exports.createRepoData = void 0;
+exports.downloadRepo = exports.getAllReposPagenated = exports.findReposByNameAndVersion = exports.findReposByName = exports.searchRepos = exports.deleteRepo = exports.updateRepo = exports.addRepo = exports.createRepoData = void 0;
 const ds_config_1 = require("./ds_config");
 const datastore_1 = require("./datastore");
 /* * * * * * * * * * *
@@ -22,6 +22,7 @@ const datastore_1 = require("./datastore");
  * @param creation_date
  * @param url
  * @param version
+ * @param readme
  *
  * @example
  * To create a repo data object which only contains
@@ -220,3 +221,21 @@ function deleteRepo(repoID) {
     });
 }
 exports.deleteRepo = deleteRepo;
+/**
+ * Gets all of the contents of a module given its id
+ * @param repoID
+ *
+ * @return
+ * The module as a base64 string
+ */
+function downloadRepo(repoID) {
+    return __awaiter(this, void 0, void 0, function* () {
+        console.log("Unimplemented function 'downloadRepo' from './src/datastore/modules.ts' was called.");
+        const key = (0, datastore_1.getKey)(ds_config_1.NAMESPACE, ds_config_1.MODULE_KIND, repoID);
+        const [entity] = yield ds_config_1.datastore.get(key);
+        console.log(typeof (entity));
+        console.log(entity);
+        return entity;
+    });
+}
+exports.downloadRepo = downloadRepo;

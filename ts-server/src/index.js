@@ -14,6 +14,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const path_1 = __importDefault(require("path"));
+const modules_1 = require("./datastore/modules");
+const datastore_1 = require("./datastore/datastore");
+const ds_config_1 = require("./datastore/ds_config");
 /* * * * * * * * * * *
  * global variables  *
  * * * * * * * * * * */
@@ -103,8 +106,15 @@ app.post('/package', (req, res) => __awaiter(void 0, void 0, void 0, function* (
 }));
 // Download Endpoint
 app.get('/package/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    res.send("package/" + req.params.id + " endpoint");
+    console.log("package/" + req.params.id + " endpoint");
+    let id = Number(req.params.id);
+    const result = yield (0, datastore_1.doesIdExistInKind)(ds_config_1.MODULE_KIND, id);
+    if (!result) {
+        res.send("req.params.id doesn't exist in MODULE_KIND.");
+        return;
+    }
     // download package by ID
+    res.send((0, modules_1.downloadRepo)(id));
     // default response:
     // unexpected error (what error code do we return)
     // code 200
