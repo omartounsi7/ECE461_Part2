@@ -3,7 +3,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.USER_KIND = exports.MODULE_KIND = exports.NAMESPACE = exports.datastore = void 0;
 const { Datastore } = require("@google-cloud/datastore");
-require('dotenv').config();
 // const projectId = process.env.PROJECT_ID;
 const datastore = new Datastore();
 exports.datastore = datastore;
