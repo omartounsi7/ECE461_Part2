@@ -123,15 +123,26 @@ app.delete('/reset', async (req, res) => {
 app.post('/package', async (req, res) => {
     res.send("package endpoint");
 
-    // get req content as PackageData schema
-    const packageData = req.body;
+    // get time
+    const now = new Date(); // creates a new Date object representing the current date and time
+    const currentTime = now.getTime(); // returns the number of milliseconds since January 1, 1970, 00:00:00 UTC
+
+
+    // get req content
+    const packageContents = req.body["data"]["Contents"];
+    const packageURL = req.body["data"]["URL"];
+    const packageName = req.body["metadata"]["Name"];
+    const packageVersion = req.body["metadata"]["Version"];
+    //const packageID = req.body["metadata"]["ID"];
 
     // get auth from header
-    const auth = req.headers.authorization;
+    
+
+    let data = createRepoData(packageName, packageVersion, currentTime.toString(), packageURL, undefined)
 
     try {
         // attempt to create and save new package to database
-        const newPackage = await addRepo(packageData.name, packageData.version, packageData.url);
+        const newPackage = await addRepo(data);
         res.status(201).json(newPackage);
     } catch (error) {
         if (error instanceof InvalidRequestError) {
@@ -147,20 +158,6 @@ app.post('/package', async (req, res) => {
             res.status(500).send("Internal Server Error");
         }
     }
-    // 201
-    // respond with Package schema json object
-
-    // 400
-    // malformed json/ invalid auth
-
-    // 403
-    // auth failed (no permissions)
-
-    // 409
-    // package already exists
-
-    // 424
-    // package not uploaded due to disqualification
 });
 
 // Download Endpoint
