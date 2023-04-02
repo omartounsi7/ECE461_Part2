@@ -154,7 +154,7 @@ app.get('/package/:id', async (req, res) => {
     }
 
     // download package by ID
-    res.send(downloadRepo(id));
+    res.send(await downloadRepo(id));
     // default response:
     // unexpected error (what error code do we return)
 
