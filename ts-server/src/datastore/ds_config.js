@@ -5,6 +5,7 @@ exports.USER_KIND = exports.MODULE_KIND = exports.NAMESPACE = exports.datastore 
 const { Datastore } = require("@google-cloud/datastore");
 // const projectId = process.env.PROJECT_ID;
 const datastore = new Datastore();
+require('dotenv').config();
 exports.datastore = datastore;
 const NAMESPACE = "ece461";
 exports.NAMESPACE = NAMESPACE;
