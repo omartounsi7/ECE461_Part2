@@ -191,6 +191,38 @@ app.get('/package/:id', async (req, res) => {
 app.put('/package/:id', async (req, res) => {
     res.send("package/" + req.params.id + " endpoint");
 
+    // get time
+    const now = new Date(); // creates a new Date object representing the current date and time
+    const currentTime = now.getTime(); // returns the number of milliseconds since January 1, 1970, 00:00:00 UTC
+
+
+    // get req content
+    const packageContents = req.body["data"]["Contents"];
+    const packageURL = req.body["data"]["URL"];
+    const packageName = req.body["metadata"]["Name"];
+    const packageVersion = req.body["metadata"]["Version"];
+    const packageID = req.body["metadata"]["ID"];
+
+    // get auth from header
+    
+
+    let data = createRepoData(packageName, packageVersion, currentTime.toString(), packageURL, undefined)
+
+    try {
+        // attempt to create and save new package to database
+        const newPackage = await updateRepo(packageID, data);
+        res.status(200).json(newPackage);
+    } catch (error) {
+        if (error instanceof InvalidRequestError) {
+            res.status(400).send(error.message);
+        } else if (error instanceof PackageDoesNotExist) {
+            res.status(404).send(error.message);
+        } else {
+            console.error(error);
+            res.status(500).send("Internal Server Error");
+        }
+    }
+
     // get package schema from request body
 
     // get id from path
