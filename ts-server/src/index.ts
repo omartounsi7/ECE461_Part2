@@ -98,13 +98,18 @@ app.post('/packages', async (req, res) => {
 
 // Reset to default state
 app.delete('/reset', async (req, res) => {
-    res.send("reset endpoint");
+    console.log("reset endpoint");
 
     // get auth from header
     // look into https://jwt.io/
     //  let auth = req.header["X-Authorization"];
+    if(!req.headers.authorization){
+        res.sendStatus(400);
+    }
 
     // return 200 when registry is reset
+    await resetKind(MODULE_KIND);
+    res.sendStatus(200);
 
     // return 400 for missing field/ invalid auth
 

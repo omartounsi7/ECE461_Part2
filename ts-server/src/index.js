@@ -80,10 +80,12 @@ app.post('/packages', (req, res) => __awaiter(void 0, void 0, void 0, function* 
 }));
 // Reset to default state
 app.delete('/reset', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    res.send("reset endpoint");
+    console.log("reset endpoint");
     // get auth from header
     // look into https://jwt.io/
     //  let auth = req.header["X-Authorization"];
+    //let auth = req.header["X-Authorization"];
+    console.log(req);
     // return 200 when registry is reset
     // return 400 for missing field/ invalid auth
     // return 401 for not enough permissions
