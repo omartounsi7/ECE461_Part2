@@ -1,8 +1,7 @@
 import { Key } from '@google-cloud/datastore';
 
 import {datastore, MODULE_KIND, NAMESPACE} from "./ds_config";
-import { getKey, deleteEntity } from "/Users/maxim/Downloads/ECE461_Part2-main/ts-server/src/datastore";
-
+import { getKey, deleteEntity } from "./datastore";
 
 /* * * * * * * * * * *
  * Helper Functions  *
@@ -25,7 +24,7 @@ import { getKey, deleteEntity } from "/Users/maxim/Downloads/ECE461_Part2-main/t
  * Returns repo data which can be passed in to other
  * functions to update or create a repo in gcp datastore.
  */
-function createRepoData(name?: string, version?: string, creation_date?: string, url?: string, readme?:string, packageAction?: any) {
+function createRepoData(name?: string, version?: string, creation_date?: string, url?: string, readme?:string, packageAction?: any, metaData?:any) {
     let data: {[key: string]: any} = {};
     if(name !== undefined)          data["name"]          = name;
     if(version !== undefined)       data["version"]       = version;
@@ -33,6 +32,7 @@ function createRepoData(name?: string, version?: string, creation_date?: string,
     if(creation_date !== undefined) data["creation-date"] = creation_date
     if(readme !== undefined)        data["readme"]        = readme;
     if(packageAction !== undefined) data["packageAction"] = packageAction;
+    if(metaData !== undefined)      data["metaData"]      = metaData;
     return data;
 }
 
@@ -91,7 +91,7 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}): Promis
  * Updates the packageAction field of a package in the datastore for the given repository ID.
  *
  * @param {string} packageID - The ID of the repository whose package action is being updated.
- * @param {any} newPackageAction - The new package action (dictionary type) to be added to the package actions.
+ * @param {any} newPackageAction - The new package action (follows the PackageHistoryEntry Schema) to be added to the package actions.
  */
  async function updateRepoPackageAction(packageID: string, newPackageAction: any): Promise<void> {
     // Get the datastore key for the repository ID
@@ -104,6 +104,32 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}): Promis
     packageActions.push(newPackageAction);
     // Update the packageAction field of the entity with the new package actions
     entity.packageAction = packageActions;
+    await datastore.save({
+        key: key,
+        data: entity
+    });
+}
+
+
+/**
+ * Updates the metaData field of a package in the datastore for the given repository ID.
+ *
+ * @param {string} packageID - The ID of the repository whose package action is being updated.
+ * @param {any} metaData - The new metaData (dictionary type) to be added to the package actions.
+ */
+ async function updateMetaData(packageID: string, metaData: any): Promise<void> {
+    // Get the datastore key for the repository ID
+    const key = getModuleKey(Number(packageID));
+    // Get the entity associated with the datastore key
+    const [entity] = await datastore.get(key);
+    // Get the existing metaData
+    const packageActions = entity.metaData;
+    
+    // Update the version of the metaData field of the entity with the new version
+    packageActions.Version = metaData.Version;
+
+    // Update the metaData field of the entity with the new metaData
+    entity.metaData = packageActions;
     await datastore.save({
         key: key,
         data: entity
@@ -249,26 +275,14 @@ async function deleteRepo(repoID: number): Promise<[{[key: string]: any}]> {
     return await deleteEntity(MODULE_KIND, repoID);
 }
 
-
-/**
- * Gets all of the contents of a module given its id
- * @param id
- * the id of the module to download
- *
- * @return
- * The module as a base64 string or a blank string if the
- * id does not exist.
- */
-async function downloadRepo(id: number): Promise<string> {
-    console.log("Unimplemented function 'downloadRepo' from './src/datastore/modules.ts' was called.");
+async function downloadRepo(id: number) {
     const key = getKey(NAMESPACE, MODULE_KIND, id);
     const [entity] = await datastore.get(key);
     return entity;
 }
 
-
 // functions to be used by the API endpoints
 export { createRepoData, addRepo, getModuleKey,
     updateRepo, deleteRepo,
-    searchRepos, findReposByName,
-    findReposByNameAndVersion, getAllReposPagenated, getAllRepos, updateRepoPackageAction};
+    searchRepos, findReposByName, updateMetaData,
+    findReposByNameAndVersion, getAllReposPagenated, getAllRepos, updateRepoPackageAction, downloadRepo};
