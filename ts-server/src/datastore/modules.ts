@@ -1,7 +1,7 @@
 import { Key } from '@google-cloud/datastore';
 
 import {datastore, MODULE_KIND, NAMESPACE} from "./ds_config";
-import { getKey, deleteEntity } from "/Users/maxim/Downloads/ECE461_Part2-main/ts-server/src/datastore";
+import { getKey, deleteEntity } from "./datastore";
 
 
 /* * * * * * * * * * *
@@ -15,24 +15,27 @@ import { getKey, deleteEntity } from "/Users/maxim/Downloads/ECE461_Part2-main/t
  * @param creation_date
  * @param url
  * @param version
+ * @param readme
+ * @param packageAction
  *
  * @example
  * To create a repo data object which only contains
  * version and creation date:
- * createRepoData(undefined, "1.2.3", new Date().toJSON;
+ * createRepoData(undefined, "1.2.3", new Date().toJSON());
  *
  * @return
  * Returns repo data which can be passed in to other
  * functions to update or create a repo in gcp datastore.
  */
-function createRepoData(name?: string, version?: string, creation_date?: string, url?: string, readme?:string, packageAction?: any) {
+function createRepoData(name?: string, version?: string, creation_date?: string, url?: string, readme?:string, packageAction?: any, cloudStoragePath?: string) {
     let data: {[key: string]: any} = {};
     if(name !== undefined)          data["name"]          = name;
     if(version !== undefined)       data["version"]       = version;
     if(url !== undefined)           data["url"]           = url;
     if(creation_date !== undefined) data["creation-date"] = creation_date
     if(readme !== undefined)        data["readme"]        = readme;
-    if(packageAction !== undefined) data["packageAction"] = packageAction;
+    if(packageAction !== undefined) data["packageAction"] = packageAction; else data["packageAction"] = "{}";
+    if(cloudStoragePath !== undefined) data["cloudStoragePath"] = cloudStoragePath;
     return data;
 }
 
@@ -271,4 +274,4 @@ async function downloadRepo(id: number): Promise<string> {
 export { createRepoData, addRepo, getModuleKey,
     updateRepo, deleteRepo,
     searchRepos, findReposByName,
-    findReposByNameAndVersion, getAllReposPagenated, getAllRepos, updateRepoPackageAction};
+    findReposByNameAndVersion, getAllReposPagenated, getAllRepos, updateRepoPackageAction, downloadRepo};
