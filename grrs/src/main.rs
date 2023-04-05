@@ -12,7 +12,6 @@ use log::LevelFilter;
 use log::{info, debug};
 
 pub fn main(){
-
     let args: Vec<String> = env::args().collect(); //returns an iterator
 
     // Check the number of arguments
@@ -31,7 +30,9 @@ pub fn main(){
     handle_url_file(task.to_string(), log_path.to_string(), log_level);
 }
 
-pub fn handle_url_file(url_file_path: String, log_path: String, log_level: i32){
+// CHANGE MADE HERE
+#[no_mangle]
+pub extern fn handle_url_file(url_file_path: String, log_path: String, log_level: i32){
     let level: LevelFilter;
     if log_level == 2 {
         level = LevelFilter::Debug;
@@ -61,6 +62,8 @@ pub fn handle_url_file(url_file_path: String, log_path: String, log_level: i32){
             debug!("File handled Properly");
             let reader = BufReader::new(_file);
             let mut heap = BinaryHeap::<Package>::new();
+            // CHANGE MADE HERE
+            let mut output_file = File::create("metrics.txt").unwrap();
             for (index, line) in reader.lines().enumerate() {
                 let line = line.unwrap(); // Ignore errors.
                 info!("{}. {}", index + 1, line);
@@ -87,7 +90,8 @@ pub fn handle_url_file(url_file_path: String, log_path: String, log_level: i32){
                 temp.debug_output();
                 let json = PackageJSON::new(&temp);
                 let json_string = serde_json::to_string(&json).unwrap();
-                println!("{}", json_string);
+                // CHANGE MADE HERE
+                writeln!(output_file, "{}", json_string).unwrap(); // write to output file
             }
         }
         Err(err) => info!("Problem opening the file: {:?}", err),
