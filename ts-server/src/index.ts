@@ -15,8 +15,8 @@ import {
     createRepoData
 } from "./datastore/modules";
 import { addUser } from "./datastore/users";
-import {deleteEntity, doesIdExistInKind, resetKind} from "/Users/maxim/Downloads/ECE461_Part2-main/ts-server/src/datastore";
-import {datastore, MODULE_KIND, NAMESPACE} from "/Users/maxim/Downloads/ECE461_Part2-main/ts-server/src/datastore/ds_config";
+import {deleteEntity, doesIdExistInKind, resetKind} from "./datastore/datastore";
+import {datastore, MODULE_KIND, NAMESPACE} from "./datastore/ds_config";
 
 /* * * * * * * * * * *
  * global variables  *
