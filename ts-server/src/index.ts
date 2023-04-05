@@ -1,5 +1,4 @@
 import express, { Request, Response } from 'express';
-import { filter } from 'lodash';
 import path from 'path';
 
 import {
@@ -12,11 +11,15 @@ import {
     getAllReposPagenated,
     getAllRepos,
     updateRepoPackageAction,
-    createRepoData
+    createRepoData,
+    downloadRepo
 } from "./datastore/modules";
 import { addUser } from "./datastore/users";
-import {deleteEntity, doesIdExistInKind, resetKind} from "/Users/maxim/Downloads/ECE461_Part2-main/ts-server/src/datastore";
-import {datastore, MODULE_KIND, NAMESPACE} from "/Users/maxim/Downloads/ECE461_Part2-main/ts-server/src/datastore/ds_config";
+import {deleteEntity, doesIdExistInKind, resetKind} from "./datastore/datastore";
+import {datastore, MODULE_KIND, NAMESPACE} from "./datastore/ds_config";
+import { MODULE_STORAGE_BUCKET, storage } from "./cloud-storage/cs_config";
+import { uploadModuleToCloudStorage, getModuleAsBase64FromCloudStorage, deleteModuleFromCloudStorage, resetCloudStorage, ZIP_FILETYPE, TXT_FILETYPE } from "./cloud-storage/cloud-storage";
+import {base64ToFile, fileToBase64} from "./util";
 
 /* * * * * * * * * * *
  * global variables  *
