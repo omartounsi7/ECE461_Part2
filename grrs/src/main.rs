@@ -1,4 +1,4 @@
-use GRRS::handle_url_file;
+use grrs::handle_url_file;
 use std::env;
 mod package;
 
