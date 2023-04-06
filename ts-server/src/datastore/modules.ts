@@ -14,25 +14,29 @@ import { getKey, deleteEntity } from "./datastore";
  * @param creation_date
  * @param url
  * @param version
+ * @param readme
+ * @param packageAction
  *
  * @example
  * To create a repo data object which only contains
  * version and creation date:
- * createRepoData(undefined, "1.2.3", new Date().toJSON;
+ * createRepoData(undefined, "1.2.3", new Date().toJSON());
  *
  * @return
  * Returns repo data which can be passed in to other
  * functions to update or create a repo in gcp datastore.
  */
-function createRepoData(name?: string, version?: string, creation_date?: string, url?: string, readme?:string, packageAction?: any, metaData?:any) {
+
+function createRepoData(name?: string, version?: string, creation_date?: string, url?: string, readme?:string, packageAction?: any, cloudStoragePath?: string, metaData? any) {
     let data: {[key: string]: any} = {};
-    if(name !== undefined)          data["name"]          = name;
-    if(version !== undefined)       data["version"]       = version;
-    if(url !== undefined)           data["url"]           = url;
-    if(creation_date !== undefined) data["creation-date"] = creation_date
-    if(readme !== undefined)        data["readme"]        = readme;
-    if(packageAction !== undefined) data["packageAction"] = packageAction;
-    if(metaData !== undefined)      data["metaData"]      = metaData;
+    if(name !== undefined)             data["name"]          = name;
+    if(version !== undefined)          data["version"]       = version;
+    if(url !== undefined)              data["url"]           = url;
+    if(creation_date !== undefined)    data["creation-date"] = creation_date;
+    if(readme !== undefined)           data["readme"]        = readme;
+    if(metaData !== undefined)         data["metaData"]      = metaData; else data["metaData"] = "{}";
+    if(packageAction !== undefined)    data["packageAction"] = packageAction; else data["packageAction"] = "{}";
+    if(cloudStoragePath !== undefined) data["cloudStoragePath"] = cloudStoragePath;
     return data;
 }
 

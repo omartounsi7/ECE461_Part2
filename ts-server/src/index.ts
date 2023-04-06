@@ -1,6 +1,9 @@
 import express, { Request, Response } from 'express';
 import path from 'path';
 import * as ffi from 'ffi-napi';
+const fs = require('fs');
+const { execFile } = require('child_process');
+
 import {
     addRepo,
     updateRepo,
@@ -17,9 +20,12 @@ import {
 import { addUser } from "./datastore/users";
 import {datastore, MODULE_KIND, NAMESPACE} from "./datastore/ds_config";
 import { getKey, deleteEntity, resetKind, doesIdExistInKind } from "./datastore/datastore";
-
-const fs = require('fs');
-const { execFile } = require('child_process');
+import { addUser } from "./datastore/users";
+import {deleteEntity, doesIdExistInKind, resetKind} from "./datastore/datastore";
+import {datastore, MODULE_KIND, NAMESPACE} from "./datastore/ds_config";
+import { MODULE_STORAGE_BUCKET, storage } from "./cloud-storage/cs_config";
+import { uploadModuleToCloudStorage, getModuleAsBase64FromCloudStorage, deleteModuleFromCloudStorage, resetCloudStorage, ZIP_FILETYPE, TXT_FILETYPE } from "./cloud-storage/cloud-storage";
+import {base64ToFile, fileToBase64} from "./util";
 
 /* * * * * * * * * * *
  * global variables  *
