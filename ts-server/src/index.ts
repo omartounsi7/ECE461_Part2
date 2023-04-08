@@ -504,19 +504,16 @@ app.post('/package/byRegEx', async (req, res) => {
 });
 
 app.put('/authenticate', async (req, res) => {
-
     // get AuthenticationRequest schema
     const username = req.body["User"]["name"];
     const isadmin = req.body["User"]["isAdmin"];
     const password = req.body["Secret"]["password"];
     // Sanitate this mf ^
 
-    const user = await findUserByName({ username });
-
+    const user = await findUserByName(username);
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
-
     const match = await bcrypt.compare(password, user.password);
 
     if (!match) {
