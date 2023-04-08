@@ -70,7 +70,7 @@ async function userLogin(username: string, password: string): Promise<string> {
 async function accessSecret() {
     const client = new SecretManagerServiceClient();
 
-    const name = 'projects/[PROJECT_ID]/secrets/[SECRET_NAME]/versions/[SECRET_VERSION]';
+    const name = 'projects/120511363295/secrets/SECRET_KEY/versions/1';
 
     const [version] = await client.accessSecretVersion({ name });
     if(version.payload === undefined || version.payload === null) {
