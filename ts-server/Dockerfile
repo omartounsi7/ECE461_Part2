@@ -7,6 +7,10 @@ WORKDIR /ts-server
 # Copy the current directory contents into the container at /app
 COPY . /ts-server
 
+# Install Make
+RUN apt-get update && apt-get install -y build-essential
+RUN apt-get update && apt-get install -y make
+
 # Install Python
 RUN apt-get update && apt-get install -y python
 ENV PYTHON /usr/bin/python
@@ -17,7 +21,8 @@ RUN npm install path
 RUN npm install typescript ts-node @types/node @types/express --save-dev
 RUN npm install --save @google-cloud/datastore
 RUN npm install --save ffi-napi  @types/ffi-napi
-RUN npm install jsonwebtoken bcrypt
+RUN npm i --save-dev @types/jsonwebtoken
+RUN npm i --save-dev @types/bcrypt
 
 # Build the TypeScript application
 RUN npm run build
