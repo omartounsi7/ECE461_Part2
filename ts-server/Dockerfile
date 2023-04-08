@@ -7,6 +7,9 @@ WORKDIR /ts-server
 # Copy the current directory contents into the container at /app
 COPY . /ts-server
 
+# Install Make
+RUN apt-get update && apt-get install -y make
+
 # Install Python
 RUN apt-get update && apt-get install -y python
 ENV PYTHON /usr/bin/python
