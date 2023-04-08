@@ -75,24 +75,22 @@ app.post('/packages', async (req, res) => {
     // process request
 
     let queries = req.body.PackageQuery;
-
+    let offset = req.query.offset;
     console.log(`Got /package post request`);
 
     // validate post request
-    if (typeof queries === undefined || queries.length === 0) {
+    if (typeof queries === undefined || queries.length === 0 || offset === undefined) {
         // invalid request
+
     } else {
-        // there are 1 more more queries. The request is valid.
-
-        // check if an offset has been given. If not, default to 0
-        let offset = req.query.offset;
-        if (offset === undefined) {
-            offset = "0";
-        }
-        // console.log(`offset: ${offset}`);
-        // console.log(queries);
-
+        // there are 1 more more queries and an offset is given. The request is valid.
         // do db actions
+
+        // iterate thru the list of queries.
+        // for each query, get its result
+        // store all results into a list
+        // return the list
+
     }
 
 
@@ -443,7 +441,7 @@ app.get("/packages", async (req, res) => {
 
 app.get('/', async (req, res) => {
     res.sendFile(path.join(__dirname, HTML_PATH + "/index.html"));
-    res.send("index!");
+    // res.send("index!");
 
 });
 
