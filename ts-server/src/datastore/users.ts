@@ -1,10 +1,19 @@
-import { datastore, NAMESPACE, USER_KIND } from "./ds_config";
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
-async function addUser(name: string, hashedPassword: string) {
+
+
+import { datastore, NAMESPACE, USER_KIND } from "./ds_config";
+import {createSecretKey} from "crypto";
+
+async function addUser(name: string, password: string) {
     const ds_key = datastore.key({
         namespace: NAMESPACE,
         path: [USER_KIND]
     });
+
+    // hash password here!
+    let hashedPassword = await bcrypt.hash(password, 1);
 
     const user = {
         key: ds_key,
@@ -33,5 +42,31 @@ async function findUserByName(name: string) {
     return results[0];
 }
 
+async function userLogin(username: string, password: string): Promise<string> {
+    const userInfo = await findUserByName(username);
+    if (userInfo.length === 1) {
+        // user exists
+        // get the hashed password from datastore and compare it with the password from the request
+        let realHashedPassword = userInfo[0].password;
+        let match = await bcrypt.compare(password, realHashedPassword);
+        if(match) {
+            // create auth token for user and replace the old one
+            let secretKey = process.env.SECRET_KEY;
+            if (secretKey === undefined) {
+                console.log("failed to get secret key");
+                return "";
+            }
+            let authToken = jwt.sign({userId: userInfo.name }, secretKey);
+            console.log(authToken);
+            return authToken;
+        } else {
+            return "";
+        }
+    } else {
+        //user dne
+        return "";
+    }
+}
+
 // functions to be used by the API endpoints
-export { addUser , findUserByName};
+export { addUser , findUserByName, userLogin };

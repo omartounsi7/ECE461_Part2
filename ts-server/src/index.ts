@@ -1,9 +1,6 @@
 import express, { Request, Response, Router } from 'express';
 import path from 'path';
 import * as ffi from 'ffi-napi';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-
 // npm install -g ts-node
 // npm install --save ffi-napi @types/ffi-napi
 import {
@@ -19,7 +16,7 @@ import {
     createRepoData,
     downloadRepo
 } from "./datastore/modules";
-import { addUser , findUserByName} from "./datastore/users";
+import { addUser , findUserByName, userLogin } from "./datastore/users";
 import {deleteEntity, doesIdExistInKind, resetKind} from "./datastore/datastore";
 import {datastore, MODULE_KIND, NAMESPACE} from "./datastore/ds_config";
 import { MODULE_STORAGE_BUCKET, storage } from "./cloud-storage/cs_config";
@@ -510,33 +507,18 @@ app.put('/authenticate', async (req, res) => {
     const password = req.body["Secret"]["password"];
     // Sanitate this mf ^
 
-    const user = await findUserByName(username);
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    if(username === undefined || password === undefined) {
+        return res.status(401).json({ message: 'Invalid credentials' });
     }
-    const match = await bcrypt.compare(password, user.password);
+    let authToken = await userLogin(username, password);
 
-    if (!match) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    if(authToken === "") {
+        return res.status(401).json({ message: 'Invalid credentials' });
     }
-  
-    // Generate a JWT and send it back to the client
-    const token = jwt.sign({ userId: user.id }, 'your-secret-key');
-  
-    res.json({ token });
 
-    // 200
-    // returned auth token successfully
+    return res.status(200).json({ token: authToken });
 
-    // 400
-    // malformed json / invalid auth
-
-    // 401
-    // username or password invalid
-
-    // 501
-    // This system does not support authentication
-    return res.status(501).json({ message: 'This system does not support authentication' });
+    //return res.status(501).json({ message: 'This system does not support authentication' });
 });
 
 /**
