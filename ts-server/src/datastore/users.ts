@@ -1,7 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-
-
+import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 
 import { datastore, NAMESPACE, USER_KIND } from "./ds_config";
 import {createSecretKey} from "crypto";
@@ -51,7 +50,7 @@ async function userLogin(username: string, password: string): Promise<string> {
         let match = await bcrypt.compare(password, realHashedPassword);
         if(match) {
             // create auth token for user and replace the old one
-            let secretKey = process.env.SECRET_KEY;
+            let secretKey = await accessSecret();
             if (secretKey === undefined) {
                 console.log("failed to get secret key");
                 return "";
@@ -66,6 +65,18 @@ async function userLogin(username: string, password: string): Promise<string> {
         //user dne
         return "";
     }
+}
+
+async function accessSecret() {
+    const client = new SecretManagerServiceClient();
+
+    const name = 'projects/[PROJECT_ID]/secrets/[SECRET_NAME]/versions/[SECRET_VERSION]';
+
+    const [version] = await client.accessSecretVersion({ name });
+
+    const token = version.payload.data.toString('utf8');
+
+    return token;
 }
 
 // functions to be used by the API endpoints
