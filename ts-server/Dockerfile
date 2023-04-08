@@ -7,6 +7,10 @@ WORKDIR /ts-server
 # Copy the current directory contents into the container at /app
 COPY . /ts-server
 
+# Install Python
+RUN apt-get update && apt-get install -y python
+ENV PYTHON /usr/bin/python
+
 # Install any needed packages
 RUN npm install express
 RUN npm install path
