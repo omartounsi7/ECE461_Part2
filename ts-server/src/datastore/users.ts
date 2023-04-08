@@ -24,5 +24,14 @@ async function addUser(name: string, hashedPassword: string) {
     await datastore.save(user);
 }
 
+async function findUserByName(name: string) {
+    const query = datastore
+        .createQuery(NAMESPACE, USER_KIND)
+        .filter('name', '=', name);
+
+    const results = await datastore.runQuery(query);
+    return results[0];
+}
+
 // functions to be used by the API endpoints
-export { addUser };
+export { addUser , findUserByName};

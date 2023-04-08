@@ -13,6 +13,7 @@ RUN npm install path
 RUN npm install typescript ts-node @types/node @types/express --save-dev
 RUN npm install --save @google-cloud/datastore
 RUN npm install --save ffi-napi  @types/ffi-napi
+RUN npm install jsonwebtoken bcrypt
 
 # Build the TypeScript application
 RUN npm run build
