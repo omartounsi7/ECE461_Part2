@@ -39,6 +39,9 @@ const port = 8080;
 
 
 app.use(express.json());
+const bodyParser = require('body-parser')
+app.use(bodyParser.raw({inflate:true, limit: '100kb', type: 'text/plain'}));
+
 
 
 /* * * * * * * * * * * *
@@ -154,8 +157,38 @@ app.post('/package', async (req, res) => {
     // Extract package metadata from metadata object in detabase
     // logPackageAction(userName, isAdmin, packageRepo.metaData, "CREATE");
 
-    
+    // Write the url to a file called URLs.txt
+    fs.writeFileSync('URLs.txt', packageURL);
 
+    // Define the type signature of the Rust function
+    const handle_url_file = ffi.Library('./target/release/libmylib', {
+        'handle_url_file': ['void', ['string', 'string', 'int']]
+    }).handle_url_file;
+
+    // Call the Rust function and output the result to the console
+    handle_url_file("URLs.txt", "example.log", 1);
+
+    // Read the contents of the metrics.txt file
+    const metrics = fs.readFileSync('metrics.txt', 'utf-8');
+    
+    // Parse the JSON string into a JavaScript object
+    const metricsObject = JSON.parse(metrics);
+    
+    // Extract the properties and convert the values to their numeric form
+    const netScore = parseFloat(metricsObject.NET_SCORE);
+    const rampUp = parseFloat(metricsObject.RAMP_UP_SCORE);
+    const correctness = parseFloat(metricsObject.CORRECTNESS_SCORE);
+    const busFactor = parseFloat(metricsObject.BUS_FACTOR_SCORE);
+    const responsiveMaintainer = parseFloat(metricsObject.RESPONSIVE_MAINTAINER_SCORE);
+    const license = parseFloat(metricsObject.LICENSE_SCORE);
+    const codeReview = parseFloat(metricsObject.CODE_REVIEW);
+    const version = parseFloat(metricsObject.Version_Pinning);
+
+    // Check if the package meets the required scores
+    if (netScore < 0.5 || rampUp < 0.5 || correctness < 0.5 || busFactor < 0.5 || responsiveMaintainer < 0.5 ||
+        license < 0.5 || codeReview < 0.5 || version < 0.5) {
+        res.status(500).send({error: 'The package rating system choked on at least one of the metrics'});
+    } 
     let data = createRepoData(packageName, packageVersion, currentTime.toString(), packageURL, undefined)
 
     try {
@@ -462,15 +495,13 @@ app.delete('/package/byName/:name', async (req, res) => {
 
 // Get any packages fitting the regular expression
 app.post('/package/byRegEx', async (req, res) => {
-    // Check if the request has a JSON body
-    if (Object.keys(req.body).length === 0) {
-        return res.status(400).json({ message: 'Malformed JSON: Request must have a JSON body.' });
-    }
-    // Check if the 'regex' field is present in the request body
-    const { regex }: { regex: string } = req.body;
+    // req.body is a Buffer object
+    const bufferData = req.body;
+    const regex = bufferData.toString();
     if (!regex) {
-        return res.status(400).json({ message: 'Malformed JSON: Request must include a regex field.' });
+        return res.status(400).json({ message: 'Request body must not be empty.' });
     }
+    
     // Retrieve all packages from the datastore
     const allPackages = await getAllRepos();
 
