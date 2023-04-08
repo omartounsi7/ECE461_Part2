@@ -73,8 +73,15 @@ async function accessSecret() {
     const name = 'projects/[PROJECT_ID]/secrets/[SECRET_NAME]/versions/[SECRET_VERSION]';
 
     const [version] = await client.accessSecretVersion({ name });
-
-    const token = version.payload.data.toString('utf8');
+    if(version.payload === undefined || version.payload === null) {
+        console.log("failed to get version.payload in accessSecret.");
+        return "";
+    }
+    if(version.payload.data === undefined || version.payload.data === null) {
+        console.log("failed to get version.payload.data in accessSecret");
+        return "";
+    }
+    const token = version.payload.data.toString();
 
     return token;
 }
