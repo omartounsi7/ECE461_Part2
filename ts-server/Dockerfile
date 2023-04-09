@@ -26,6 +26,7 @@ RUN npm i --save-dev @types/jsonwebtoken
 RUN npm i --save-dev @types/bcrypt
 RUN npm install dotenv --save
 RUN npm install bcrypt
+RUN npm install jsonwebtoken
 
 # Build the TypeScript application
 RUN npm run build
