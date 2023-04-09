@@ -16,9 +16,9 @@ import {datastore, MODULE_KIND, NAMESPACE} from "./ds_config";
 function getKey(namespace: string, kind: string, id?:number): Key {
     let path = [];
     if (typeof id === undefined) {
-        path = [MODULE_KIND]
+        path = [kind]
     } else {
-        path = [MODULE_KIND, id];
+        path = [kind, id];
     }
     return datastore.key({
         namespace: NAMESPACE,

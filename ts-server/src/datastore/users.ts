@@ -1,9 +1,17 @@
-import bcrypt from 'bcrypt';
+import bcrypt, {compare} from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 
-import { datastore, NAMESPACE, USER_KIND } from "./ds_config";
+import {datastore, MODULE_KIND, NAMESPACE, USER_KIND} from "./ds_config";
 import {createSecretKey} from "crypto";
+import {getModuleKey} from "./modules";
+import {Key} from "@google-cloud/datastore";
+import {getKey} from "./datastore";
+
+
+function getUserKey(id?: number): Key {
+    return getKey(NAMESPACE, USER_KIND, id);
+}
 
 async function addUser(name: string, password: string) {
     const ds_key = datastore.key({
@@ -42,11 +50,13 @@ async function findUserByName(name: string) {
 }
 
 async function userLogin(username: string, password: string): Promise<string> {
-    const userInfo = await findUserByName(username);
-    if (userInfo.length === 1) {
+    const userInfoL: any[] = await findUserByName(username);
+    if (userInfoL.length === 1) {
+        const userInfo = userInfoL[0];
+        const userKey = userInfo[datastore.KEY];
         // user exists
         // get the hashed password from datastore and compare it with the password from the request
-        let realHashedPassword = userInfo[0].password;
+        let realHashedPassword = userInfo.password;
         let match = await bcrypt.compare(password, realHashedPassword);
         if(match) {
             // create auth token for user and replace the old one
@@ -56,13 +66,16 @@ async function userLogin(username: string, password: string): Promise<string> {
                 return "";
             }
             let authToken = jwt.sign({userId: userInfo.name }, secretKey);
-            console.log(authToken);
+            // store auth token in datastore
+            await updateAuthToken(Number(userKey.id), authToken);
             return authToken;
         } else {
+            console.log("incorrect password");
             return "";
         }
     } else {
         //user dne
+        console.log("user does not exist");
         return "";
     }
 }
@@ -84,6 +97,19 @@ async function accessSecret() {
     const token = version.payload.data.toString();
 
     return token;
+}
+
+async function updateAuthToken(id: number, authToken: string) {
+    // Get the datastore key for the repository ID
+    let key = getUserKey(id);
+    // Get the entity associated with the datastore key
+    const [entity] = await datastore.get(key);
+    // Merge the new data with the existing data of the entity
+    Object.assign(entity, {authToken: authToken});
+    await datastore.save({
+        key: key,
+        data: entity
+    });
 }
 
 // functions to be used by the API endpoints

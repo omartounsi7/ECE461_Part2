@@ -511,7 +511,6 @@ app.put('/authenticate', async (req, res) => {
         return res.status(401).json({ message: 'Invalid credentials' });
     }
     let authToken = await userLogin(username, password);
-
     if(authToken === "") {
         return res.status(401).json({ message: 'Invalid credentials' });
     }
