@@ -1,7 +1,6 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, Router } from 'express';
 import path from 'path';
 import * as ffi from 'ffi-napi';
-
 // npm install -g ts-node
 // npm install --save ffi-napi @types/ffi-napi
 import {
@@ -17,7 +16,7 @@ import {
     createRepoData,
     downloadRepo
 } from "./datastore/modules";
-import { addUser } from "./datastore/users";
+import { addUser , findUserByName, userLogin } from "./datastore/users";
 import {deleteEntity, doesIdExistInKind, resetKind} from "./datastore/datastore";
 import {datastore, MODULE_KIND, NAMESPACE} from "./datastore/ds_config";
 import { MODULE_STORAGE_BUCKET, storage } from "./cloud-storage/cs_config";
@@ -533,21 +532,23 @@ app.post('/package/byRegEx', async (req, res) => {
 });
 
 app.put('/authenticate', async (req, res) => {
-
     // get AuthenticationRequest schema
+    const username = req.body["User"]["name"];
+    const isadmin = req.body["User"]["isAdmin"];
+    const password = req.body["Secret"]["password"];
+    // Sanitate this mf ^
 
-    // 200
-    // returned auth token successfully
+    if(username === undefined || password === undefined) {
+        return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    let authToken = await userLogin(username, password);
+    if(authToken === "") {
+        return res.status(401).json({ message: 'Invalid credentials' });
+    }
 
-    // 400
-    // malformed json / invalid auth
+    return res.status(200).json({ token: authToken });
 
-    // 401
-    // username or password invalid
-
-    // 501
-    // This system does not support authentication
-    return res.status(501).json({ message: 'This system does not support authentication' });
+    //return res.status(501).json({ message: 'This system does not support authentication' });
 });
 
 /**
