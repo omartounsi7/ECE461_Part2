@@ -1,1 +1,138 @@
-Hello World!
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Modules Registry</title>
+        <style>
+            .h2 {
+                margin: 1%;
+            }
+            .p {
+                margin: 1%;
+            }
+            .endpoint-div {
+                display: flex;
+                flex-direction: column;
+            }
+            .submit-button {
+                max-width: 150px;
+            }
+            .input-text {
+                max-width: 200px;
+            }
+            .input-file {
+                max-width: 250px;
+            }
+        </style>
+    </head>
+    <body>
+        <h2>Modules Registry</h2>
+        <div>
+            <button onclick="toggleDiv(0)">Package Search</button>
+            <button onclick="toggleDiv(1)">Upload Module</button>
+            <button onclick="toggleDiv(2)">Delete Module</button>
+        </div>
+        <div id="package-search" class="endpoint-div">
+            <h3>Package Search</h3>
+            <p>
+                Enter search queries in the format: name,version<br>
+                With a new line separating each query<br>
+                Leave blank to query all packages
+            </p>
+            <textarea id="package-search-input" cols="3" rows="5"></textarea>
+            <button onclick="submitPackageSearch()" class="submit-button">Submit Search</button>
+        </div>
+        <div id="upload-module" class="endpoint-div">
+            <h3>Upload Module</h3>
+            <p>
+                Upload your module as a zip file<br>
+                Enter the name of your module<br>
+                Enter the version of your module
+            </p>
+            <input type="file" accept=".zip" class="input-file">
+            <label>Module Name:</label>
+            <input type="text" id="module-upload-name" class="input-text">
+            <label>Module Version:</label>
+            <input type="text" id="module-upload-button" class="input-text">
+            <button onclick="submitUploadModule()" class="submit-button">Upload Module</button>
+        </div>
+        <div id="delete-module" class="endpoint-div">
+            <h2>Delete Module</h2>
+            <p>
+                Select the way you would like to choose a module to be deleted.<br>
+                Then fill in the input box with the name or id depending on which one you have selected.
+            </p>
+            <label>
+                <input type="radio" name="delete-by" value="name" checked> name
+            </label>
+            <label>
+                <input type="radio" name="delete-by" value="id"> id
+            </label>
+            <label>Input name or id:</label>
+            <input type="text" id="delete-module-input" class="input-text">
+
+            <button onclick="submitDeleteModule()" class="submit-button">Delete Module</button>
+        </div>
+    </body>
+    <script>
+        let packageSearchDiv = document.getElementById("package-search");
+        let uploadModuleDiv = document.getElementById("upload-module");
+        let deleteModuleDiv = document.getElementById("delete-module");
+        let allDivs = [packageSearchDiv, uploadModuleDiv, deleteModuleDiv];
+
+        function showDiv(div) {
+            div.style.display = "flex";
+        }
+        function hideDiv(div) {
+            div.style.display = "none";
+
+        }
+        function toggleDiv(index) {
+            console.log(allDivs)
+            let d = allDivs[index];
+            if(d.style.display === "none") {
+                allDivs.forEach(item => { item !== d ? hideDiv(item) : showDiv(item); });
+            } else {
+                hideDiv(d);
+            }
+        }
+        // package search
+        function submitPackageSearch() {
+            // get input(s)
+            // confirm input(s) are correct
+            // send request
+            // recv request
+            // display results
+        }
+
+        // upload module
+        function submitUploadModule() {
+            // get input(s)
+            // confirm input(s) are correct
+            // send request
+            // recv request
+            // display results
+        }
+
+        // delete module
+        function submitDeleteModule() {
+            let t = getSelectedDeleteType();
+            console.log(t);
+        }
+
+        function getSelectedDeleteType() {
+            let radios = document.getElementsByName('delete-by');
+            for (let i = 0; i < radios.length; i++) {
+                if (radios[i].checked) {
+                    return radios[i].value;
+                }
+            }
+            return "";
+        }
+
+        // init website
+        function init() {
+            allDivs.forEach(item => hideDiv(item));
+        }
+        init();
+    </script>
+</html>
