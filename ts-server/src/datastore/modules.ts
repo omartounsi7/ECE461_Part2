@@ -99,7 +99,7 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}): Promis
  */
  async function updateRepoPackageAction(packageID: string, newPackageAction: any): Promise<void> {
     // Get the datastore key for the repository ID
-    const key = getModuleKey(Number(packageID));
+    const key = getModuleKey();
     // Get the entity associated with the datastore key
     const [entity] = await datastore.get(key);
     // Get the existing package actions or create an empty array (in case the packageAction field is undefined or null)

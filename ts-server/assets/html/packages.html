@@ -1,10 +1,495 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Packages</title>
+  <title>Modules Registry</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      margin: 0 auto;
+      max-width: 800px;
+      padding: 20px;
+    }
+    h2 {
+      margin: 1% 0;
+      text-align: center;
+    }
+    p {
+      margin: 1%;
+    }
+    .endpoint-div {
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin: 10px 0;
+      padding: 20px;
+    }
+    .submit-button {
+      background-color: #4CAF50;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+      padding: 10px;
+      text-align: center;
+      text-decoration: none;
+      width: 100%;
+    }
+    .submit-button.yes {
+      font-size: 14px;
+    }
+    .submit-button:hover {
+      background-color: #3e8e41;
+    }
+    .input-text {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      height: 40px;
+      margin-top: 10px;
+      padding: 10px;
+      width: 100%;
+    }
+    .input-file {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      height: 40px;
+      margin-top: 10px;
+      padding: 10px;
+      width: 100%;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .radio-label {
+      display: inline-block;
+      font-weight: normal;
+      margin-right: 20px;
+    }
+    .radio-group label {
+        margin-right: 10px;
+    }
+    .radio-group input[type="radio"] {
+      margin-right: 5px;
+    }
+    /* New styles */
+    #register-user form label,
+    #register-user form input[type="text"],
+    #register-user form input[type="password"] {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    #register-user form .radio-group label {
+      margin-right: 10px;
+    }
+    #register-user form .radio-group input[type="radio"] {
+      margin-right: 5px;
+    }
+  </style>
 </head>
 <body>
+    <header>
+        <h1>Modules Registry</h1>
+        <nav>
+            <button onclick="toggleDiv(0)">Package Search</button>
+            <button onclick="toggleDiv(1)">Upload Module</button>
+            <button onclick="toggleDiv(2)">Delete Module</button>
+            <button onclick="toggleDiv(3)">Register User</button>
+            <button onclick="toggleDiv(4)">Regex</button>
+            <button onclick="toggleDiv(5)">Delete Account</button>
+            <button onclick="logOut()">Log Out</button>
+        </nav>
+    </header>
 
-</body>
+    <main>
+      <div id="package-search" class="endpoint-div">
+        <h2 style="margin-right: 20px;">Package Search</h2>
+        <form>
+          <label for="package-search-input">Enter search queries in the format: name,version
+            <br> With a new line separating each query
+            <br> Leave blank to query all packages
+          </label>
+          <textarea id="package-search-input" rows="5" cols="50" class="input-text"></textarea>
+          <br>
+          <button type="button" class="submit-button" onclick="submitPackageSearch()">Submit Search</button>
+        </form>
+      </div>
+
+      <div id="regex-search" class="endpoint-div">
+        <h2 style="margin-right: 20px;">Regex Search</h2>
+        <form>
+          <label for="regex-input">Enter a regex:</label>
+          <input type="text" id="regex-input" class="input-text">
+          <button type="button" class="submit-button" onclick="submitRegexSearch()">Submit Regex</button>
+        </form>
+      
+        <h3 style="margin-left: 45px;">Results:</h3>
+        <ul id="packages-list" style="margin-left: 10px; margin-top: 20px;">
+        </ul>
+      </div>
+  
+      <div id="upload-module" class="endpoint-div">
+        <h2 style="margin-right: 20px;">Upload Module</h2>
+        <form>
+            <label for="module-upload-file">Upload your module as a zip file</label>
+            <input type="file" id="module-upload-file" accept=".zip" class="input-file" required>
+            <label for="module-upload-name">Enter the name of your module</label>
+            <input type="text" id="module-upload-name" class="input-text" required>
+            <label for="module-upload-version">Enter the version of your module</label>
+            <input type="text" id="module-upload-version" class="input-text" required>
+            <button type="button" class="submit-button" onclick="submitUploadModule()">Upload Module</button>
+        </form>
+      </div>
+    
+      <div id="delete-module" class="endpoint-div">
+        <h2 style="margin-right: 20px;">Delete Module</h2>
+        <form>
+            <label>
+                <input type="radio" name="delete-by" value="name" checked> Delete by name
+            </label>
+            <label>
+                <input type="radio" name="delete-by" value="id"> Delete by ID
+            </label>
+            <br>
+            <label for="delete-module-input">Input name or ID:</label>
+            <input type="text" id="delete-module-input" class="input-text">
+            <button type="button" class="submit-button" onclick="submitDeleteModule()">Delete Module</button>
+        </form>
+      </div>
+
+      <div id="register-user" class="endpoint-div">
+        <h2 style="margin-right: 20px;">Register User</h2>
+        <form>
+            <label for="username-input">Enter a username:</label>
+            <input type="text" id="username-input" size="40" class="input-text" required>
+            <label for="password-input">Enter a password:</label>
+            <input type="password" id="password-input" size="40" class="input-text" required>
+            <span id="password-error" style="color: red; display: none;">Password must only contain alphanumeric characters.</span>
+            <label for="admin-input">Is the user an admin?</label>
+            <div class="radio-group">
+                <label class="radio-label">
+                    <input type="radio" name="admin-input" value="yes"> Yes
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="admin-input" value="no" checked> No
+                </label>
+            </div>
+            <button type="button" class="submit-button" onclick="submitRegisterUser()">Register User</button>
+        </form>
+      </div>
+
+      <div id="delete-account" class="endpoint-div">
+        <h2>Delete Account</h2>
+        <p>Are you sure you want to delete your account?</p>
+        <button type="button" class="submit-button yes" onclick="submitDeleteAccount(true)">Yes</button>
+      </div>
+
+  </main>
+  <script>
+
+      let packageSearchDiv = document.getElementById("package-search");
+      let uploadModuleDiv = document.getElementById("upload-module");
+      let deleteModuleDiv = document.getElementById("delete-module");
+      let registerModuleDiv = document.getElementById("register-user");
+      let regexDiv = document.getElementById("regex-search");
+      let deleteUser = document.getElementById("delete-account");
+      let allDivs = [packageSearchDiv, uploadModuleDiv, deleteModuleDiv, registerModuleDiv, regexDiv, deleteUser];
+      
+      function showDiv(div) {
+          div.style.display = "flex";
+      }
+      function hideDiv(div) {
+          div.style.display = "none";
+
+      }
+      function toggleDiv(index) {
+          let d = allDivs[index];
+          if(d.style.display === "none") {
+              allDivs.forEach(item => { item !== d ? hideDiv(item) : showDiv(item); });
+          } else {
+              hideDiv(d);
+          }
+      }
+
+      // init website
+      function init() {
+        // Hide all other divs
+        allDivs.forEach(item => hideDiv(item));
+      }
+      init();
+
+      async function submitRegisterUser() {
+        // Get the form fields
+        const usernameInput = document.getElementById('username-input');
+        const passwordInput = document.getElementById('password-input');
+        const adminInput = document.querySelector('input[name="admin-input"]:checked');
+
+        // Check that all fields have been populated
+        if (!usernameInput.value || !passwordInput.value || !adminInput.value) {
+          alert('Please fill in all fields.');
+          return;
+        }
+
+        // Call the API to check if the username is already taken
+        try {
+          const response = await fetch('/user/' + usernameInput.value, {
+            method: 'GET',
+            headers: {
+              'X-Authorization': localStorage.getItem('authToken')
+            }
+          });
+          if (response.status === 402) {
+            // Session needs to restart, prompt user to log out
+            alert('Your session needs to be restarted. You will be logged out now.');
+            // remove expired JWT authentication token from local storage
+            localStorage.removeItem('authToken');
+            // Redirect the user to the login page
+            window.location.href = "/";
+          } else if (response.status === 401) {
+            // *Server Error retrieving secret key*,  *Invalid token or Misformed token*, *Token not provided*
+            const data = await response.json();
+            const errorMessage = data.message;
+            renderErrorView(errorMessage, 'packages.html');
+          } else {
+            const isUsernameTaken = await response.json();
+            if (isUsernameTaken) {
+              // If the username is already taken, ask the user to reprompt for a new name
+              alert('Username is already taken. Please choose a different username.');
+              return;
+            } 
+
+            // If the username is not already taken, register the user
+            const userData = {
+              username: usernameInput.value,
+              password: passwordInput.value,
+              admin: (adminInput.value === 'yes'),
+            };
+
+            // Check if current user trying to register another user has admin privileges
+            const response_two = await fetch('/isAdmin', {
+              method: 'GET',
+              headers: {
+                'X-Authorization': localStorage.getItem('authToken'),
+              },
+            });
+
+            if (response_two.status === 403) {
+              // The user does not have admin privileges
+              alert("Insufficient permissions to register a new user");
+              return;
+            } else if (response_two.status === 401) {
+              // *Server Error retrieving secret key*,  *Invalid token or Misformed token*, *Token not provided*
+              const data = await response_two.json();
+              const errorMessage = data.message;
+              renderErrorView(errorMessage, 'packages.html');
+            } else if (response_two.status === 402) {
+              // Session needs to restart, prompt user to log out (TOKEN  EXPIRED or OVERUSED)
+              alert('Your session needs to be restarted. You will be logged out now.');
+              // remove expired JWT authentication token from local storage
+              localStorage.removeItem('authToken');
+              // Redirect the user to the login page
+              window.location.href = "/";
+            } else if (response_two.status === 200) { 
+              const registerResponse = await fetch('/new_user', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-Authorization': localStorage.getItem('authToken'),
+                },
+                body: JSON.stringify(userData)
+              });
+              if (registerResponse.status === 402) {
+                // Session needs to restart, prompt user to log out
+                // remove expired JWT authentication token from local storage
+                localStorage.removeItem('authToken');
+                // Redirect the user to the login page
+                window.location.href = "/";
+              } else if (registerResponse.status === 401) {
+                // *Server Error retrieving secret key*, 
+                return registerResponse.json().then(data => {
+                  const errorMessage = data.message;
+                  renderErrorView(errorMessage, 'packages.html');
+                });
+              } else if (registerResponse.status === 201) {
+                // continue registering that user
+                // Notify the user that the registration was successful
+                alert('User registered successfully!');
+                // Reset the form fields
+                usernameInput.value = '';
+                passwordInput.value = '';
+                adminInput.checked = false;
+              }
+            }
+          }
+        }
+        catch (error) {
+          console.error('Error:', error);
+        }
+      }
+    
+      function checkPasswordInput() {
+        if (!/^[a-zA-Z0-9]*$/.test(passwordInput.value)) {
+            passwordError.style.display = 'block';
+        } else {
+            passwordError.style.display = 'none';
+        }
+      }
+      const passwordInput = document.getElementById('password-input');
+      passwordInput.addEventListener('input', checkPasswordInput);
+
+      // package search
+      function submitPackageSearch() {
+          // get input(s)
+          // confirm input(s) are correct
+          // send request
+          // recv request
+          // display results
+      }
+
+      // upload module
+      function submitUploadModule() {
+          // get input(s)
+          // confirm input(s) are correct
+          // send request
+          // recv request
+          // display results
+      }
+
+      // delete module
+      function submitDeleteModule() {
+          let t = getSelectedDeleteType();
+          console.log(t);
+      }
+
+      function getSelectedDeleteType() {
+          let radios = document.getElementsByName('delete-by');
+          for (let i = 0; i < radios.length; i++) {
+              if (radios[i].checked) {
+                  return radios[i].value;
+              }
+          }
+          return "";
+      }
+
+      // executes the JavaScript within the <script> tags in the fetched error.html file.
+      function executeScripts(element) {
+        // Get all script tags in the element
+        const scripts = element.querySelectorAll('script');
+
+        // Execute each script in the element
+        for (let script of scripts) {
+          const scriptContent = script.innerHTML;
+          const newScript = document.createElement('script');
+          newScript.innerHTML = scriptContent;
+          document.body.appendChild(newScript);
+        }
+      }
+
+      async function renderErrorView(errorMessage, backUrl) {
+        const errorHtmlResponse = await fetch('/error.html');
+        const errorHtml = await errorHtmlResponse.text();
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(errorHtml, 'text/html');
+        doc.querySelector('#error-message').setAttribute('data-message', errorMessage);
+        doc.querySelector('#error-message').innerHTML = errorMessage;
+
+        // Set the value of the "data-url" attribute on the #back-url element
+        const backUrlElement = doc.querySelector('#back-url');
+        backUrlElement.setAttribute('data-url', backUrl);
+
+        // Replace the current document's head with the fetched head
+        document.head.innerHTML = doc.head.innerHTML;
+        document.body.innerHTML = doc.documentElement.innerHTML;
+        // Execute scripts in the fetched error.html
+        executeScripts(doc);
+      }
+
+      function submitRegexSearch() {
+        let regex = document.getElementById('regex-input').value.trim();
+
+        // check if regex was provided
+        if (regex === '') {
+          alert('Please enter a regex.');
+          return;
+        }
+
+        // call the API endpoint
+        fetch('/package/byRegEx', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Authorization': localStorage.getItem('authToken')
+          },
+          body: JSON.stringify({"RegEx": regex})
+        })
+        .then(async (response) => {
+          if (response.status === 402) {
+            // Session needs to restart, prompt user to log out
+            alert('Your session needs to be restarted. You will be logged out now.');
+            // remove expired JWT authentication token from local storage
+            localStorage.removeItem('authToken');
+            // Redirect the user to the login page
+            window.location.href = "/";
+          } else if (!response.ok) {
+            const data = await response.json();
+            const errorMessage = data.message;
+            renderErrorView(errorMessage, 'packages.html');
+          } else {
+            const packages = await response.json();
+            const packagesList = document.getElementById('packages-list');
+            packagesList.innerHTML = '';
+
+            packages.forEach(pkg => {
+              const li = document.createElement('li');
+              li.textContent = `Name: ${pkg.Name} –– Version: (${pkg.Version})`;
+              packagesList.appendChild(li);
+            });
+          }
+        })
+        .catch(err => console.error(err));
+      }
+
+      function logOut() {
+        // Redirect the user to the login page
+        window.location.href = "/";
+      }
+
+      function submitDeleteAccount(confirmed) {
+        if (confirmed) {
+          // Call API to delete user account
+          fetch('/user', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Authorization': localStorage.getItem('authToken')
+            }
+          })
+          .then(registerResponse => {
+            if (registerResponse.status === 402) {
+              // Session needs to restart, prompt user to log out
+              alert('Your session needs to be restarted. You will be logged out now.');
+              // remove expired JWT authentication token from local storage
+              localStorage.removeItem('authToken');
+              // Redirect the user to the login page
+              window.location.href = "/";
+            }
+            if (registerResponse.ok) {
+              // Handle success response
+              alert('Account successfully deleted.');
+              localStorage.removeItem('authToken');
+              window.location.href = '/';
+            }
+          })
+        }
+      }
+  </script>
 </html>
