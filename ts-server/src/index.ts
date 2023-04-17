@@ -1,6 +1,7 @@
-import express, { Request, Response, Router } from 'express';
+import express, { Request, Response } from 'express';
 import path from 'path';
 import * as ffi from 'ffi-napi';
+
 // npm install -g ts-node
 // npm install --save ffi-napi @types/ffi-napi
 import {
@@ -16,16 +17,20 @@ import {
     createRepoData,
     downloadRepo
 } from "./datastore/modules";
-import { addUser , findUserByName, userLogin } from "./datastore/users";
+//import { addUser } from "./datastore/users";
 import {deleteEntity, doesIdExistInKind, resetKind} from "./datastore/datastore";
 import {datastore, MODULE_KIND, NAMESPACE} from "./datastore/ds_config";
 import { MODULE_STORAGE_BUCKET, storage } from "./cloud-storage/cs_config";
 import { uploadModuleToCloudStorage, getModuleAsBase64FromCloudStorage, deleteModuleFromCloudStorage, resetCloudStorage, ZIP_FILETYPE, TXT_FILETYPE } from "./cloud-storage/cloud-storage";
 import {base64ToFile, fileToBase64} from "./util";
-
+import { addUser , findUserByName, userLogin, accessSecret, updateApiCounter, deleteUser} from "./datastore/users"
 const fs = require('fs');
 const { execFile } = require('child_process');
 
+// Imports the npm package
+import dotenv from "dotenv"; 
+// Loads environment variables into process.env
+dotenv.config(); 
 
 /* * * * * * * * * * *
  * global variables  *
@@ -38,17 +43,17 @@ const port = 8080;
 
 
 app.use(express.json());
-const bodyParser = require('body-parser')
-app.use(bodyParser.raw({inflate:true, limit: '100kb', type: 'text/plain'}));
+app.use(express.urlencoded({ extended: false }));
 
-
+// Serve static files from the "public" directory
+app.use(express.static('assets/html'));
 
 /* * * * * * * * * * * *
  * Rest API endpoints  *
  * * * * * * * * * * * */
 
 // Fetch directory of packages
-app.post('/packages', async (req, res) => {
+app.post('/packages', authenticateJWT, async (req, res) => {
     res.send("packages endpoint");
 
     // Overview:
@@ -85,21 +90,20 @@ app.post('/packages', async (req, res) => {
 
     let queries = req.body.PackageQuery;
     let offset = req.query.offset;
+
     console.log(`Got /package post request`);
 
     // validate post request
     if (typeof queries === undefined || queries.length === 0 || offset === undefined) {
         // invalid request
-
     } else {
         // there are 1 more more queries and an offset is given. The request is valid.
-        // do db actions
+         // do db actions
 
-        // iterate thru the list of queries.
-        // for each query, get its result
-        // store all results into a list
-        // return the list
-
+         // iterate thru the list of queries.
+         // for each query, get its result
+         // store all results into a list
+         // return the list
     }
 
 
@@ -108,7 +112,7 @@ app.post('/packages', async (req, res) => {
 });
 
 // Reset to default state
-app.delete('/reset', async (req, res) => {
+app.delete('/reset', authenticateJWT, async (req, res) => {
     console.log("reset endpoint");
 
     // get auth from header
@@ -131,7 +135,7 @@ app.delete('/reset', async (req, res) => {
 
 // Upload endpoint and module ingestion
 // (call logPackageAction) ACTION: CREATE 
-app.post('/package', async (req, res) => {
+app.post('/package', authenticateJWT, async (req, res) => {
     res.send("package endpoint");
 
     // get time
@@ -210,7 +214,7 @@ app.post('/package', async (req, res) => {
 
 // Download Endpoint
 // (call logPackageAction) ACTION: DOWNLOAD
-app.get('/package/:id', async (req, res) => {
+app.get('/package/:id', authenticateJWT, async (req, res) => {
     console.log("package/" + req.params.id + " endpoint");
 
     let id = Number(req.params.id);
@@ -238,11 +242,9 @@ app.get('/package/:id', async (req, res) => {
     // package DNE
 });
 
-
-
 // Update Endpoint
 // (call logPackageAction), ACTION: UPDATE
-app.put('/package/:id', async (req, res) => {
+app.put('/package/:id', authenticateJWT, async (req, res) => {
     res.send("package/" + req.params.id + " endpoint");
 
     // get time
@@ -269,8 +271,6 @@ app.put('/package/:id', async (req, res) => {
     const packageID = req.body["metadata"]["ID"];
 
     // get auth from header
-    
-
     let data = createRepoData(packageName, packageVersion, currentTime.toString(), packageURL, undefined)
 
     try {
@@ -305,7 +305,7 @@ app.put('/package/:id', async (req, res) => {
 });
 
 // Delete endpoint
-app.delete('/package/:id', async (req, res) => {
+app.delete('/package/:id', authenticateJWT, async (req, res) => {
     res.send("package/" + req.params.id + " endpoint");
 
     // get package ID from path
@@ -321,7 +321,7 @@ app.delete('/package/:id', async (req, res) => {
 });
 
 // (call logPackageAction), ACTION: RATE
-app.get('/package/:id/rate', async (req, res) => {
+app.get('/package/:id/rate', authenticateJWT, async (req, res) => {
     // Extract package ID and authentication token from request params and headers
     const packageID = Number(req.params.id);
 
@@ -411,7 +411,7 @@ function nameConv(name: string): boolean {
   return true;
 }
 // Return the history of this package (all versions).
-app.get('/package/byName/:name', async (req, res) => {
+app.get('/package/byName/:name', authenticateJWT, async (req, res) => {
     try {
       // get package name from header
       const packageName = req.params.name;
@@ -448,7 +448,7 @@ app.get('/package/byName/:name', async (req, res) => {
 });
 
 // Deletes all versions of a package from the datastore with the given name.
-app.delete('/package/byName/:name', async (req, res) => {
+app.delete('/package/byName/:name', authenticateJWT, async (req, res) => {
     // get package name from header
     const packageName = req.params.name;
     
@@ -490,13 +490,19 @@ app.delete('/package/byName/:name', async (req, res) => {
     }
 });
 
+// We use the authenticateJWT middleware function to protect routes that require 
+// authentication, like the /package/byRegEx endpoint
 // Get any packages fitting the regular expression
-app.post('/package/byRegEx', async (req, res) => {
-    // req.body is a Buffer object
-    const bufferData = req.body;
-    const regex = bufferData.toString();
-    if (!regex) {
-        return res.status(400).json({ message: 'Request body must not be empty.' });
+app.post('/package/byRegEx',authenticateJWT, async (req, res) => {
+
+    // Check if the request has a JSON body
+    if (Object.keys(req.body).length === 0) {
+        return res.status(400).json({ message: 'Malformed JSON: Request must have a JSON body.' });
+    }
+    // Check if the 'regex' field is present in the request body
+    const regex = req.body["RegEx"];
+    if (!regex) { 
+        return res.status(400).json({ message: 'Malformed JSON: Request must include a regex field.' });
     }
     
     // Retrieve all packages from the datastore
@@ -517,8 +523,6 @@ app.post('/package/byRegEx', async (req, res) => {
         };
     });
 
-    //console.log(response)
-
     // Return the search results
     if (response.length > 0) {
         // 200: Return a list of packages.
@@ -526,29 +530,127 @@ app.post('/package/byRegEx', async (req, res) => {
     } else {
         // 404 Error: No package found under this regex.
         return res.status(404).json({ message: 'No packages found under this regex.' });
-    }
+    };
+
 });
 
-app.put('/authenticate', async (req, res) => {
-    // get AuthenticationRequest schema
+//1. Install the jsonwebtoken library: npm install jsonwebtoken
+const jwt = require("jsonwebtoken");
+
+// 2. Create a middleware function that checks for the JWT token in the Authorization header 
+// of incoming requests and verifies its authenticity using the jsonwebtoken library:
+async function authenticateJWT(req: any, res: any, next: any) {
+  // Retrieve the value of the 'X-Authorization' header from the request headers
+  const authHeader = req.headers['x-authorization'];
+  // console.log(req.headers['x-authorization'])
+  if (authHeader) {
+    const token = authHeader.split(' ')[1];
+    // Retrieve the JWT secret key 
+    let jwtSecret = "apple";//await accessSecret();
+    if (!jwtSecret) {
+        return res.status(401).json({message: 'Access Failed: Server Error retrieving secret key' });}
+    try {
+        const decodedToken = jwt.verify(token, jwtSecret);
+        console.log(decodedToken)
+
+        // Decrement API counter in database by one every time an API endpoint is called
+        const apiCounterError = await updateApiCounter(decodedToken.id);
+        if (apiCounterError) {
+            throw new Error('API counter went below 0');
+        }
+        // Admin boolean of current user will be passed to the next middleware function 
+        req.admin = decodedToken.admin; 
+        next();
+    } catch (err: any) {
+        // If the token is expired or used more than 1000 times
+        if (err instanceof jwt.TokenExpiredError || (typeof err.message === 'string' && err.message === 'API counter went below 0')) {
+            // Generate a new token by asking the user to log back in!
+            return res.status(402).json({message: 'Access Failed: Token expired for current user. Please log in again' });
+        }
+        // If the token seems to have an invalid signature (JsonWebTokenError) *someone tempered with it* or other errors
+        return res.status(401).json({message: 'Access Failed: Invalid token or Misformed token' });
+    }
+  } else {
+    return res.status(401).json({ message: 'Access Failed: Token not provided' });
+  }
+};
+
+// Checks if user has admin priviledges
+async function isAdmin(req: any, res: any, next: any) {
+    console.log(req.admin)
+    if (req.admin === true) {
+      next();
+    } else {
+        return res.status(403).json({ message: "Insufficient permissions." });
+    }
+}
+
+app.get('/isAdmin', authenticateJWT, isAdmin, async (req, res) => {
+    return res.status(200).json({ message: "User is an admin." });
+});
+
+
+// When the user first logs-in
+async function authentication(req: any, res: any) {
+    const { User, Secret } = req.body;
+
+    // Check that the User and Secret objects are present in the request body
+    if (!User || !Secret) {
+        return res.status(400).json({ message: 'Request body must contain User and Secret objects.' });
+    }
+    
+    // Check that the User object contains the required properties
+    if (!User["name"] || typeof User["name"] !== 'string' || typeof User["isAdmin"] !== 'boolean') {
+        return res.status(400).json({ message: 'Username field is empty.' });
+    }
+    
+    // Check that the Secret object contains the required properties
+    if (!Secret["password"] || typeof Secret["password"] !== 'string') {
+        return res.status(400).json({ message: 'Password field is empty' });
+    }
+    
     const username = req.body["User"]["name"];
     const isadmin = req.body["User"]["isAdmin"];
     const password = req.body["Secret"]["password"];
-    // Sanitate this mf ^
 
-    if(username === undefined || password === undefined) {
-        return res.status(401).json({ message: 'Invalid credentials' });
+    const sanitzed_password = sanitizeInput(password)
+    let authToken =  await userLogin(username, sanitzed_password);
+    if (authToken === "") {
+        return res.status(401).json({message: 'Username or Password is invalid!'});
+    } else {
+        return res.status(200).json({message: 'bearer ' + authToken});
     }
-    let authToken = await userLogin(username, password);
-    if(authToken === "") {
-        return res.status(401).json({ message: 'Invalid credentials' });
-    }
+}
+app.put('/authenticate', authentication)
 
-    return res.status(200).json({ token: authToken });
 
-    //return res.status(501).json({ message: 'This system does not support authentication' });
-});
 
+/*
+    The following characters are being escaped:
+
+    Single quote (')
+    Double quote (")
+    Semicolon (;)
+    Right single quotation mark (’)
+    Right double quotation mark (”)
+    Exclamation mark (!)
+    Underscore (_)
+    Plus sign (+)
+    At symbol (@)
+    Asterisk (*)
+    Ampersand (&)
+    Hash symbol (#)
+    Backslash (\)
+    Hyphen (-)
+*/
+function sanitizeInput(input: string) {
+    // Define a regular expression to escape any potentially dangerous characters
+    const injectionRegex = /['";’”!_+@*&#\\-]/g;
+    // Replace any matches with the matched character preceded by a backslash
+    var escapedInput = input.replace(injectionRegex, '\\$&');
+    return escapedInput;
+}
+      
 /**
  * Logs a package action in the repository for the given user and package.
  *
@@ -587,20 +689,61 @@ async function logPackageAction(userName: string, isAdmin: boolean, packageRepo:
     await updateRepoPackageAction(packageRepo.ID, packageAction);
 }
 
+
+app.get('/user/:name', authenticateJWT, async (req, res) => {
+    // name of user we want to query
+    const name = req.params.name;
+    const results = await findUserByName(name);
+    // return a boolean value based on the length of the results
+    return res.send(results.length > 0);
+});
+
+app.post('/new_user', authenticateJWT, async (req, res) => {
+    // name of user we want to register
+    const username = req.body["username"];
+    const password = req.body["password"];
+    const is_admin = req.body["admin"];
+    const key = await addUser(username, password, is_admin);
+    return res.status(201).json({ message: "User added successfully." });
+});
+
+// Reset to default state
+app.delete('/user', async (req, res) => {
+    // Define the JWT secret (this should be stored securely and not hard-coded)
+    let jwtSecret = "apple"
+
+    // Retrieve the value of the 'X-Authorization' header from the request headers
+    const authHeader = req.headers['x-authorization'];
+    if (authHeader) {
+        const authToken = (authHeader as string).split(' ')[1];
+        
+        // Decode the JWT token and extract the payload
+        const decodedToken = jwt.verify(authToken, jwtSecret);
+        // Find the user_id by decoding the JWT_TOKEN
+        const userId = decodedToken.id;
+        await deleteUser(userId);
+        res.status(200);
+    }
+});
+
 /* * * * * * * * * * * * * * *
  * Website Serving endpoints *
  * * * * * * * * * * * * * * */
 
-app.get("/packages", async (req, res) => {
-    // serve webpage
-    console.log("hello world");
-    res.sendFile(path.join(__dirname, HTML_PATH + "/packages.html"));
+app.get("/packages", authenticateJWT, async (req, res) => {
+    console.log("Redirecting user to packages.html")
+    // server webpage (If successfully logged in, redirect to packages.html)
+    res.status(200).sendFile(path.join(__dirname, HTML_PATH + "/packages.html"));
 });
 
-app.get('/', async (req, res) => {
-    res.sendFile(path.join(__dirname, HTML_PATH + "/index.html"));
-    // res.send("index!");
+app.put('/', async (req, res) => {
+    await addUser('max', '12345', true);
+    //res.sendFile(path.join(__dirname, HTML_PATH + "/index.html"));
+});
 
+
+app.get('/', async (req, res) => {
+    //res.sendFile(path.join(__dirname, HTML_PATH + "/index.html"));
 });
 
 app.listen(port, () => {

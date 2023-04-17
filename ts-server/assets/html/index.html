@@ -1,138 +1,235 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Modules Registry</title>
-        <style>
-            .h2 {
-                margin: 1%;
-            }
-            .p {
-                margin: 1%;
-            }
-            .endpoint-div {
-                display: flex;
-                flex-direction: column;
-            }
-            .submit-button {
-                max-width: 150px;
-            }
-            .input-text {
-                max-width: 200px;
-            }
-            .input-file {
-                max-width: 250px;
-            }
-        </style>
-    </head>
-    <body>
-        <h2>Modules Registry</h2>
-        <div>
-            <button onclick="toggleDiv(0)">Package Search</button>
-            <button onclick="toggleDiv(1)">Upload Module</button>
-            <button onclick="toggleDiv(2)">Delete Module</button>
-        </div>
-        <div id="package-search" class="endpoint-div">
-            <h3>Package Search</h3>
-            <p>
-                Enter search queries in the format: name,version<br>
-                With a new line separating each query<br>
-                Leave blank to query all packages
-            </p>
-            <textarea id="package-search-input" cols="3" rows="5"></textarea>
-            <button onclick="submitPackageSearch()" class="submit-button">Submit Search</button>
-        </div>
-        <div id="upload-module" class="endpoint-div">
-            <h3>Upload Module</h3>
-            <p>
-                Upload your module as a zip file<br>
-                Enter the name of your module<br>
-                Enter the version of your module
-            </p>
-            <input type="file" accept=".zip" class="input-file">
-            <label>Module Name:</label>
-            <input type="text" id="module-upload-name" class="input-text">
-            <label>Module Version:</label>
-            <input type="text" id="module-upload-button" class="input-text">
-            <button onclick="submitUploadModule()" class="submit-button">Upload Module</button>
-        </div>
-        <div id="delete-module" class="endpoint-div">
-            <h2>Delete Module</h2>
-            <p>
-                Select the way you would like to choose a module to be deleted.<br>
-                Then fill in the input box with the name or id depending on which one you have selected.
-            </p>
-            <label>
-                <input type="radio" name="delete-by" value="name" checked> name
-            </label>
-            <label>
-                <input type="radio" name="delete-by" value="id"> id
-            </label>
-            <label>Input name or id:</label>
-            <input type="text" id="delete-module-input" class="input-text">
+  <head>
+    <meta charset="UTF-8">
+    <title>Login Page</title>
+    <style>
 
-            <button onclick="submitDeleteModule()" class="submit-button">Delete Module</button>
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to right, #e0eafc, #cfdef3);
+    }
+
+    .login-box {
+      width: 400px;
+      height: 450px;
+      background: #fff;
+      color: #333;
+      top: 50%;
+      left: 50%;
+      position: absolute;
+      transform: translate(-50%, -50%);
+      box-sizing: border-box;
+      padding: 70px 30px;
+      border-radius: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      padding: 0 0 20px;
+      text-align: center;
+      font-size: 36px;
+    }
+
+    .form-input {
+      margin-bottom: 20px;
+    }
+
+    .form-input label {
+      margin: 0;
+      padding: 0;
+      font-weight: bold;
+      display: block;
+    }
+
+    .form-input .form-box {
+      width: 100%;
+      margin-top: 10px;
+      border: none;
+      border-radius: 5px;
+      background: #f2f2f2;
+      outline: none;
+      height: 40px;
+      font-size: 16px;
+      padding: 5px;
+    }
+
+    .form-input input[type="submit"] {
+      border: none;
+      outline: none;
+      height: 40px;
+      background: #333;
+      color: #fff;
+      font-size: 18px;
+      border-radius: 20px;
+    }
+
+    .error-box {
+      margin-top: 20px;
+      margin-bottom: 20px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .error-box.active {
+      border: 1px solid #f00;
+      box-shadow: 0 0 10px #f00;
+      display: block;
+    }
+
+    #errorCode, #errorMessage {
+      margin: 0;
+      padding: 0;
+      font-weight: bold;
+    }
+
+    </style>
+  </head>
+  <body>
+    <div class="login-box">
+      <h1>Login</h1>
+      <form id="loginForm">
+        <div class="form-input">
+          <label for="username">Username:</label>
+          <input type="text" name="username" id="username" class="form-box">
         </div>
-    </body>
+        <div class="form-input">
+          <label for="password">Password:</label>
+          <input type="password" name="password" id="password" class="form-box">
+        </div>
+        <div class="error-box">
+          <div id="errorMessage"></div>
+          <div id="errorCode"></div>
+        </div>
+        <input type="submit" value="Login">
+      </form>
+    </div>
     <script>
-        let packageSearchDiv = document.getElementById("package-search");
-        let uploadModuleDiv = document.getElementById("upload-module");
-        let deleteModuleDiv = document.getElementById("delete-module");
-        let allDivs = [packageSearchDiv, uploadModuleDiv, deleteModuleDiv];
+      loginForm.onsubmit = (event) => {
+      event.preventDefault(); // prevent default form submission behavior
 
-        function showDiv(div) {
-            div.style.display = "flex";
-        }
-        function hideDiv(div) {
-            div.style.display = "none";
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const url = '/authenticate'; // the URL to the API endpoint
+      const errorBox = document.querySelector('.error-box');
+      
+      // Construct the request body as a JSON object
+      const requestBody = {
+          User: {
+              name: username,
+              isAdmin: false
+          },
+          Secret: {
+              password: password
+          }
+      };
 
-        }
-        function toggleDiv(index) {
-            console.log(allDivs)
-            let d = allDivs[index];
-            if(d.style.display === "none") {
-                allDivs.forEach(item => { item !== d ? hideDiv(item) : showDiv(item); });
+      const options = {
+          method: 'PUT',
+          headers: {
+              'Content-Type': 'application/json' // set the Content-Type header to 'application/json'
+          },
+          body: JSON.stringify(requestBody), // convert the JavaScript object to a JSON string
+      };
+
+    async function renderErrorView(errorMessage, backUrl) {
+      const errorHtmlResponse = await fetch('/error.html');
+      const errorHtml = await errorHtmlResponse.text();
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(errorHtml, 'text/html');
+      doc.querySelector('#error-message').setAttribute('data-message', errorMessage);
+      doc.querySelector('#error-message').innerHTML = errorMessage;
+
+      // Set the value of the "data-url" attribute on the #back-url element
+      const backUrlElement = doc.querySelector('#back-url');
+      backUrlElement.setAttribute('data-url', backUrl);
+
+      // Replace the current document's head with the fetched head
+      document.head.innerHTML = doc.head.innerHTML;
+      document.body.innerHTML = doc.documentElement.innerHTML;
+      // Execute scripts in the fetched error.html
+      executeScripts(doc);
+    }
+
+    async function renderPackagesView() {
+      const packagesHtmlResponse = await fetch('/packages.html');
+      const packagesHtml = await packagesHtmlResponse.text();
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(packagesHtml, 'text/html');
+
+      // Replace the current document's head with the fetched head
+      document.head.innerHTML = doc.head.innerHTML;
+
+      document.body.innerHTML = doc.documentElement.innerHTML;
+      // Execute scripts in the fetched packages.html
+      executeScripts(doc);
+    }
+
+    // executes the JavaScript within the <script> tags in the fetched error.html file.
+    function executeScripts(element) {
+      // Get all script tags in the element
+      const scripts = element.querySelectorAll('script');
+
+      // Execute each script in the element
+      for (let script of scripts) {
+        const scriptContent = script.innerHTML;
+        const newScript = document.createElement('script');
+        newScript.innerHTML = scriptContent;
+        document.body.appendChild(newScript);
+      }
+    }
+
+
+    fetch(url, options) // send the PUT request with the form data in the request body
+      .then(response => response.json().then(data => ({response, data})))
+      .then(({response, data}) => {
+        if (data.message && response.status === 401) {
+          errorMessage.innerText = "HTTP response status code: " + response.status + "\n" + data.message;
+          errorBox.classList.add('active');
+        } else {
+          // Set the authentication token in local storage
+          localStorage.setItem('authToken', data.message);
+
+          // Get the authentication token from local storage
+          const authToken = localStorage.getItem('authToken');
+
+          // Set up the headers for the fetch request
+          const headers = {
+            'X-Authorization': authToken
+          };
+          
+          fetch('/packages', {
+            method: 'GET',
+            headers: headers
+          })
+          
+          .then(async (response) => {
+            if (!response.ok) {
+              const data = await response.json();
+              const errorMessage = data.message;
+              renderErrorView(errorMessage, '/');
             } else {
-                hideDiv(d);
-            }
+              // Handle successful response
+              renderPackagesView();
+            };
+          })
         }
-        // package search
-        function submitPackageSearch() {
-            // get input(s)
-            // confirm input(s) are correct
-            // send request
-            // recv request
-            // display results
+      })
+      .catch(error => {
+        if (error.message) {
+          document.getElementById('errorMessage').innerText =  error.message
+          errorBox.classList.add('active');
         }
+        else {
+          document.getElementById('errorMessage').innerText =  error
+          errorBox.classList.add('active');
+        }
+      });
 
-        // upload module
-        function submitUploadModule() {
-            // get input(s)
-            // confirm input(s) are correct
-            // send request
-            // recv request
-            // display results
-        }
 
-        // delete module
-        function submitDeleteModule() {
-            let t = getSelectedDeleteType();
-            console.log(t);
-        }
-
-        function getSelectedDeleteType() {
-            let radios = document.getElementsByName('delete-by');
-            for (let i = 0; i < radios.length; i++) {
-                if (radios[i].checked) {
-                    return radios[i].value;
-                }
-            }
-            return "";
-        }
-
-        // init website
-        function init() {
-            allDivs.forEach(item => hideDiv(item));
-        }
-        init();
-    </script>
+  };
+  </script>
+  </body>
 </html>

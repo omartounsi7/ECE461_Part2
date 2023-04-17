@@ -1,6 +1,6 @@
 import { Key } from '@google-cloud/datastore';
 
-import {datastore, MODULE_KIND, NAMESPACE} from "./ds_config";
+import {datastore, MODULE_KIND, NAMESPACE, USER_KIND} from "./ds_config";
 
 /**
  * Creates and returns a key object in the correct format for
@@ -16,15 +16,30 @@ import {datastore, MODULE_KIND, NAMESPACE} from "./ds_config";
 function getKey(namespace: string, kind: string, id?:number): Key {
     let path = [];
     if (typeof id === undefined) {
-        path = [kind]
+        path = [MODULE_KIND]
     } else {
-        path = [kind, id];
+        path = [MODULE_KIND, id];
     }
     return datastore.key({
         namespace: NAMESPACE,
         path: path
     });
 }
+
+
+function getUserKey(namespace: string, kind: string, id?:number): Key {
+    let path = [];
+    if (typeof id === undefined) {
+        path = [USER_KIND]
+    } else {
+        path = [USER_KIND, id];
+    }
+    return datastore.key({
+        namespace: NAMESPACE,
+        path: path
+    });
+}
+
 
 
 /**
@@ -57,9 +72,14 @@ async function doesIdExistInKind(kind: string, id: number): Promise<boolean> {
  * undefined if no entity was deleted.
  */
 async function deleteEntity(kind: string, entityID: number) {
-    let key = getKey(NAMESPACE, kind, entityID);
+    let key;
+    if (kind === "modules") {
+        key = getKey(NAMESPACE, kind, entityID);
+    } else {
+        key = getUserKey(NAMESPACE, kind, entityID);
+    }
+    
     let entity = datastore.get(key);
-
     await datastore.delete(key);
     return entity;
 }
@@ -82,7 +102,7 @@ async function resetKind(kind: string) {
     await datastore.delete(keys);
 }
 
-export { getKey, deleteEntity, resetKind, doesIdExistInKind };
+export { getKey, deleteEntity, getUserKey, resetKind, doesIdExistInKind };
 
 
 

@@ -6,24 +6,25 @@ import {datastore, MODULE_KIND, NAMESPACE, USER_KIND} from "./ds_config";
 import {createSecretKey} from "crypto";
 import {getModuleKey} from "./modules";
 import {Key} from "@google-cloud/datastore";
-import {getKey} from "./datastore";
+import {getKey, getUserKey, deleteEntity} from "./datastore";
 
 
-function getUserKey(id?: number): Key {
-    return getKey(NAMESPACE, USER_KIND, id);
+/**
+ * Creates data for a user.
+ * @return
+ * Returns user data which can be passed in to other
+ * functions to update or create a user in gcp datastore.
+ */
+
+function getUser1Key(id?: number): Key {
+    return getUserKey(NAMESPACE, USER_KIND, id);
 }
 
-async function addUser(name: string, password: string) {
-    const ds_key = datastore.key({
-        namespace: NAMESPACE,
-        path: [USER_KIND]
-    });
-
+async function addUser(name: string, password: string, is_admin: boolean) {
     // hash password here!
-    let hashedPassword = await bcrypt.hash(password, 1);
-
+    let hashedPassword = await bcrypt.hash(password, 3);
     const user = {
-        key: ds_key,
+        key: getUser1Key(),
         data: [
             {
                 name: "name",
@@ -33,12 +34,28 @@ async function addUser(name: string, password: string) {
                 name: "password",
                 value: hashedPassword,
                 excludeFromIndexes: true
+            },
+            {
+                name: "is_admin",
+                value: is_admin
+            },
+            {
+                name: "api_counter",
+                value: 1000
             }
         ]
     };
 
-    await datastore.save(user);
+    await datastore.save(user)
+    console.log(getUser1Key())
+    return getUser1Key();
 }
+
+// removes/deletes user from our user database
+async function deleteUser(repoID: number): Promise<[{[key: string]: any}]> {
+    return await deleteEntity(USER_KIND, repoID);
+}
+
 
 async function findUserByName(name: string) {
     const query = datastore
@@ -59,15 +76,30 @@ async function userLogin(username: string, password: string): Promise<string> {
         let realHashedPassword = userInfo.password;
         let match = await bcrypt.compare(password, realHashedPassword);
         if(match) {
+            // Checks if user already has a JWT authentication token in the database
+            //if (userInfo.authToken) {
+            //    return userInfo.authToken;
+            // }
             // create auth token for user and replace the old one
-            let secretKey = await accessSecret();
+            let secretKey = "apple"; //await accessSecret();
             if (secretKey === undefined) {
                 console.log("failed to get secret key");
                 return "";
             }
-            let authToken = jwt.sign({userId: userInfo.name }, secretKey);
+            console.log(userInfo.name)
+            console.log(userInfo.is_admin)
+            console.log(Number(userKey.id))
+
+            const payload = {
+                "name": userInfo.name,
+                "admin": userInfo.is_admin,
+                "id": Number(userKey.id)
+              };
+            
+            // JWT TOKEN WILL EXPIRE IN 10 HOURS
+            let authToken = jwt.sign(payload, secretKey,  { expiresIn: '10h' });
             // store auth token in datastore
-            await updateAuthToken(Number(userKey.id), authToken);
+            await createAuthToken(Number(userKey.id), authToken);
             return authToken;
         } else {
             console.log("incorrect password");
@@ -99,18 +131,44 @@ async function accessSecret() {
     return token;
 }
 
-async function updateAuthToken(id: number, authToken: string) {
+async function createAuthToken(id: number, authToken: string) {
     // Get the datastore key for the repository ID
-    let key = getUserKey(id);
+    const key = getUser1Key(id);
     // Get the entity associated with the datastore key
     const [entity] = await datastore.get(key);
+    console.log(entity)
     // Merge the new data with the existing data of the entity
     Object.assign(entity, {authToken: authToken});
     await datastore.save({
         key: key,
         data: entity
     });
+
 }
 
+async function updateApiCounter(userId: number): Promise<boolean> {
+    // Get the datastore key for the user ID
+    const key = getUser1Key(userId);
+    // Get the user entity from the Datastore
+    const [user] = await datastore.get(key);
+    
+    // Get the existing api counter value
+    const api_count = user["api_counter"];
+    const newApiCounter = api_count - 1;
+
+    // Update the api_counter field of the entity with the new count
+    user["api_counter"] = newApiCounter;
+
+    // Update the apiCounter field for the user entity with the new value
+    await datastore.save({
+      key: key,
+      data: user,
+    });
+  
+    // Return a boolean indicating whether the apiCounter value is negative or not
+    return newApiCounter < 0;
+}
+
+
 // functions to be used by the API endpoints
-export { addUser , findUserByName, userLogin };
+export { addUser , findUserByName, userLogin, accessSecret, updateApiCounter, deleteUser};

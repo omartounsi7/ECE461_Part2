@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Error</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(to right, #e0eafc, #cfdef3);
+      }
+
+      .error-box {
+        width: 400px;
+        height: 200px;
+        background: #fff;
+        color: #333;
+        top: 50%;
+        left: 50%;
+        position: absolute;
+        transform: translate(-50%, -50%);
+        box-sizing: border-box;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+      }
+
+      h1 {
+        margin: 0;
+        padding: 0;
+        font-size: 36px;
+        margin-bottom: 20px;
+      }
+
+      p {
+        margin: 0;
+        padding: 0;
+        font-size: 18px;
+      }
+
+      button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background: #333;
+        color: #fff;
+        font-size: 18px;
+        border-radius: 20px;
+        border: none;
+        outline: none;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="error-box">
+      <h1>Error</h1>
+      <p id="error-message" data-message=""></p>
+      <button onclick="goBack()">Go Back</button>
+      <div id="back-url" data-url=""></div>
+    </div>
+
+    <script>
+      function goBack() {
+        const backUrl = document.querySelector('#back-url').getAttribute('data-url');
+        window.location.href = backUrl;
+      }
+    </script>
+  </body>
+</html>
