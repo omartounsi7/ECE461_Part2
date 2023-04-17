@@ -722,7 +722,7 @@ app.delete('/user', async (req, res) => {
         // Find the user_id by decoding the JWT_TOKEN
         const userId = decodedToken.id;
         await deleteUser(userId);
-        res.status(200);
+        return res.status(200).json({message: "User deleted successfully"});
     }
 });
 

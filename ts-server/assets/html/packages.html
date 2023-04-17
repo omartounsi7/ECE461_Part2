@@ -463,18 +463,18 @@
         window.location.href = "/";
       }
 
-      function submitDeleteAccount(confirmed) {
+      async function submitDeleteAccount(confirmed) {
         if (confirmed) {
-          // Call API to delete user account
-          fetch('/user', {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Authorization': localStorage.getItem('authToken')
-            }
-          })
-          .then(registerResponse => {
-            if (registerResponse.status === 402) {
+          try {
+            const deleteResponse = await fetch('/user', {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Authorization': localStorage.getItem('authToken')
+              }
+            });
+
+            if (deleteResponse.status === 402) {
               // Session needs to restart, prompt user to log out
               alert('Your session needs to be restarted. You will be logged out now.');
               // remove expired JWT authentication token from local storage
@@ -482,13 +482,17 @@
               // Redirect the user to the login page
               window.location.href = "/";
             }
-            if (registerResponse.ok) {
+
+            if (deleteResponse.ok) {
               // Handle success response
               alert('Account successfully deleted.');
               localStorage.removeItem('authToken');
               window.location.href = '/';
             }
-          })
+          } catch (error) {
+            // Handle errors if any
+            console.error('Error occurred while deleting account: ', error);
+          }
         }
       }
   </script>
