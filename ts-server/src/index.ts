@@ -534,6 +534,22 @@ app.post('/package/byRegEx',authenticateJWT, async (req, res) => {
 
 });
 
+// Fetch uploader name and upload date
+app.get('/package/:id/upload_info',authenticateJWT, async (req, res) => {
+  // Extract package ID and authentication token from request params and headers
+  const packageID = Number(req.params.id);
+
+  const result = await doesIdExistInKind(MODULE_KIND, packageID)
+  if(!result){
+      // 404: Package does not exist.
+      res.status(404).send({error: 'Package does not exist'});
+      return;
+  }
+  // Get the package information by id
+  const packageRepo = await downloadRepo(packageID);
+  res.send({"name": packageRepo.name, "date": packageRepo["creation-date"]});
+});
+
 //1. Install the jsonwebtoken library: npm install jsonwebtoken
 const jwt = require("jsonwebtoken");
 
