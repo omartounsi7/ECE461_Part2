@@ -21,7 +21,8 @@
     "express": "^4.18.2",
     "ffi-napi": "^4.0.3",
     "jsonwebtoken": "^9.0.0",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "requestify": "^0.2.5"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
