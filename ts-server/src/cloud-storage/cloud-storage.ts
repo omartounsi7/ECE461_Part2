@@ -49,12 +49,13 @@ async function uploadModuleToCloudStorage(moduleName: string, version: string, f
  * @param bucket     - bucket containing the module
  *
  * @example
- * // deletes the file "module_1_0_0.zip"  from the directory "module/"
- * // which is located in the bucket "buckeName"
- * deleteModuleFromCloudStorage("module", "1.0.0", ZIP_FILETYPE, "bucketName");
+ * deletes the file "module_1_0_0.zip"  from the directory "module/"
+ * which is located in the bucket "buckeName"
+ * deleteModuleFromCloudStorage("module/module_1_0_0.zip", "bucketName");
  */
-async function deleteModuleFromCloudStorage(moduleName: string, version: string, filetype: string, bucket: string): Promise<void> {
-    await storage.bucket(bucket).file(cloudStorageFilePathBuilder(moduleName, version)).delete();
+
+async function deleteModuleFromCloudStorage(cloudStorageFile: string, bucket: string): Promise<void> {
+    await storage.bucket(bucket).file(cloudStorageFile).delete();
 }
 
 /**
@@ -109,7 +110,7 @@ function cloudStorageFilePathBuilder(moduleName: string, version: string): strin
             .replace(/\./g, "_");
 
     // create path
-    let cloudFilePath = splitName[0] + "/" + splitName[0] + "_" + version;
+    let cloudFilePath = "module/" + splitName[0] + "_" + version;
 
     // add file extension if it exists
     if (splitName.length === 2) cloudFilePath += "." + splitName[1];
@@ -185,4 +186,4 @@ async function downloadFileFromCloudStorage(srcCloudPath: string, destFilePath: 
     await srcFile.createReadStream().pipe(createWriteStream(destFilePath));
 }
 
-export { getModuleAsBase64FromCloudStorage, uploadModuleToCloudStorage, deleteModuleFromCloudStorage, resetCloudStorage, ZIP_FILETYPE, TXT_FILETYPE };
+export { getModuleAsBase64FromCloudStorage, cloudStorageFilePathBuilder, uploadModuleToCloudStorage, deleteModuleFromCloudStorage, resetCloudStorage, ZIP_FILETYPE, TXT_FILETYPE };

@@ -13,19 +13,22 @@ import {
     findReposByNameAndVersion,
     getAllReposPagenated,
     getAllRepos,
+    updateMetaData,
     updateRepoPackageAction,
     createRepoData,
+    findModuleById,
     downloadRepo
 } from "./datastore/modules";
 //import { addUser } from "./datastore/users";
 import {deleteEntity, doesIdExistInKind, resetKind} from "./datastore/datastore";
-import {datastore, MODULE_KIND, NAMESPACE} from "./datastore/ds_config";
+import {datastore, MODULE_KIND, USER_KIND, NAMESPACE} from "./datastore/ds_config";
 import { MODULE_STORAGE_BUCKET, storage } from "./cloud-storage/cs_config";
-import { uploadModuleToCloudStorage, getModuleAsBase64FromCloudStorage, deleteModuleFromCloudStorage, resetCloudStorage, ZIP_FILETYPE, TXT_FILETYPE } from "./cloud-storage/cloud-storage";
+import { uploadModuleToCloudStorage, getModuleAsBase64FromCloudStorage, cloudStorageFilePathBuilder, deleteModuleFromCloudStorage, resetCloudStorage, ZIP_FILETYPE, TXT_FILETYPE } from "./cloud-storage/cloud-storage";
 import {base64ToFile, fileToBase64} from "./util";
 import { addUser , findUserByName, userLogin, accessSecret, updateApiCounter, deleteUser} from "./datastore/users"
 const fs = require('fs');
-const { execFile } = require('child_process');
+const JSZip = require('jszip');
+const zlib = require('zlib');
 
 // Imports the npm package
 import dotenv from "dotenv"; 
@@ -41,6 +44,9 @@ const HTML_PATH = ASSETS_PATH + "/html";
 const app = express();
 const port = 8080;
 
+const bodyParser = require('body-parser');
+// Increase the payload size limit to 1 gigabyte
+app.use(bodyParser.json({ limit: '100gb' }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -111,106 +117,245 @@ app.post('/packages', authenticateJWT, async (req, res) => {
 
 });
 
-// Reset to default state
-app.delete('/reset', authenticateJWT, async (req, res) => {
-    console.log("reset endpoint");
+// Reset the registry to a system default state (an empty registry with the default user))
+app.delete('/reset', authenticateJWT, isAdmin, async (req, res) => {
+    console.log("Reset endpoint");
 
-    // get auth from header
-    // look into https://jwt.io/
-    //  let auth = req.header["X-Authorization"];
-    if(!req.headers.authorization){
-        res.sendStatus(400);
-    }
-
-    // return 200 when registry is reset
+    // deletes all modules stored in firestore
     await resetKind(MODULE_KIND);
+    // deletes all users stored in firestore (add the default user in return function)
+    await resetKind(USER_KIND);
+
+    // deletes all packages stored in Google Cloud storage
+    await resetCloudStorage(MODULE_STORAGE_BUCKET);
+
+    // Code: 200  Registry is reset
     res.sendStatus(200);
-
-    // return 400 for missing field/ invalid auth
-
-    // return 401 for not enough permissions
-
-
 })
+
 
 // Upload endpoint and module ingestion
 // (call logPackageAction) ACTION: CREATE 
-app.post('/package', authenticateJWT, async (req, res) => {
-    res.send("package endpoint");
+app.post('/package', async (req, res) => {
 
-    // get time
-    const now = new Date(); // creates a new Date object representing the current date and time
-    const currentTime = now.getTime(); // returns the number of milliseconds since January 1, 1970, 00:00:00 UTC
+    /*
+    Content: string *The uploaded content is a zipped version of the package*
+    Package contents: zip file uploaded by the user. (Encoded as text using a Base64 encoding)
 
+    This will be a zipped version of an npm package's GitHub repository, minus the ".git/" directory." 
+    It will, for example, include the "package.json" file that can be used to retrieve the project homepage.
+    See https://docs.npmjs.com/cli/v7/configuring-npm/package-json#homepage.
+    */
+    const base64String = req.body["Content"];
 
-    // get req content
-    const packageContents = req.body["data"]["Contents"];
-    const packageURL = req.body["data"]["URL"];
-    const packageName = req.body["metadata"]["Name"];
-    const packageVersion = req.body["metadata"]["Version"];
-    //const packageID = req.body["metadata"]["ID"];
+    /*
+    URL: string
+    Package URL (for use in public ingest).
+    */
+    const url = req.body["URL"];
 
-    // get auth from header
+    /*JSProgram	string
+    A JavaScript program (for use with sensitive modules).
+    */
+    const JSProgram = req.body["JSProgram"];
 
-    // Package Action
-    // const userName = "Max";
-    // const isAdmin = true;
-    // Extract package metadata from metadata object in detabase
-    // logPackageAction(userName, isAdmin, packageRepo.metaData, "CREATE");
+    // On package upload, either Content or URL should be set. If both are set, returns 400.
+    if (base64String && url) {
+        return res.status(400).send({message: "Both 'Content' and 'URL' cannot be provided at the same time."});
+    } else if (!base64String && !url) {
+        return res.status(400).send({message: "Either 'Content' or 'URL' must be provided."});
+    }
 
-    // Write the url to a file called URLs.txt
-    fs.writeFileSync('URLs.txt', packageURL);
-
-    // Define the type signature of the Rust function
-    const handle_url_file = ffi.Library('./target/release/libmylib', {
-        'handle_url_file': ['void', ['string', 'string', 'int']]
-    }).handle_url_file;
-
-    // Call the Rust function and output the result to the console
-    handle_url_file("URLs.txt", "example.log", 1);
-
-    // Read the contents of the metrics.txt file
-    const metrics = fs.readFileSync('metrics.txt', 'utf-8');
-    
-    // Parse the JSON string into a JavaScript object
-    const metricsObject = JSON.parse(metrics);
-    
-    // Extract the properties and convert the values to their numeric form
-    const netScore = parseFloat(metricsObject.NET_SCORE);
-    const rampUp = parseFloat(metricsObject.RAMP_UP_SCORE);
-    const correctness = parseFloat(metricsObject.CORRECTNESS_SCORE);
-    const busFactor = parseFloat(metricsObject.BUS_FACTOR_SCORE);
-    const responsiveMaintainer = parseFloat(metricsObject.RESPONSIVE_MAINTAINER_SCORE);
-    const license = parseFloat(metricsObject.LICENSE_SCORE);
-    const codeReview = parseFloat(metricsObject.CODE_REVIEW);
-    const version = parseFloat(metricsObject.Version_Pinning);
-
-    // Check if the package meets the required scores
-    if (netScore < 0.5 || rampUp < 0.5 || correctness < 0.5 || busFactor < 0.5 || responsiveMaintainer < 0.5 ||
-        license < 0.5 || codeReview < 0.5 || version < 0.5) {
-        res.status(500).send({error: 'The package rating system choked on at least one of the metrics'});
-    } 
-    let data = createRepoData(packageName, packageVersion, currentTime.toString(), packageURL, undefined)
-
-    try {
-        // attempt to create and save new package to database
-        const newPackage = await addRepo(data);
-        res.status(201).json(newPackage);
-    } catch (error) {
-        if (error instanceof InvalidRequestError) {
-            res.status(400).send(error.message);
-        } else if (error instanceof AuthenticationError) {
-            res.status(403).send(error.message);
-        } else if (error instanceof PackageAlreadyExistsError) {
-            res.status(409).send(error.message);
-        } else if (error instanceof PackageDisqualificationError) {
-            res.status(424).send(error.message);
-        } else {
-            console.error(error);
-            res.status(500).send("Internal Server Error");
+    if (base64String) {
+        // Decode the Base64 string
+        //const binaryData = atob(base64String);
+        const binaryData = Buffer.from(base64String, 'base64').toString('binary');
+        
+        // Convert the binary data to a Uint8Array
+        const byteArray = new Uint8Array(binaryData.length);
+        for (let i = 0; i < binaryData.length; i++) {
+            byteArray[i] = binaryData.charCodeAt(i);
         }
+        
+        // Load the zip file using JSZip
+        const zip = await JSZip.loadAsync(byteArray);
+
+        // Will store `homepage` URL (links to the GitHub repository) from package.json
+        let packageURL;
+
+        // Will store the package name from package.json
+        let packageName;
+
+        // Will store the package version from package.json
+        let packageVersion;
+
+        // Will store the README contents of the uploaded package
+        let readmeContent;
+
+        try {
+            // Extract the package.json file
+            const packageJsonContent = await zip.file('package.json').async('string');
+            
+            // Parse the package.json content as a JSON object
+            const packageJson = JSON.parse(packageJsonContent);
+            
+            // Extract the name and version fields from package.json
+            packageName = packageJson.name;
+            packageVersion = packageJson.version;
+
+            console.log(packageName);
+            console.log(packageVersion);
+
+            // Extract`homepage` URL (links to the GitHub repository) from package.json
+            packageURL = "https://github.com/jashkenas/underscore"; // packageJson.homepage;
+            console.log(packageURL)
+
+            if (!packageURL) {
+                return res.status(400).send('Bad Request: homepage URL is missing in package.json');
+            }
+
+            const readmeFile = await zip.file("README.md");
+            if (readmeFile) {
+                // readmeContent will be passed to the createRepo function
+                readmeContent = await readmeFile.async('string');
+                // Using zlib to compress the readmeContent
+                readmeContent = zlib.deflateSync(readmeContent);
+            }
+
+        } catch (error: any) { // specify the type of the error variable
+            if (error.message === "Cannot read properties of null (reading 'async')") {
+                // The package.json file does not exist in the zip file
+                // Return an appropriate HTTP error code like 400 Bad Request
+                return res.status(400).send('Bad Request: package.json file is missing');
+            }
+        }
+        const cloudStoragePath = cloudStorageFilePathBuilder(packageName + ".zip", packageVersion);
+        console.log(cloudStoragePath)
+
+        // Checks if package already exists in database
+        const result = await findReposByNameAndVersion(packageName, packageVersion);
+        if (result.length > 0) {
+            // package exists already
+            res.status(409).send("Package exists already");
+            return;
+        }
+
+        let data = createRepoData(packageName, packageVersion, new Date().toJSON(), url, undefined, readmeContent, undefined, cloudStoragePath)
+        // attempt to create and save new package to database
+        const newPackageID = await addRepo(data);
+
+        console.log(newPackageID)
+
+        // Create a JavaScript object with the metadata
+        const metadata = {
+            "Name": packageName,
+            "Version": packageVersion,
+            "ID": newPackageID
+        }; 
+
+        if (newPackageID) {
+            await updateMetaData(newPackageID, metadata);
+        }
+
+        // Define the JWT secret (this should be stored securely and not hard-coded)
+        let jwtSecret = "apple"
+
+        // Retrieve the value of the 'X-Authorization' header from the request headers
+        const authHeader = req.headers['x-authorization'];
+        const authToken = (authHeader as string).split(' ')[1];
+        
+        // Decode the JWT token and extract the payload
+        const decodedToken = jwt.verify(authToken, jwtSecret);
+        // Find the user name by decoding the JWT_TOKEN
+        const userName = decodedToken.name;
+        // Find whether the user is an admin by decoding the JWT_TOKEN
+        const isAdmin = decodedToken.admin;
+        // Package Action: CREATE
+        logPackageAction(userName, isAdmin, metadata, "CREATE");
+
+        // Define response JSON object
+        const responseObject = {
+            "metadata": {
+                "Name": packageName,
+                "Version": packageVersion,
+                "ID": newPackageID
+            },
+            "data": {
+                "Content": req.body["Content"],
+                "JSProgram":req.body["JSProgram"]
+            }
+        }
+
+        // Uploads module to Google Cloud Storage
+        uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, req.body["Content"], MODULE_STORAGE_BUCKET);
+
+        // 201 Success. Check the ID in the returned metadata for the official ID.
+        res.status(201).json(responseObject);
+    } 
+
+    // if Package URL (for use in public ingest) is passed in
+    if (url) {
+
+        /* 
+        1. DO RATING of Package URL (for use in public ingest).
+        // Write the url to a file called URLs.txt
+        fs.writeFileSync('URLs.txt', packageURL);
+
+        // Define the type signature of the Rust function
+        const handle_url_file = ffi.Library('./target/release/libmylib', {
+            'handle_url_file': ['void', ['string', 'string', 'int']]
+        }).handle_url_file;
+
+        // Call the Rust function and output the result to the console
+        handle_url_file("URLs.txt", "example.log", 1);
+
+        // Read the contents of the metrics.txt file
+        const metrics = fs.readFileSync('metrics.txt', 'utf-8');
+        
+        // Parse the JSON string into a JavaScript object
+        const metricsObject = JSON.parse(metrics);
+        
+        // Extract the properties and convert the values to their numeric form
+        const netScore = parseFloat(metricsObject.NET_SCORE);
+        const rampUp = parseFloat(metricsObject.RAMP_UP_SCORE);
+        const correctness = parseFloat(metricsObject.CORRECTNESS_SCORE);
+        const busFactor = parseFloat(metricsObject.BUS_FACTOR_SCORE);
+        const responsiveMaintainer = parseFloat(metricsObject.RESPONSIVE_MAINTAINER_SCORE);
+        const license = parseFloat(metricsObject.LICENSE_SCORE);
+        const codeReview = parseFloat(metricsObject.CODE_REVIEW);
+        const version = parseFloat(metricsObject.Version_Pinning);
+
+        // Check if the package meets the required scores
+        if (netScore < 0.5 || rampUp < 0.5 || correctness < 0.5 || busFactor < 0.5 || responsiveMaintainer < 0.5 ||
+            license < 0.5 || codeReview < 0.5 || version < 0.5) {
+            res.status(424).send({message: 'Package is not uploaded due to the disqualified rating'});
+        } 
+        */
+        const { clone } = require('git-clone');
+        const rimraf = require('rimraf');
+        const zipdir = require('zip-dir');
+        const fs = require('fs');
+        
+        // Clone the repository using git-clone
+        clone('https://github.com/jashkenas/underscore.git', './underscore', { shallow: true })
+        // Remove the .git directory using rimraf
+        rimraf('./underscore/.git')
+        
+        // Create a zipped file
+        zipdir('./underscore', { saveTo: './underscore.zip' })
+
+        // encode underscore.zip to base64
+        fs.readFile('./underscore.zip', function (err: any, data: any) {
+            if (err) {
+              console.error(err);
+            } else {
+              const base64 = data.toString('base64');
+              console.log(base64);
+            }
+          });
     }
 });
+
 
 // Download Endpoint
 // (call logPackageAction) ACTION: DOWNLOAD
@@ -242,82 +387,73 @@ app.get('/package/:id', authenticateJWT, async (req, res) => {
     // package DNE
 });
 
+
 // Update Endpoint
-// (call logPackageAction), ACTION: UPDATE
 app.put('/package/:id', authenticateJWT, async (req, res) => {
-    res.send("package/" + req.params.id + " endpoint");
 
-    // get time
-    const now = new Date(); // creates a new Date object representing the current date and time
-    const currentTime = now.getTime(); // returns the number of milliseconds since January 1, 1970, 00:00:00 UTC
+    // On package update, exactly one field should be set.
+    // The package contents (from PackageData) will replace the previous contents.
+    const packageContents = req.body["data"]["Content"];
+    const packageURL = req.body["data"]["URL"];
+    const JSProgram = req.body["data"]["JSProgram"];
 
-    let id = Number(req.params.id);
-    const result = await doesIdExistInKind(MODULE_KIND, id)
-    if(!result){
-        res.send("req.params.id doesn't exist in MODULE_KIND.");
-        return;
+    // On package upload, either Content or URL should be set. If both are set, returns 400.
+    if (packageContents && packageURL) {
+        return res.status(400).send({message: "Both 'Content' and 'URL' cannot be provided at the same time."});
+    } else if (!packageContents && !packageURL) {
+        return res.status(400).send({message: "Either 'Content' or 'URL' must be provided."});
     }
 
-    // Package Action
-    //const userName = "Max";
-    //const isAdmin = true;
-    //logPackageAction(userName, isAdmin, packageRepo.metaData, "UPDATE");
+   
+    let id = Number(req.params.id);
+    if (!id) {
+        return res.status(400).json({ message: "There is a missing field in the PackageID" });
+    }
 
-    // get req content
-    const packageContents = req.body["data"]["Contents"];
-    const packageURL = req.body["data"]["URL"];
+    const result = await doesIdExistInKind(MODULE_KIND, id)
+    if(!result){
+        return res.status(404).json({ message: "Package does not exist" });
+    }
+
+    // The name, version, and ID must match.
+    const entry = await findModuleById(id);
+
     const packageName = req.body["metadata"]["Name"];
     const packageVersion = req.body["metadata"]["Version"];
     const packageID = req.body["metadata"]["ID"];
 
-    // get auth from header
-    let data = createRepoData(packageName, packageVersion, currentTime.toString(), packageURL, undefined)
+    // The name, version, and ID must match.
+    if ((entry.Name === packageName) && (entry.Version == packageVersion) && (entry.ID !== packageID)) {
 
-    try {
-        // attempt to create and save new package to database
-        const newPackage = await updateRepo(packageID, data);
-        res.status(200).json(newPackage);
-    } catch (error) {
-        if (error instanceof InvalidRequestError) {
-            res.status(400).send(error.message);
-        } else if (error instanceof PackageDoesNotExist) {
-            res.status(404).send(error.message);
-        } else {
-            console.error(error);
-            res.status(500).send("Internal Server Error");
-        }
+        // Package Action
+        // const userName = "Max";
+        // const isAdmin = true;
+        //logPackageAction(userName, isAdmin, packageRepo.metaData, "UPDATE");
+
+        // 200 Version is updated.
+        // the package contents from PackageData schema will replace previous contents
     }
-
-    // get package schema from request body
-
-    // get id from path
-
-    // 200
-    // version is updated successfully
-    // the package contents from PackageData schema will replace previous contents
-
-    // 400
-    // malformed json/ invalid auth
-
-    // 404
-    // package DNE
-
 });
 
 // Delete endpoint
 app.delete('/package/:id', authenticateJWT, async (req, res) => {
-    res.send("package/" + req.params.id + " endpoint");
+    console.log(req.params.id)
 
-    // get package ID from path
+    const id = req.params.id;
+    // Check for missing id field in request
+    if (!id) {
+        return res.status(400).json({message: 'Package ID is required'});
+    }
 
-    // 200
-    // package successfully deleted
-
-    // 400
-    // malformed json/invalid auth
-
-    // 404
-    // package DNE
+    const record = await findModuleById(Number(id));
+    console.log(record)
+    if (record) {
+        await deleteRepo(Number(id));
+        await deleteModuleFromCloudStorage(record.cloudStoragePath, MODULE_STORAGE_BUCKET);
+        return res.status(200).json({ message: "Package is deleted" });
+    } else {
+        return res.status(404).json({ message: "Package does not exist" });
+    }
 });
 
 // (call logPackageAction), ACTION: RATE
@@ -328,7 +464,7 @@ app.get('/package/:id/rate', authenticateJWT, async (req, res) => {
     const result = await doesIdExistInKind(MODULE_KIND, packageID)
     if(!result){
         // 404: Package does not exist.
-        res.status(404).send({error: 'Package does not exist'});
+        res.status(404).send({message: 'Package does not exist'});
         return;
     }
     // Download the package entity
@@ -448,42 +584,35 @@ app.get('/package/byName/:name', authenticateJWT, async (req, res) => {
 });
 
 // Deletes all versions of a package from the datastore with the given name.
-app.delete('/package/byName/:name', authenticateJWT, async (req, res) => {
+app.delete('/package/byName/:name', async (req, res) => {
     // get package name from header
+    console.log(req.params.name);
     const packageName = req.params.name;
+
+    if (!packageName){
+        return res.status(400).json({message: 'Package Name is required'});
+    }
     
     // Check if the package name adheres to the naming conventions
     if (!nameConv(packageName) || packageName === '*') {
         // 400 - invalid package name
-        res.status(400).json({error: 'Invalid package name'});
+        res.status(400).json({message: 'Invalid package name'});
     } else {
         // Retrieve all packages from the datastore with that package name
         const allPackages = await findReposByName(packageName);
 
         if (allPackages.length === 0) {
             // 404 - package does not exist
-            res.status(404).json({error: 'Package does not exist'});
+            res.status(404).json({message: 'Package does not exist'});
         } else {
-
-            let id = null;
-            const deletionPromises = [];
-
             // Iterates over each package
             for (const pkg of allPackages) {
-            const symbolKeys = Object.getOwnPropertySymbols(pkg);
-            // Iterates over each key in dictionary
-            for (const symbolKey of symbolKeys) {
-                if (symbolKey.toString() === 'Symbol(KEY)') {
-                // Extracts the ID
-                id = pkg[symbolKey].id;
-                console.log(id)
-                break;
-                }
+                const cloudStoragePath = pkg.cloudStoragePath;
+                let id = pkg.metaData["ID"];
+                // Delete all versions of the package from the datastore + Google Cloud Storage
+                await deleteModuleFromCloudStorage(cloudStoragePath, MODULE_STORAGE_BUCKET);
+                await deleteRepo(Number(id));
             }
-            deletionPromises.push(deleteRepo(Number(id)));
-            }
-            // Delete all versions of the package from the datastore
-            await Promise.all(deletionPromises);
             // 200 - package successfully deleted
             res.status(200).json({ message: `All versions of package ${packageName} have been deleted` });
         }
@@ -508,37 +637,44 @@ app.post('/package/byRegEx',authenticateJWT, async (req, res) => {
     // Retrieve all packages from the datastore
     const allPackages = await getAllRepos();
 
-    // Search for packages using regular expression over package names and READMEs.
-    const results = allPackages.filter((pkg: { name: string; readme: string; }) => {
-        return new RegExp(regex).test(pkg.name) || new RegExp(regex).test(pkg.readme);
-    });
+    try {
+        const results = allPackages.filter((pkg: { name: string; readme: string; }) => {
+            // Decompress the readme content
+            const readmeContent = zlib.inflateSync(pkg.readme).toString(); 
+            return new RegExp(regex).test(pkg.name) || new RegExp(regex).test(readmeContent);
+        });
 
-    //console.log(results)
+        // Extract the name and version of each matching package
+        const response = results.map((pkg: { name: any; version: any; }) => {
+            return {
+                Name: pkg.name,
+                Version: pkg.version
+            };
+        });
 
-    // Extract the name and version of each matching package
-    const response = results.map((pkg: { name: any; version: any; }) => {
-        return {
-            Name: pkg.name,
-            Version: pkg.version
+        // Return the search results
+        if (response.length > 0) {
+            // 200: Return a list of packages.
+            return res.status(200).json(response);
+        } else {
+            // 404 Error: No package found under this regex.
+            return res.status(404).json({ message: 'No packages found under this regex.' });
         };
-    });
-
-    // Return the search results
-    if (response.length > 0) {
-        // 200: Return a list of packages.
-        return res.status(200).json(response);
-    } else {
-        // 404 Error: No package found under this regex.
-        return res.status(404).json({ message: 'No packages found under this regex.' });
-    };
-
+    } catch (error) {
+        if (error instanceof SyntaxError) {
+            // Handle the SyntaxError here
+            return res.status(400).json({ message: 'SyntaxError: Invalid regular expression' });
+        }
+    }
 });
 
-//1. Install the jsonwebtoken library: npm install jsonwebtoken
+// npm install jsonwebtoken
 const jwt = require("jsonwebtoken");
 
-// 2. Create a middleware function that checks for the JWT token in the Authorization header 
+// Create a middleware function that checks for the JWT token in the Authorization header 
 // of incoming requests and verifies its authenticity using the jsonwebtoken library:
+
+// ERROR 400: There is missing field(s) in the AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.
 async function authenticateJWT(req: any, res: any, next: any) {
   // Retrieve the value of the 'X-Authorization' header from the request headers
   const authHeader = req.headers['x-authorization'];
@@ -548,7 +684,7 @@ async function authenticateJWT(req: any, res: any, next: any) {
     // Retrieve the JWT secret key 
     let jwtSecret = "apple";//await accessSecret();
     if (!jwtSecret) {
-        return res.status(401).json({message: 'Access Failed: Server Error retrieving secret key' });}
+        return res.status(400).json({message: 'Access Failed: Server Error retrieving secret key' });}
     try {
         const decodedToken = jwt.verify(token, jwtSecret);
         console.log(decodedToken)
@@ -565,13 +701,13 @@ async function authenticateJWT(req: any, res: any, next: any) {
         // If the token is expired or used more than 1000 times
         if (err instanceof jwt.TokenExpiredError || (typeof err.message === 'string' && err.message === 'API counter went below 0')) {
             // Generate a new token by asking the user to log back in!
-            return res.status(402).json({message: 'Access Failed: Token expired for current user. Please log in again' });
+            return res.status(400).json({message: 'Access Failed: Token expired for current user. Please log in again' });
         }
         // If the token seems to have an invalid signature (JsonWebTokenError) *someone tempered with it* or other errors
-        return res.status(401).json({message: 'Access Failed: Invalid token or Misformed token' });
+        return res.status(400).json({message: 'Access Failed: Invalid token or Misformed token' });
     }
   } else {
-    return res.status(401).json({ message: 'Access Failed: Token not provided' });
+    return res.status(400).json({ message: 'Access Failed: Token not provided' });
   }
 };
 
@@ -581,7 +717,7 @@ async function isAdmin(req: any, res: any, next: any) {
     if (req.admin === true) {
       next();
     } else {
-        return res.status(403).json({ message: "Insufficient permissions." });
+        return res.status(401).json({ message: "Insufficient permissions." });
     }
 }
 
@@ -613,7 +749,9 @@ async function authentication(req: any, res: any) {
     const isadmin = req.body["User"]["isAdmin"];
     const password = req.body["Secret"]["password"];
 
+    console.log(password)
     const sanitzed_password = sanitizeInput(password)
+    console.log(sanitzed_password)
     let authToken =  await userLogin(username, sanitzed_password);
     if (authToken === "") {
         return res.status(401).json({message: 'Username or Password is invalid!'});
@@ -685,8 +823,9 @@ async function logPackageAction(userName: string, isAdmin: boolean, packageRepo:
       Action: action
     };
 
+    const jsonString = JSON.stringify(packageAction);
     // Updates the packageAction field of a package in the datastore for the given repository ID.
-    await updateRepoPackageAction(packageRepo.ID, packageAction);
+    await updateRepoPackageAction(Number(packageRepo.ID), jsonString);
 }
 
 
@@ -736,15 +875,18 @@ app.get("/packages", authenticateJWT, async (req, res) => {
     res.status(200).sendFile(path.join(__dirname, HTML_PATH + "/packages.html"));
 });
 
+
+// Uploads default user to database upon registry reset
 app.put('/', async (req, res) => {
-    await addUser('max', '12345', true);
-    //res.sendFile(path.join(__dirname, HTML_PATH + "/index.html"));
+    //uploadModuleToCloudStorage("testing_max", "1.5.0", ZIP_FILETYPE, "aGVsbG8gd29ybGQ=", 'ece461-repositories');
+    const password =  "correcthorsebatterystaple123(!__+@**(A’”`;DROP TABLE packages;"
+    const sanitzed_password = sanitizeInput(password)
+
+    await addUser('ece30861defaultadminuser', sanitzed_password , true);
+    // Code: 200  Default user is added
+    res.sendStatus(200);
 });
 
-
-app.get('/', async (req, res) => {
-    //res.sendFile(path.join(__dirname, HTML_PATH + "/index.html"));
-});
 
 app.listen(port, () => {
     console.log("The application is listening on port " + port + "!");
