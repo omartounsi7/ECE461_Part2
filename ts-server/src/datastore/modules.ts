@@ -2,6 +2,7 @@ import { Key } from '@google-cloud/datastore';
 
 import {datastore, MODULE_KIND, NAMESPACE} from "./ds_config";
 import { getKey, deleteEntity } from "./datastore";
+import { error } from 'console';
 
 
 /* * * * * * * * * * *
@@ -293,9 +294,42 @@ async function downloadRepo(id: number) {
     return entity;
 }
 
+/**
+ * Retreive the number of dowonloads and stars of the given package.
+ * @param repoID the repository ID
+ * 
+ */
+async function getPopularityInfo(repoID: number) {
+    // The datastore doesn't record the number of downloads, so I use zero to replace it
+    const numDownloads = 0;
+
+    // Retrieve the github stars of the package
+    const packageRepo = await downloadRepo(repoID);
+    const url = packageRepo.url;
+    let stars = 0;
+
+    // Get owner and repo from the url
+    const splitItems = url.split("/");
+    if(splitItems.length > 2){
+        const owner = splitItems[splitItems.length-1];
+        const repo = splitItems[splitItems.length-2];
+
+        var requestify = require('requestify');
+        await requestify.get('https://api.github.com/repos/' + owner + '/' + repo)
+        .then(function(res: any) {
+            // Get the response body and the retrieve the stars
+            const resJson = res.getBody();
+            stars = resJson["stargazers_count"];
+        });
+        
+    }
+
+    return {'downloads': numDownloads, 'stars': stars}
+}
+
 
 // functions to be used by the API endpoints
 export { createRepoData, addRepo, getModuleKey,
     updateRepo, deleteRepo,
     searchRepos, findReposByName,
-    findReposByNameAndVersion, getAllReposPagenated, getAllRepos, updateRepoPackageAction, downloadRepo};
+    findReposByNameAndVersion, getAllReposPagenated, getAllRepos, updateRepoPackageAction, downloadRepo, getPopularityInfo};
