@@ -189,7 +189,7 @@ impl URLHandler {
 
             // let json = response.json::<NpmJSON>().unwrap();
             let json_res = response.json::<NpmJSON>();
-            if json_res.is_none() || json_res.is_err() {
+            if json_res.is_err() {
                 info!("Failed to parse json from npm url");
                 info!("Returning Garbage");
                 return "GARBAGE".to_string();
@@ -198,7 +198,7 @@ impl URLHandler {
 
             // let git_url_from_npm = json.repository.get("url").unwrap();
             let git_url_from_npm_res = json.repository.get("url");
-            if git_url_from_npm_res.is_err() || git_url_from_npm_res.is_none() {
+            if git_url_from_npm_res.is_none() {
                 info!("Failed to get github url from npm request");
                 info!("Returning Garbage");
                 return "GARBAGE".to_string();
@@ -209,7 +209,7 @@ impl URLHandler {
 
             // let owner_repo = GIT_NPM_RE.captures(&git_url_from_npm).unwrap();
             let owner_repo_res = GIT_NPM_RE.captures(&git_url_from_npm);
-            if owner_repo_res.is_none() || owner_repo_res.is_err() {
+            if owner_repo_res.is_none() {
                 info!("Failed to parse owner repo from npm request");
                 info!("Returning Garbage");
                 return "GARBAGE".to_string();

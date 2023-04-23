@@ -161,7 +161,7 @@ pub extern fn handle_url_file(url_file_path: String, log_path: String, log_level
                 let temp = res.unwrap();
                 temp.debug_output();
                 let json = PackageJSON::new(&temp);
-                if json.is_none() {
+                if json.is_err() {
                     info!("Failed to parse json value using PackageJSON::new()");
                 }
                 let json_string = serde_json::to_string(&json).unwrap();
