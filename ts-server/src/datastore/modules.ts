@@ -1,9 +1,8 @@
-import { Key } from '@google-cloud/datastore';
+import { Key} from '@google-cloud/datastore';
 
 import {datastore, MODULE_KIND, NAMESPACE} from "./ds_config";
 import { getKey, deleteEntity } from "./datastore";
 import { error } from 'console';
-
 
 /* * * * * * * * * * *
  * Helper Functions  *
@@ -28,17 +27,26 @@ import { error } from 'console';
  * Returns repo data which can be passed in to other
  * functions to update or create a repo in gcp datastore.
  */
-function createRepoData(name?: string, version?: string, creation_date?: string, url?: string, metaData?:any, readme?:string, packageAction?: any, cloudStoragePath?: string) {
+function createRepoData(name?: string, version?: string, creation_date?: string, url?: string, metaData?:any, readme?:any, packageAction?: any, cloudStoragePath?: string) {
     let data: {[key: string]: any} = {};
     if(name !== undefined)          data["name"]          = name;
     if(version !== undefined)       data["version"]       = version;
     if(url !== undefined)           data["url"]           = url;
     if(creation_date !== undefined) data["creation-date"] = creation_date
-    if(readme !== undefined)        data["readme"]        = readme;
-    if(packageAction !== undefined) data["packageAction"] = packageAction; else data["packageAction"] = "{}";
+    if (readme !== undefined)       data["readme"] = readme.toString()
+    if(packageAction !== undefined) data["packageAction"] = packageAction;
     if(cloudStoragePath !== undefined) data["cloudStoragePath"] = cloudStoragePath;
-    if(metaData !== undefined)      data["metaData"]      = metaData;
+    if(metaData !== undefined)      data["metaData"]      = metaData; 
     return data;
+}
+
+
+async function findModuleById(id: number): Promise<any> {
+    const key = getModuleKey(Number(id));
+    const [entity] = await datastore.get(key);
+    if (entity) {
+      return entity;
+    }
 }
 
 
@@ -62,16 +70,15 @@ function getModuleKey(id?: number): Key {
 async function addRepo(repoData: {[key: string]: any}): Promise<string | undefined> {
     // call createRepoData to create the repoData to pass into this function
     const key = getModuleKey();
-
     const repo = {
         key: key,
-        data: repoData
+        data: repoData,
+        excludeFromIndexes: ['readme']
     };
 
     await datastore.save(repo);
     return key.id;
 }
-
 
 /**
  * Updates a repo
@@ -88,7 +95,8 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}): Promis
     Object.assign(entity, newData);
     await datastore.save({
         key: key,
-        data: entity
+        data: entity,
+        excludeFromIndexes: ['readme']
     });
 }
 
@@ -98,9 +106,9 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}): Promis
  * @param {string} packageID - The ID of the repository whose package action is being updated.
  * @param {any} newPackageAction - The new package action (follows the PackageHistoryEntry Schema) to be added to the package actions.
  */
- async function updateRepoPackageAction(packageID: string, newPackageAction: any): Promise<void> {
+ async function updateRepoPackageAction(packageID: number, newPackageAction: any): Promise<void> {
     // Get the datastore key for the repository ID
-    const key = getModuleKey();
+    const key = getModuleKey(packageID);
     // Get the entity associated with the datastore key
     const [entity] = await datastore.get(key);
     // Get the existing package actions or create an empty array (in case the packageAction field is undefined or null)
@@ -111,7 +119,8 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}): Promis
     entity.packageAction = packageActions;
     await datastore.save({
         key: key,
-        data: entity
+        data: entity,
+        excludeFromIndexes: ['readme']
     });
 }
 
@@ -119,24 +128,21 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}): Promis
  * Updates the metaData field of a package in the datastore for the given repository ID.
  *
  * @param {string} packageID - The ID of the repository whose package action is being updated.
- * @param {any} metaData - The new metaData (dictionary type) to be added to the package actions.
+ * @param {any} metaData1 - The new metaData (dictionary type) to be added to the package actions.
  */
- async function updateMetaData(packageID: string, metaData: any): Promise<void> {
+ async function updateMetaData(packageID: string, metaData1: any): Promise<void> {
     // Get the datastore key for the repository ID
     const key = getModuleKey(Number(packageID));
     // Get the entity associated with the datastore key
     const [entity] = await datastore.get(key);
-    // Get the existing metaData
-    const packageActions = entity.metaData;
-    
-    // Update the version of the metaData field of the entity with the new version
-    packageActions.Version = metaData.Version;
-
     // Update the metaData field of the entity with the new metaData
-    entity.metaData = packageActions;
+    entity.metaData = metaData1;
+    console.log(entity.metaData)
+
     await datastore.save({
         key: key,
-        data: entity
+        data: entity,
+        excludeFromIndexes: ['readme']
     });
 }
 
@@ -332,4 +338,5 @@ async function getPopularityInfo(repoID: number) {
 export { createRepoData, addRepo, getModuleKey,
     updateRepo, deleteRepo,
     searchRepos, findReposByName,
-    findReposByNameAndVersion, getAllReposPagenated, getAllRepos, updateRepoPackageAction, downloadRepo, getPopularityInfo};
+    findReposByNameAndVersion,findModuleById, updateMetaData, getAllReposPagenated, getAllRepos, updateRepoPackageAction, getPopularityInfo, downloadRepo};
+

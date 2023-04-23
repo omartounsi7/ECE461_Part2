@@ -40,6 +40,11 @@
       text-decoration: none;
       width: 100%;
     }
+
+    .submit-button:focus {
+      outline: 2px solid blue;
+    }
+
     .submit-button.yes {
       font-size: 14px;
     }
@@ -105,6 +110,7 @@
             <button onclick="toggleDiv(3)">Register User</button>
             <button onclick="toggleDiv(4)">Regex</button>
             <button onclick="toggleDiv(5)">Delete Account</button>
+            <button onclick="toggleDiv(6)">Reset Registry</button>
             <button onclick="logOut()">Log Out</button>
         </nav>
     </header>
@@ -139,32 +145,35 @@
       <div id="upload-module" class="endpoint-div">
         <h2 style="margin-right: 20px;">Upload Module</h2>
         <form>
+          <div>
             <label for="module-upload-file">Upload your module as a zip file</label>
-            <input type="file" id="module-upload-file" accept=".zip" class="input-file" required>
-            <label for="module-upload-name">Enter the name of your module</label>
-            <input type="text" id="module-upload-name" class="input-text" required>
-            <label for="module-upload-version">Enter the version of your module</label>
-            <input type="text" id="module-upload-version" class="input-text" required>
+            <input type="file" id="module-upload-file" accept=".zip" class="input-file" />
+          </div>
+            <label for="module-upload-url">OR provide a URL of your module</label>
+            <input type="url" id="module-upload-url" class="input-text">
             <button type="button" class="submit-button" onclick="submitUploadModule()">Upload Module</button>
         </form>
-      </div>
+    </div>
+
+
     
       <div id="delete-module" class="endpoint-div">
         <h2 style="margin-right: 20px;">Delete Module</h2>
         <form>
-            <label>
-                <input type="radio" name="delete-by" value="name" checked> Delete by name
-            </label>
-            <label>
-                <input type="radio" name="delete-by" value="id"> Delete by ID
-            </label>
-            <br>
-            <label for="delete-module-input">Input name or ID:</label>
-            <input type="text" id="delete-module-input" class="input-text">
-            <button type="button" class="submit-button" onclick="submitDeleteModule()">Delete Module</button>
+          <label>
+            <input type="radio" name="delete-by" value="name"> Delete by name
+          </label>
+          <label>
+            <input type="radio" name="delete-by" value="id" checked> Delete by ID
+          </label>
+          <br>
+          <label for="delete-module-input">Input name or ID:</label>
+          <input type="text" id="delete-module-input" class="input-text" required>
+          <button type="button" class="submit-button" onclick="submitDeleteModule()">Delete Module</button>
         </form>
       </div>
-
+      
+      
       <div id="register-user" class="endpoint-div">
         <h2 style="margin-right: 20px;">Register User</h2>
         <form>
@@ -189,8 +198,18 @@
       <div id="delete-account" class="endpoint-div">
         <h2>Delete Account</h2>
         <p>Are you sure you want to delete your account?</p>
-        <button type="button" class="submit-button yes" onclick="submitDeleteAccount(true)">Yes</button>
+        <button type="button" class="submit-button yes" onclick="submitDeleteAccount(true)" style="margin-right: 20px; font-size: 15px;">Yes</button>
+        <button type="button" class="submit-button no" onclick="submitDeleteAccount(false)" style="margin-left: 20px; font-size: 15px;">No</button>
+
       </div>
+
+      <div id="reset-registry" class="endpoint-div">
+        <h2>Reset Entire Registry</h2>
+        <p>Are you sure you want to reset the entire registry?</p>
+        <button type="button" class="submit-button yes" onclick="resetAccount(true)" style="margin-right: 20px; font-size: 15px;">Yes</button>
+        <button type="button" class="submit-button no" onclick="resetAccount(false)" style="margin-left: 20px; font-size: 15px;">No</button>
+      </div>
+      
 
   </main>
   <script>
@@ -201,7 +220,8 @@
       let registerModuleDiv = document.getElementById("register-user");
       let regexDiv = document.getElementById("regex-search");
       let deleteUser = document.getElementById("delete-account");
-      let allDivs = [packageSearchDiv, uploadModuleDiv, deleteModuleDiv, registerModuleDiv, regexDiv, deleteUser];
+      let resetRegistry = document.getElementById("reset-registry");
+      let allDivs = [packageSearchDiv, uploadModuleDiv, deleteModuleDiv, registerModuleDiv, regexDiv, deleteUser, resetRegistry];
       
       function showDiv(div) {
           div.style.display = "flex";
@@ -226,6 +246,115 @@
       }
       init();
 
+      // Finds out how to delete the module: by (name or id)
+      function submitDeleteModuleBy() {
+        let t = getSelectedDeleteType();
+        return t;
+      }
+
+      function getSelectedDeleteType() {
+          let radios = document.getElementsByName('delete-by');
+          for (let i = 0; i < radios.length; i++) {
+              if (radios[i].checked) {
+                  return radios[i].value;
+              }
+          }
+          return "";
+      }
+
+
+      async function submitDeleteModule() {
+        // Get the selected radio input
+        var deleteTypeInput = submitDeleteModuleBy();
+
+        // Determine whether to delete by ID or name
+        let deleteById = (deleteTypeInput === "id");
+       
+        // Get the input for the module name or ID
+        var moduleTextUser = document.getElementById("delete-module-input");
+
+        // Check that all fields have been populated
+        if (!moduleTextUser.value) {
+          alert('Please fill in the field.');
+          return;
+        }
+
+        if (deleteById) {
+          // Delete module by ID
+          const response = await fetch('/package/' + moduleTextUser.value, {
+            method: 'DELETE',
+            headers: {
+              'X-Authorization': localStorage.getItem('authToken')
+            } 
+          });
+
+          if (response.status === 400) {
+            const data = await response.json();
+            const errorMessage = data.message;
+            
+            if (errorMessage.includes('Expired Token')) {
+              // Session needs to restart, prompt user to log out
+              alert('Your session needs to be restarted. You will be logged out now.');
+              // remove expired JWT authentication token from local storage
+              localStorage.removeItem('authToken');
+              // Redirect the user to the login page
+              window.location.href = "/";
+            } else if (errorMessage.includes('Invalid Token')) {
+              renderErrorView(errorMessage, 'packages.html');
+            } else if (errorMessage.includes('No Token Provided')) {
+              renderErrorView(errorMessage, 'login.html');
+            } else if (errorMessage.includes('required')) {
+              renderErrorView(errorMessage, 'packages.html');
+            }
+          } else if (response.status === 404) {
+            // Error: Package does not exist
+            const data = await response.json();
+            const errorMessage = data.message;
+            renderErrorView(errorMessage, 'packages.html');
+          } else {
+            alert('Successfully deleted module by ID!');
+            // Reset the form field
+            moduleTextUser.value = '';
+          }
+        } else {
+          // Delete module by name
+          const response = await fetch('/package/byName/' + moduleTextUser.value, {
+            method: 'DELETE',
+            headers: {
+              'X-Authorization': localStorage.getItem('authToken')
+            } 
+          });
+          if (response.status === 400) {
+            const data = await response.json();
+            const errorMessage = data.message;
+            
+            if (errorMessage.includes('Expired Token')) {
+              // Session needs to restart, prompt user to log out
+              alert('Your session needs to be restarted. You will be logged out now.');
+              // remove expired JWT authentication token from local storage
+              localStorage.removeItem('authToken');
+              // Redirect the user to the login page
+              window.location.href = "/";
+            } else if (errorMessage.includes('Invalid Token')) {
+              renderErrorView(errorMessage, 'packages.html');
+            } else if (errorMessage.includes('No Token Provided')) {
+              renderErrorView(errorMessage, 'login.html');
+            } else if (errorMessage.includes('required')) {
+              renderErrorView(errorMessage, 'packages.html');
+            }
+          } else if (response.status === 404) {
+            // Error: Package does not exist
+            const data = await response.json();
+            const errorMessage = data.message;
+            renderErrorView(errorMessage, 'packages.html');
+          } else {
+            alert('Successfully deleted module by Name!');
+            // Reset the form field
+            moduleTextUser.value = '';
+          }
+        }
+      }
+
       async function submitRegisterUser() {
         // Get the form fields
         const usernameInput = document.getElementById('username-input');
@@ -246,19 +375,25 @@
               'X-Authorization': localStorage.getItem('authToken')
             }
           });
-          if (response.status === 402) {
-            // Session needs to restart, prompt user to log out
-            alert('Your session needs to be restarted. You will be logged out now.');
-            // remove expired JWT authentication token from local storage
-            localStorage.removeItem('authToken');
-            // Redirect the user to the login page
-            window.location.href = "/";
-          } else if (response.status === 401) {
-            // *Server Error retrieving secret key*,  *Invalid token or Misformed token*, *Token not provided*
+
+          if (response.status === 400) {
             const data = await response.json();
             const errorMessage = data.message;
-            renderErrorView(errorMessage, 'packages.html');
-          } else {
+            
+            if (errorMessage.includes('Expired Token')) {
+              // Session needs to restart, prompt user to log out
+              alert('Your session needs to be restarted. You will be logged out now.');
+              // remove expired JWT authentication token from local storage
+              localStorage.removeItem('authToken');
+              // Redirect the user to the login page
+              window.location.href = "/";
+            } else if (errorMessage.includes('Invalid Token')) {
+              renderErrorView(errorMessage, 'packages.html');
+            } else if (errorMessage.includes('No Token Provided')) {
+              renderErrorView(errorMessage, 'login.html');
+            }
+          }
+          else {
             const isUsernameTaken = await response.json();
             if (isUsernameTaken) {
               // If the username is already taken, ask the user to reprompt for a new name
@@ -281,23 +416,31 @@
               },
             });
 
-            if (response_two.status === 403) {
-              // The user does not have admin privileges
+            if (response_two.status === 401) {
+              // The user does not have the necessary admin privileges to reset the entire registry
               alert("Insufficient permissions to register a new user");
               return;
-            } else if (response_two.status === 401) {
-              // *Server Error retrieving secret key*,  *Invalid token or Misformed token*, *Token not provided*
-              const data = await response_two.json();
+            } 
+
+            if (response.status === 400) {
+              const data = await response.json();
               const errorMessage = data.message;
+            
+              if (errorMessage.includes('Expired Token')) {
+                // Session needs to restart, prompt user to log out
+                alert('Your session needs to be restarted. You will be logged out now.');
+                // remove expired JWT authentication token from local storage
+                localStorage.removeItem('authToken');
+                // Redirect the user to the login page
+                window.location.href = "/";
+              } else if (errorMessage.includes('Invalid Token')) {
               renderErrorView(errorMessage, 'packages.html');
-            } else if (response_two.status === 402) {
-              // Session needs to restart, prompt user to log out (TOKEN  EXPIRED or OVERUSED)
-              alert('Your session needs to be restarted. You will be logged out now.');
-              // remove expired JWT authentication token from local storage
-              localStorage.removeItem('authToken');
-              // Redirect the user to the login page
-              window.location.href = "/";
-            } else if (response_two.status === 200) { 
+              } else if (errorMessage.includes('No Token Provided')) {
+              renderErrorView(errorMessage, 'login.html');
+              }
+            }
+
+            if (response_two.status === 200) { 
               const registerResponse = await fetch('/new_user', {
                 method: 'POST',
                 headers: {
@@ -306,18 +449,23 @@
                 },
                 body: JSON.stringify(userData)
               });
-              if (registerResponse.status === 402) {
-                // Session needs to restart, prompt user to log out
-                // remove expired JWT authentication token from local storage
-                localStorage.removeItem('authToken');
-                // Redirect the user to the login page
-                window.location.href = "/";
-              } else if (registerResponse.status === 401) {
-                // *Server Error retrieving secret key*, 
-                return registerResponse.json().then(data => {
-                  const errorMessage = data.message;
+
+              if (response.status === 400) {
+                const data = await response.json();
+                const errorMessage = data.message;
+              
+                if (errorMessage.includes('Expired Token')) {
+                  // Session needs to restart, prompt user to log out
+                  alert('Your session needs to be restarted. You will be logged out now.');
+                  // remove expired JWT authentication token from local storage
+                  localStorage.removeItem('authToken');
+                  // Redirect the user to the login page
+                  window.location.href = "/";
+                } else if (errorMessage.includes('Invalid Token')) {
                   renderErrorView(errorMessage, 'packages.html');
-                });
+                } else if (errorMessage.includes('No Token Provided')) {
+                  renderErrorView(errorMessage, 'login.html');
+                }
               } else if (registerResponse.status === 201) {
                 // continue registering that user
                 // Notify the user that the registration was successful
@@ -356,27 +504,31 @@
 
       // upload module
       function submitUploadModule() {
+        // get input(s)
+        const file = document.getElementById("module-upload-file").files[0];
+        const url = document.getElementById("module-upload-url").value;
+
+        if (!file && !url) {
+          alert('Either Content or URL must be provided');
+          return;
+        } else if (file && url) {
+          alert('Both Content and URL cannot be provided at the same time.');
+          return;
+        }
+    
+        if (file) {
+          alert('File present');
+          // ...
+        } else {
+          alert(url);
+          // User entered a URL
+          
           // get input(s)
           // confirm input(s) are correct
           // send request
           // recv request
           // display results
-      }
-
-      // delete module
-      function submitDeleteModule() {
-          let t = getSelectedDeleteType();
-          console.log(t);
-      }
-
-      function getSelectedDeleteType() {
-          let radios = document.getElementsByName('delete-by');
-          for (let i = 0; i < radios.length; i++) {
-              if (radios[i].checked) {
-                  return radios[i].value;
-              }
-          }
-          return "";
+        }
       }
 
       // executes the JavaScript within the <script> tags in the fetched error.html file.
@@ -413,7 +565,7 @@
         executeScripts(doc);
       }
 
-      function submitRegexSearch() {
+      async function submitRegexSearch() {
         let regex = document.getElementById('regex-input').value.trim();
 
         // check if regex was provided
@@ -422,46 +574,103 @@
           return;
         }
 
-        // call the API endpoint
-        fetch('/package/byRegEx', {
+        const response = await fetch('/package/byRegEx', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'X-Authorization': localStorage.getItem('authToken')
           },
           body: JSON.stringify({"RegEx": regex})
-        })
-        .then(async (response) => {
-          if (response.status === 402) {
+        });
+      
+    
+        if (response.status === 400) {
+          const data = await response.json();
+          const errorMessage = data.message;
+
+          if (errorMessage.includes("Expired Token")) {
             // Session needs to restart, prompt user to log out
-            alert('Your session needs to be restarted. You will be logged out now.');
+            alert("Your session needs to be restarted. You will be logged out now.");
             // remove expired JWT authentication token from local storage
             localStorage.removeItem('authToken');
             // Redirect the user to the login page
             window.location.href = "/";
-          } else if (!response.ok) {
-            const data = await response.json();
-            const errorMessage = data.message;
+          } else if (errorMessage.includes("Invalid Token")) {
             renderErrorView(errorMessage, 'packages.html');
-          } else {
-            const packages = await response.json();
-            const packagesList = document.getElementById('packages-list');
-            packagesList.innerHTML = '';
-
-            packages.forEach(pkg => {
-              const li = document.createElement('li');
-              li.textContent = `Name: ${pkg.Name} –– Version: (${pkg.Version})`;
-              packagesList.appendChild(li);
-            });
+          } else if (errorMessage.includes("No Token Provided")) {
+            renderErrorView(errorMessage, 'login.html');
+          } else if (errorMessage.includes("SyntaxError:")) {
+            renderErrorView(errorMessage, 'packages.html');
           }
-        })
-        .catch(err => console.error(err));
-      }
+        } else if (response.status === 404) {
+          const data = await response.json();
+          const errorMessage = data.message;
+          renderErrorView(errorMessage, 'packages.html');
+        } else {
+          const packages = await response.json();
+          const packagesList = document.getElementById('packages-list');
+          packagesList.innerHTML = '';
 
+          packages.forEach(pkg => {
+            const li = document.createElement('li');
+            li.textContent = `Name: ${pkg.Name} –– Version: (${pkg.Version})`;
+            packagesList.appendChild(li);
+          });
+        }
+      }
+      
       function logOut() {
         // Redirect the user to the login page
         window.location.href = "/";
       }
+
+      async function resetAccount(confirmed) {
+        if (confirmed) {
+          const response = await fetch('/reset', {
+            method: 'DELETE',
+            headers: {
+              'X-Authorization': localStorage.getItem('authToken')
+            }
+          });
+          
+          if (response.status === 400) {
+            const data = await response.json();
+            const errorMessage = data.message;
+            
+            if (errorMessage.includes('Expired Token')) {
+                // Session needs to restart, prompt user to log out
+                alert('Your session needs to be restarted. You will be logged out now.');
+                // remove expired JWT authentication token from local storage
+                localStorage.removeItem('authToken');
+                // Redirect the user to the login page
+                window.location.href = "/";
+            } else if (errorMessage.includes('Invalid Token')) {
+                renderErrorView(errorMessage, 'packages.html');
+            } else if (errorMessage.includes('No Token Provided')) {
+                renderErrorView(errorMessage, 'login.html');
+            }
+          } else if (response.status === 401) {
+              // The user does not have the necessary admin privileges to reset the entire registry
+              alert("Insufficient permissions to reset a new user");
+              return;
+          } else {
+            // adds default user with admin priviledges to database upon reset
+            const response = await fetch('/', {
+              method: 'PUT'
+            });
+            
+            // Handles success response
+            alert('Registry successfully reset.');
+            window.location.href = '/';
+          
+          }
+        } else {
+          // Redirect the user to the main page if user presses "No"
+          window.location.href = 'packages.html';
+        }
+      }
+
+
 
       async function submitDeleteAccount(confirmed) {
         if (confirmed) {
@@ -493,6 +702,9 @@
             // Handle errors if any
             console.error('Error occurred while deleting account: ', error);
           }
+        } else {
+          // Redirect the user to the main page if user presses "No"
+          window.location.href = 'packages.html';
         }
       }
   </script>
