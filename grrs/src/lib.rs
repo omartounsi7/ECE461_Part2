@@ -47,12 +47,6 @@ use log::{info, debug};
 ///                     log level 1: log info
 ///                   - log level 2: log debug
 ///
-/// # Examples
-///
-/// ```
-/// handle_url_file("path/to/urls.txt", "path/to/logs.txt", 1);
-/// ```
-///
 #[no_mangle]
 pub extern fn handle_url_file(url_file_path: String, log_path: String, log_level: i32){
     // set the log level based on the
