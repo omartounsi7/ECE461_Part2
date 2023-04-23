@@ -1,8 +1,8 @@
-import { Key } from '@google-cloud/datastore';
+import { Key} from '@google-cloud/datastore';
+const { StringValue } = require('@google-cloud/datastore/build/src/value');
 
 import {datastore, MODULE_KIND, NAMESPACE} from "./ds_config";
 import { getKey, deleteEntity } from "./datastore";
-
 
 /* * * * * * * * * * *
  * Helper Functions  *
@@ -27,16 +27,25 @@ import { getKey, deleteEntity } from "./datastore";
  * Returns repo data which can be passed in to other
  * functions to update or create a repo in gcp datastore.
  */
-function createRepoData(name?: string, version?: string, creation_date?: string, url?: string, metaData?:any, readme?:string, packageAction?: any, cloudStoragePath?: string) {
+function createRepoData(name?: string, version?: string, creation_date?: string, url?: string, metaData?:any, readme?:any, packageAction?: any, cloudStoragePath?: string) {
     let data: {[key: string]: any} = {};
     if(name !== undefined)          data["name"]          = name;
     if(version !== undefined)       data["version"]       = version;
     if(url !== undefined)           data["url"]           = url;
     if(creation_date !== undefined) data["creation-date"] = creation_date
-    if(readme !== undefined)        data["readme"]        = readme;
+    
+    // Set the "readme" property as unindexed
+    if(readme !== undefined) {
+        data["readme"] = StringValue
+            .builder(readme)
+            .excludeFromIndexes()
+            .build();
+    }
+      
     if(packageAction !== undefined) data["packageAction"] = packageAction;
     if(cloudStoragePath !== undefined) data["cloudStoragePath"] = cloudStoragePath;
     if(metaData !== undefined)      data["metaData"]      = metaData; 
+
     return data;
 }
 
@@ -71,9 +80,10 @@ async function addRepo(repoData: {[key: string]: any}): Promise<string | undefin
     // call createRepoData to create the repoData to pass into this function
     const key = getModuleKey();
 
+    console.log(repoData)
     const repo = {
         key: key,
-        data: repoData
+        data: repoData,
     };
 
     await datastore.save(repo);

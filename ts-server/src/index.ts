@@ -30,6 +30,11 @@ const fs = require('fs');
 const JSZip = require('jszip');
 const zlib = require('zlib');
 
+const zipdir = require('zip-dir');
+const { execSync } = require('child_process');
+
+
+
 // Imports the npm package
 import dotenv from "dotenv"; 
 // Loads environment variables into process.env
@@ -166,136 +171,13 @@ app.post('/package', async (req, res) => {
         return res.status(400).send({message: "Either 'Content' or 'URL' must be provided."});
     }
 
+    // Base64 encoded string is passed in req.body
     if (base64String) {
-        // Decode the Base64 string
-        //const binaryData = atob(base64String);
-        const binaryData = Buffer.from(base64String, 'base64').toString('binary');
-        
-        // Convert the binary data to a Uint8Array
-        const byteArray = new Uint8Array(binaryData.length);
-        for (let i = 0; i < binaryData.length; i++) {
-            byteArray[i] = binaryData.charCodeAt(i);
-        }
-        
-        // Load the zip file using JSZip
-        const zip = await JSZip.loadAsync(byteArray);
-
-        // Will store `homepage` URL (links to the GitHub repository) from package.json
-        let packageURL;
-
-        // Will store the package name from package.json
-        let packageName;
-
-        // Will store the package version from package.json
-        let packageVersion;
-
-        // Will store the README contents of the uploaded package
-        let readmeContent;
-
-        try {
-            // Extract the package.json file
-            const packageJsonContent = await zip.file('package.json').async('string');
-            
-            // Parse the package.json content as a JSON object
-            const packageJson = JSON.parse(packageJsonContent);
-            
-            // Extract the name and version fields from package.json
-            packageName = packageJson.name;
-            packageVersion = packageJson.version;
-
-            console.log(packageName);
-            console.log(packageVersion);
-
-            // Extract`homepage` URL (links to the GitHub repository) from package.json
-            packageURL = "https://github.com/jashkenas/underscore"; // packageJson.homepage;
-            console.log(packageURL)
-
-            if (!packageURL) {
-                return res.status(400).send('Bad Request: homepage URL is missing in package.json');
-            }
-
-            const readmeFile = await zip.file("README.md");
-            if (readmeFile) {
-                // readmeContent will be passed to the createRepo function
-                readmeContent = await readmeFile.async('string');
-                // Using zlib to compress the readmeContent
-                readmeContent = zlib.deflateSync(readmeContent);
-            }
-
-        } catch (error: any) { // specify the type of the error variable
-            if (error.message === "Cannot read properties of null (reading 'async')") {
-                // The package.json file does not exist in the zip file
-                // Return an appropriate HTTP error code like 400 Bad Request
-                return res.status(400).send('Bad Request: package.json file is missing');
-            }
-        }
-        const cloudStoragePath = cloudStorageFilePathBuilder(packageName + ".zip", packageVersion);
-        console.log(cloudStoragePath)
-
-        // Checks if package already exists in database
-        const result = await findReposByNameAndVersion(packageName, packageVersion);
-        if (result.length > 0) {
-            // package exists already
-            res.status(409).send("Package exists already");
-            return;
-        }
-
-        let data = createRepoData(packageName, packageVersion, new Date().toJSON(), url, undefined, readmeContent, undefined, cloudStoragePath)
-        // attempt to create and save new package to database
-        const newPackageID = await addRepo(data);
-
-        console.log(newPackageID)
-
-        // Create a JavaScript object with the metadata
-        const metadata = {
-            "Name": packageName,
-            "Version": packageVersion,
-            "ID": newPackageID
-        }; 
-
-        if (newPackageID) {
-            await updateMetaData(newPackageID, metadata);
-        }
-
-        // Define the JWT secret (this should be stored securely and not hard-coded)
-        let jwtSecret = "apple"
-
-        // Retrieve the value of the 'X-Authorization' header from the request headers
-        const authHeader = req.headers['x-authorization'];
-        const authToken = (authHeader as string).split(' ')[1];
-        
-        // Decode the JWT token and extract the payload
-        const decodedToken = jwt.verify(authToken, jwtSecret);
-        // Find the user name by decoding the JWT_TOKEN
-        const userName = decodedToken.name;
-        // Find whether the user is an admin by decoding the JWT_TOKEN
-        const isAdmin = decodedToken.admin;
-        // Package Action: CREATE
-        logPackageAction(userName, isAdmin, metadata, "CREATE");
-
-        // Define response JSON object
-        const responseObject = {
-            "metadata": {
-                "Name": packageName,
-                "Version": packageVersion,
-                "ID": newPackageID
-            },
-            "data": {
-                "Content": req.body["Content"],
-                "JSProgram":req.body["JSProgram"]
-            }
-        }
-
-        // Uploads module to Google Cloud Storage
-        uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, req.body["Content"], MODULE_STORAGE_BUCKET);
-
-        // 201 Success. Check the ID in the returned metadata for the official ID.
-        res.status(201).json(responseObject);
+        await decodeBase64(base64String, JSProgram, res, req);
     } 
 
-    // if Package URL (for use in public ingest) is passed in
+    // Package URL (for use in public ingest) is passed in req.body
     if (url) {
-
         /* 
         1. DO RATING of Package URL (for use in public ingest).
         // Write the url to a file called URLs.txt
@@ -331,31 +213,170 @@ app.post('/package', async (req, res) => {
             res.status(424).send({message: 'Package is not uploaded due to the disqualified rating'});
         } 
         */
-        const { clone } = require('git-clone');
-        const rimraf = require('rimraf');
-        const zipdir = require('zip-dir');
-        const fs = require('fs');
         
-        // Clone the repository using git-clone
-        clone('https://github.com/jashkenas/underscore.git', './underscore', { shallow: true })
-        // Remove the .git directory using rimraf
-        rimraf('./underscore/.git')
-        
-        // Create a zipped file
-        zipdir('./underscore', { saveTo: './underscore.zip' })
+        const parts = url.split('/');
+        const cloneDir = './' + parts[parts.length - 1];
 
-        // encode underscore.zip to base64
-        fs.readFile('./underscore.zip', function (err: any, data: any) {
+        // clones the GitHub package locally
+        try {
+            execSync(`git clone ${url} ${cloneDir}`);
+        } catch (error: any) {
+            throw new Error(`Failed to clone repository: ${error.message}`);
+        }
+
+        // Remove the .git directory using fs.rmSync
+        const gitDir = `${cloneDir}/.git`;
+        if (fs.existsSync(gitDir)) {
+            fs.rmSync(gitDir, { recursive: true, force: true });
+        }
+
+        let base64String;
+        // Create a zipped file
+        zipdir(cloneDir, { saveTo: cloneDir + '.zip' }, async (err: any, buffer: any) => {
             if (err) {
-              console.error(err);
-            } else {
-              const base64 = data.toString('base64');
-              console.log(base64);
+                // remove the locally downloaded GitHub directory
+                fs.rmdirSync(cloneDir, { recursive: true });
+                throw new Error(`Failed to zip directory: ${err.message}`);
             }
-          });
+            // Encode the zipped file to a Base64-encoded string
+            base64String = Buffer.from(buffer).toString('base64');
+            await decodeBase64(base64String, JSProgram, res, req);
+            // remove the locally downloaded GitHub directory
+            fs.rm(cloneDir, { recursive: true });
+        });
     }
 });
 
+async function decodeBase64(base64String: string, JSProgram: string, res: any, req: any) {
+
+    // Decode the Base64 string
+    const binaryData = Buffer.from(base64String, 'base64').toString('binary');
+    
+    // Convert the binary data to a Uint8Array
+    const byteArray = new Uint8Array(binaryData.length);
+    for (let i = 0; i < binaryData.length; i++) {
+        byteArray[i] = binaryData.charCodeAt(i);
+    }
+    
+    // Load the zip file using JSZip
+    const zip = await JSZip.loadAsync(byteArray);
+
+    // Will store the package name from package.json
+    let packageName;
+
+    // Will store the package version from package.json
+    let packageVersion;
+
+    // Will store the README contents of the uploaded package
+    let readmeContent;
+
+    // Will store `homepage` URL (links to the GitHub repository) from package.json
+    let packageURL;
+
+
+    try {
+        // Extract the package.json file
+        const packageJsonContent = await zip.file('package.json').async('string');
+        
+        // Parse the package.json content as a JSON object
+        const packageJson = JSON.parse(packageJsonContent);
+        
+        // Extract the name and version fields from package.json
+        packageName = packageJson.name;
+        packageVersion = packageJson.version;
+
+        console.log(packageName);
+        console.log(packageVersion);
+
+        // Extract`homepage` URL (links to the GitHub repository) from package.json
+        packageURL = "https://github.com/jashkenas/underscore"; //packageJson.homepage;
+
+        if (!packageURL) {
+            return res.status(400).send('Bad Request: homepage URL is missing in package.json');
+        }
+
+        const readmeFile = await zip.file("README.md");
+        if (readmeFile) {
+            // readmeContent will be passed to the createRepo function
+            readmeContent = await readmeFile.async('string');
+            // Using zlib to compress the readmeContent
+            readmeContent = zlib.deflateSync(readmeContent);
+        }
+
+    } catch (error: any) { // specify the type of the error variable
+        if (error.message === "Cannot read properties of null (reading 'async')") {
+            // The package.json file does not exist in the zip file
+            // Return an appropriate HTTP error code like 400 Bad Request
+            return res.status(400).send('Bad Request: package.json file is missing');
+        }
+    }
+    const cloudStoragePath = cloudStorageFilePathBuilder(packageName + ".zip", packageVersion);
+    console.log(cloudStoragePath)
+
+    // Checks if package already exists in database
+    const result = await findReposByNameAndVersion(packageName, packageVersion);
+    if (result.length > 0) {
+        // package exists already
+        res.status(409).send("Package exists already");
+        return;
+    }
+
+    let data = createRepoData(packageName, packageVersion, new Date().toJSON(), packageURL, undefined, readmeContent, undefined, cloudStoragePath)
+    // attempt to create and save new package to database
+    const newPackageID = await addRepo(data);
+    console.log("Success")
+
+    // Create a JavaScript object with the metadata
+    const metadata = {
+        "Name": packageName,
+        "Version": packageVersion,
+        "ID": newPackageID
+    }; 
+
+    if (newPackageID) {
+        await updateMetaData(newPackageID, metadata);
+        console.log("Success1")
+    }
+
+    // Define the JWT secret (this should be stored securely and not hard-coded)
+    let jwtSecret = "apple"
+
+    // Retrieve the value of the 'X-Authorization' header from the request headers
+    const authHeader = req.headers['x-authorization'];
+    const authToken = (authHeader as string).split(' ')[1];
+    
+    // Decode the JWT token and extract the payload
+    const decodedToken = jwt.verify(authToken, jwtSecret);
+    // Find the user name by decoding the JWT_TOKEN
+    const userName = decodedToken.name;
+    console.log(userName)
+    // Find whether the user is an admin by decoding the JWT_TOKEN
+    const isAdmin = decodedToken.admin;
+    console.log(isAdmin)
+    // Package Action: CREATE
+    logPackageAction(userName, isAdmin, metadata, "CREATE");
+    console.log("Success2")
+
+    // Define response JSON object
+    const responseObject = {
+        "metadata": {
+            "Name": packageName,
+            "Version": packageVersion,
+            "ID": newPackageID
+        },
+        "data": {
+            "Content": base64String,
+            "JSProgram": JSProgram
+        }
+    }
+
+    // Uploads module to Google Cloud Storage
+    uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, base64String, MODULE_STORAGE_BUCKET);
+    console.log("Success3")
+
+    // 201 Success. Check the ID in the returned metadata for the official ID.
+    res.status(201).json(responseObject);
+}
 
 // Download Endpoint
 // (call logPackageAction) ACTION: DOWNLOAD
@@ -423,7 +444,19 @@ app.put('/package/:id', authenticateJWT, async (req, res) => {
     const packageID = req.body["metadata"]["ID"];
 
     // The name, version, and ID must match.
-    if ((entry.Name === packageName) && (entry.Version == packageVersion) && (entry.ID !== packageID)) {
+    if ((entry.Name === packageName) && (entry.Version == packageVersion) && (entry.ID === packageID)) {
+
+        // if packageContents field is set
+        if (packageContents) {
+            // 200: Version is updated.
+            // Package contents from PackageData schema will replace previous contents
+
+        }
+
+        // if packageURL field is set
+        if (packageURL) {
+
+        }
 
         // Package Action
         // const userName = "Max";
