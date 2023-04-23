@@ -754,6 +754,7 @@ app.post('/package/byRegEx',authenticateJWT, async (req, res) => {
     }
 });
 
+
 // Fetch uploader name and upload date
 app.get('/package/:id/upload_info',authenticateJWT, async (req, res) => {
   // Extract package ID and authentication token from request params and headers
@@ -770,6 +771,8 @@ app.get('/package/:id/upload_info',authenticateJWT, async (req, res) => {
   res.send({"name": packageRepo.name, "date": packageRepo["creation-date"]});
 });
 
+
+//1. Install the jsonwebtoken library: npm install jsonwebtoken
 const jwt = require("jsonwebtoken");
 
 // Create a middleware function that checks for the JWT token in the Authorization header 

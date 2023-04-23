@@ -27,6 +27,14 @@ RUN npm i --save-dev @types/bcrypt
 RUN npm install dotenv --save
 RUN npm install bcrypt
 RUN npm install jsonwebtoken
+RUN npm install fs
+RUN npm install jszip
+RUN npm install zlib
+RUN npm install util
+RUN npm install zip-dir
+RUN npm install child_process
+RUN npm install rimraf
+
 
 # Build the TypeScript application
 RUN npm run build
