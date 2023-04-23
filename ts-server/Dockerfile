@@ -34,7 +34,6 @@ RUN npm install util
 RUN npm install zip-dir
 RUN npm install child_process
 RUN npm install rimraf
-RUN npm install requestify
 
 
 # Build the TypeScript application
