@@ -24,8 +24,7 @@
     "jsonwebtoken": "^9.0.0",
     "jszip": "^3.10.1",
     "path": "^0.12.7",
-    "zip-dir": "^2.0.0",
-    "requestify": "^0.2.5"
+    "zip-dir": "^2.0.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
