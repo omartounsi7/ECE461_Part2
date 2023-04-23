@@ -10,11 +10,14 @@ use serde::{Serialize, Deserialize};
 use serde_json;
 
 use log::{info, debug};
+use serde_json::json;
+
 
 #[derive(Deserialize)]
 pub struct NpmJSON {
     repository:  HashMap<String, String>,
 }
+
 
 #[derive(Deserialize)]
 pub struct MetricJSON {
@@ -36,6 +39,7 @@ pub struct MetricJSON {
     pub version_pinning: f32
 }
 
+
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize)]
 pub struct PackageJSON {
@@ -49,6 +53,7 @@ pub struct PackageJSON {
     pub CODE_REVIEW: f32,
     pub Version_Pinning: f32,
 }
+
 
 impl PackageJSON {
     pub fn new(package: &Package) -> PackageJSON {
@@ -66,6 +71,7 @@ impl PackageJSON {
     }
 }
 
+
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct Package {
     pub net_score: OrderedFloat<f32>,
@@ -78,6 +84,7 @@ pub struct Package {
     pub url: URLHandler,
     pub version_pinning: OrderedFloat<f32>,
 }
+
 
 impl Package {
     pub fn new(url: String) -> Package{
@@ -135,8 +142,12 @@ impl URLHandler {
 
     pub fn new(url: String) -> URLHandler{
         let owner_repo = URLHandler::determine_owner_repo(&url);
-        URLHandler {url: url.clone(), owner_repo: owner_repo}
+        URLHandler {
+            url: url.clone(),
+            owner_repo: owner_repo
+        }
     }
+
 
     fn determine_owner_repo(url: &String) -> String{
         lazy_static! {
@@ -144,40 +155,97 @@ impl URLHandler {
             static ref NPM_RE:Regex = Regex::new(r#"https://www\.npmjs\.com/package/(.+)"#).unwrap();
             static ref GIT_NPM_RE:Regex = Regex::new(r#".+github\.com/(.+).git"#).unwrap();
         }
+
         if GIT_RE.is_match(url) {
             info!("{} is a github URL!", url);
-            let owner_repo = GIT_RE.captures(url).unwrap();
+            // let owner_repo = GIT_RE.captures(url);
+            let owner_repo_res = GIT_RE.captures(url);
+            if owner_repo_res.is_none() {
+                info!("GIT_RE regex capture failed to parse 'owner_repo'");
+            }
+            let owner_repo = owner_repo_res.unwrap();
             info!("{} is the owner repo!", &owner_repo[1]);
             (&owner_repo[1]).to_string()
+
         } else if NPM_RE.is_match(url) {
             info!("{} is NOT a github URL!", url);
-            let cap = NPM_RE.captures(url).unwrap();
+            // let cap = NPM_RE.captures(url).unwrap();
+            let cap_res = NPM_RE.captures(url);
+            if cap_res.is_none() {
+                info!("NPM_RE regex capture failed to parse 'owner_repo'");
+            }
+            let cap = cap_res.unwrap();
+
             let npm_url = format!("https://registry.npmjs.org/{}", &cap[1]);
-            let response = reqwest::blocking::get(npm_url).unwrap();
-            let json = response.json::<NpmJSON>().unwrap();
-            let git_url_from_npm = json.repository.get("url").unwrap();
+
+            // let response = reqwest::blocking::get(npm_url).unwrap();
+            let response_res = reqwest::blocking::get(npm_url);
+            if response_res.is_err() {
+                info!("Failed to get response from npm url!");
+                info!("Returning Garbage!");
+                return "GARBAGE".to_string();
+            }
+            let response = response_res.unwrap();
+
+            // let json = response.json::<NpmJSON>().unwrap();
+            let json_res = response.json::<NpmJSON>();
+            if json_res.is_err() {
+                info!("Failed to parse json from npm url");
+                info!("Returning Garbage");
+                return "GARBAGE".to_string();
+            }
+            let json = json_res.unwrap();
+
+            // let git_url_from_npm = json.repository.get("url").unwrap();
+            let git_url_from_npm_res = json.repository.get("url");
+            if git_url_from_npm_res.is_none() {
+                info!("Failed to get github url from npm request");
+                info!("Returning Garbage");
+                return "GARBAGE".to_string();
+            }
+            let git_url_from_npm = git_url_from_npm_res.unwrap();
+
             debug!("Git URL: {}", &git_url_from_npm);
-            let owner_repo = GIT_NPM_RE.captures(&git_url_from_npm).unwrap();
+
+            // let owner_repo = GIT_NPM_RE.captures(&git_url_from_npm).unwrap();
+            let owner_repo_res = GIT_NPM_RE.captures(&git_url_from_npm);
+            if owner_repo_res.is_none() {
+                info!("Failed to parse owner repo from npm request");
+                info!("Returning Garbage");
+                return "GARBAGE".to_string();
+            }
+            let owner_repo = owner_repo_res.unwrap();
+
             info!("{} is the owner repo!", &owner_repo[1]);
+            // owner repo found successfully
             (&owner_repo[1]).to_string()
+
         } else {
             info!("Supplied URL is not npm or github! Returning Garbage!");
-            "GARBAGE".to_string()
+            return "GARBAGE".to_string();
         }
     }
+
+
     pub fn get_url(&self) -> String{
         self.url.clone()
     }
+
+
     pub fn get_owner_repo(&self) -> String{
         self.owner_repo.clone()
     }
 }
+
+
 
 impl fmt::Display for URLHandler {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.url)
     }
 }
+
+
 
 pub fn calc_bus_factor(json: &MetricJSON) -> f32 {
     let total_commits : i32 = json.total_commits;
@@ -189,25 +257,39 @@ pub fn calc_bus_factor(json: &MetricJSON) -> f32 {
     1.0 - ratio
 }
 
+
+
 pub fn calc_responsiveness(json: &MetricJSON) -> f32 {
     let open: i32 = json.open_issues + 50;
     let closed: i32 = json.closed_issues + 50;
+
     debug!("open_issues:    {}", &open);
     debug!("closed_issues:  {}", &closed);
-    open as f32 / (open + closed) as f32
+
+    let result = open as f32 / (open + closed) as f32;
+
+    result
 }
+
+
 
 pub fn calc_ramp_up_time(json: &MetricJSON) -> f32 {
     let wiki:        f32 = (json.has_wiki as i32)        as f32;
     let discussions: f32 = (json.has_discussions as i32) as f32;
     let pages:       f32 = (json.has_pages as i32)       as f32;
     let readme:      f32 = (json.has_readme as i32)      as f32;
+
     debug!("wiki:         {}", &wiki);
     debug!("discussions:  {}", &discussions);
     debug!("pages:        {}", &pages);
     debug!("readme:       {}", &readme);
-    0.25 * wiki + 0.25 * discussions + 0.25 * pages + 0.25 * readme
+
+    let result = 0.25 * wiki + 0.25 * discussions + 0.25 * pages + 0.25 * readme;
+
+    result
 }
+
+
 
 #[cfg(test)]
 mod tests {
@@ -228,7 +310,9 @@ mod tests {
             correctness_score: 0.3,
             version_pinning: 0.2
         };
+
         let ramp_up_time = calc_ramp_up_time(&metric_json);
+
         assert_ne!(ramp_up_time, 1.0);
     }
     #[test]
@@ -249,6 +333,7 @@ mod tests {
         };
 
         let result = calc_ramp_up_time(&json);
+
         assert_eq!(result, 0.5);
     }
     #[test]
@@ -267,6 +352,7 @@ mod tests {
             has_readme: false,
             version_pinning: 0.2
         };
+
         // This assert will fail because the expected value is not equal to the actual value of 0.375.
         assert_ne!(calc_responsiveness(&json), 0.4);
     }
@@ -286,6 +372,7 @@ mod tests {
             has_readme: false,
             version_pinning: 0.2
         };
+
         assert_eq!(calc_responsiveness(&json), 0.375);
     }
     #[test]
@@ -304,7 +391,9 @@ mod tests {
             has_readme: false,
             version_pinning: 0.2
         };
+
         let result = calc_bus_factor(&json);
+
         assert_ne!(result, 2.0);
     }
     #[test]
@@ -323,7 +412,9 @@ mod tests {
             has_readme: false,
             version_pinning: 0.2
         };
+
         let result = calc_bus_factor(&json);
+
         assert_eq!(result, 0.375);
     }
     #[test]

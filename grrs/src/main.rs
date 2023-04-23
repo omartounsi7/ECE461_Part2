@@ -15,9 +15,12 @@ pub fn main(){
     let task = &args[1]; //stores what instruction will be run
     let log_path = &args[2]; //stores what instruction will be run
     let temp = &args[3]; //stores what instruction will be run
+
     let log_level: i32 = match temp.parse::<i32>() {
         Ok(n) => n,
         Err(_e) => 1,
     };
+
     handle_url_file(task.to_string(), log_path.to_string(), log_level);
 }
+
