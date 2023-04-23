@@ -3,6 +3,10 @@ use std::path::Path;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 
+
+#[macro_use]
+extern crate lazy_static;
+
 use reqwest::blocking::Client;
 use reqwest::header;
 
@@ -171,7 +175,10 @@ pub extern fn handle_url_file(url_file_path: String, log_path: String, log_level
     };
 }
 
-
+// global variable for testing
+lazy_static! {
+    static ref MY_GLOBAL_STRING: String = "https://npm-module-registry-381816.uc.r.appspot.com".to_string();
+}
 
 ///
 /// module tests
@@ -252,6 +259,21 @@ mod tests {
         // Perform your assertions here.
         // For example:
         assert_eq!(result, ());
+    }
+
+    #[test]
+    fn test_package_by_id() {
+        let client = Client::new();
+        let response_res = client
+            .post("https://npm-module-registry-381816.uc.r.appspot.com")
+            .headers()
+            .json()
+            .send();
+        if response_res.is_err() {
+            println!("failed to send request to server");
+            assert_eq!(false == true);
+        }
+
     }
 }
 
