@@ -161,7 +161,7 @@ pub extern fn handle_url_file(url_file_path: String, log_path: String, log_level
                 let temp = res.unwrap();
                 temp.debug_output();
                 let json = PackageJSON::new(&temp);
-                
+
                 let json_string = serde_json::to_string(&json).unwrap();
                 // CHANGE MADE HERE
                 writeln!(output_file, "{}", json_string).unwrap(); // write to output file
@@ -264,7 +264,7 @@ mod tests {
         let id = "";
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert(header::HeaderValue::from_static("X-Authorization"), header::HeaderValue::from_static("Bearer <your_token_here>"));
+        headers.insert("X-Authorization", header::HeaderValue::from_static("Bearer <your_token_here>"));
         let client = Client::new();
         let response_res = client
             .get(format!("https://npm-module-registry-381816.uc.r.appspot.com/package/{}", id))
@@ -272,7 +272,7 @@ mod tests {
             .send();
         if response_res.is_err() {
             println!("failed to send request to server");
-            assert_eq!(false == true);
+            assert_eq!(false, true);
         }
 
     }
