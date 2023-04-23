@@ -27,16 +27,17 @@ import { error } from 'console';
  * Returns repo data which can be passed in to other
  * functions to update or create a repo in gcp datastore.
  */
-function createRepoData(name?: string, version?: string, creation_date?: string, url?: string, metaData?:any, readme?:any, packageAction?: any, cloudStoragePath?: string) {
+function createRepoData(name?: string, version?: string, creation_date?: string, url?: string, metaData?:any, readme?:any, packageAction?: any, cloudStoragePath?: string, downloads?: string) {
     let data: {[key: string]: any} = {};
-    if(name !== undefined)          data["name"]          = name;
-    if(version !== undefined)       data["version"]       = version;
-    if(url !== undefined)           data["url"]           = url;
-    if(creation_date !== undefined) data["creation-date"] = creation_date
-    if (readme !== undefined)       data["readme"] = readme.toString()
-    if(packageAction !== undefined) data["packageAction"] = packageAction;
-    if(cloudStoragePath !== undefined) data["cloudStoragePath"] = cloudStoragePath;
-    if(metaData !== undefined)      data["metaData"]      = metaData; 
+    if(name !== undefined)              data["name"]          = name;
+    if(version !== undefined)           data["version"]       = version;
+    if(url !== undefined)               data["url"]           = url;
+    if(creation_date !== undefined)     data["creation-date"] = creation_date
+    if (readme !== undefined)           data["readme"] = readme.toString()
+    if(packageAction !== undefined)     data["packageAction"] = packageAction;
+    if(cloudStoragePath !== undefined)  data["cloudStoragePath"] = cloudStoragePath;
+    if(metaData !== undefined)          data["metaData"]      = metaData; else data["metaData"] = "{}";
+    if(downloads !== undefined)         data["downloads"] = downloads; else data["downloads"] = 0;
     return data;
 }
 
@@ -294,7 +295,7 @@ async function deleteRepo(repoID: number): Promise<[{[key: string]: any}]> {
  * The module as a base64 string or a blank string if the
  * id does not exist.
  */
-async function downloadRepo(id: number) {
+async function getRepoData(id: number) {
     const key = getKey(NAMESPACE, MODULE_KIND, id);
     const [entity] = await datastore.get(key);
     return entity;
@@ -310,7 +311,7 @@ async function getPopularityInfo(repoID: number) {
     const numDownloads = 0;
 
     // Retrieve the github stars of the package
-    const packageRepo = await downloadRepo(repoID);
+    const packageRepo = await getRepoData(repoID);
     const url = packageRepo.url;
     let stars = 0;
 
@@ -338,5 +339,5 @@ async function getPopularityInfo(repoID: number) {
 export { createRepoData, addRepo, getModuleKey,
     updateRepo, deleteRepo,
     searchRepos, findReposByName,
-    findReposByNameAndVersion,findModuleById, updateMetaData, getAllReposPagenated, getAllRepos, updateRepoPackageAction, getPopularityInfo, downloadRepo};
+    findReposByNameAndVersion,findModuleById, updateMetaData, getAllReposPagenated, getAllRepos, updateRepoPackageAction, getPopularityInfo, getRepoData};
 

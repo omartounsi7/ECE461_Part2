@@ -17,7 +17,7 @@ import {
     updateRepoPackageAction,
     createRepoData,
     findModuleById,
-    downloadRepo,
+    getRepoData,
     getPopularityInfo
 } from "./datastore/modules";
 //import { addUser } from "./datastore/users";
@@ -135,6 +135,9 @@ app.delete('/reset', authenticateJWT, isAdmin, async (req, res) => {
 
     // deletes all packages stored in Google Cloud storage
     await resetCloudStorage(MODULE_STORAGE_BUCKET);
+
+    // add the default admin account for the autograder
+    await addUser("ece30861defaultadminuser", "correcthorsebatterystaple123(!__+@**(A’”`;DROP TABLE packages;", true);
 
     // Code: 200  Registry is reset
     res.sendStatus(200);
@@ -423,10 +426,18 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
 app.get('/package/:id', authenticateJWT, async (req, res) => {
     console.log("package/" + req.params.id + " endpoint");
 
+    if (!req.params.id) {
+        res.status(400).send("There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.")
+    }
+
     let id = Number(req.params.id);
+    if(isNaN(id)) {
+        res.status(400).send("There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.")
+    }
+
     const result = await doesIdExistInKind(MODULE_KIND, id)
     if(!result){
-        res.send("req.params.id doesn't exist in MODULE_KIND.");
+        res.status(404).send("Package does not exist.");
         return;
     }
 
@@ -436,7 +447,7 @@ app.get('/package/:id', authenticateJWT, async (req, res) => {
     //logPackageAction(userName, isAdmin, packageRepo.metaData, "DOWNLOAD");
 
     // download package by ID
-    let packageInfo = await downloadRepo(id);
+    let packageInfo = await getRepoData(id);
     if("password" in packageInfo){
         delete packageInfo.password;
     }
@@ -444,21 +455,30 @@ app.get('/package/:id', authenticateJWT, async (req, res) => {
         delete packageInfo.is_admin;
     }
 
-    // Add the number of downloads and stars
-    const popularityInfo = await getPopularityInfo(id);
-    packageInfo['downloads'] = popularityInfo['downloads'];
-    packageInfo['stars'] = popularityInfo['stars'];
-    res.send(JSON.stringify(packageInfo));
+    if(packageInfo.name === undefined || packageInfo.version === undefined || packageInfo.metaData === undefined) {
+        res.status(400).send("There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.")
+    }
 
-    // default response:
-    // unexpected error (what error code do we return)
+    let module = await getModuleAsBase64FromCloudStorage(packageInfo.name, packageInfo.version, ZIP_FILETYPE, MODULE_STORAGE_BUCKET);
+    let metaData = packageInfo.metaData;
+
+    // Add the number of downloads and stars
+    // const popularityInfo = await getPopularityInfo(id);
+    // packageInfo['downloads'] = popularityInfo['downloads'];
+    // packageInfo['stars'] = popularityInfo['stars'];
+    // res.send(JSON.stringify(packageInfo));
+
 
     // code 200
     // return package schema json object
     //  includes: metadata and data
-
-    // code 404
-    // package DNE
+    let body = {
+        "metadata": metaData,
+        "data": {
+            "Content": module
+        }
+    }
+    res.status(200).json(body);
 });
 
 
@@ -554,7 +574,7 @@ app.get('/package/:id/rate', authenticateJWT, async (req, res) => {
         return;
     }
     // Download the package entity
-    const packageRepo = await downloadRepo(packageID);
+    const packageRepo = await getRepoData(packageID);
     //const userName = "Max";
     //const isAdmin = true;
     //logPackageAction(userName, isAdmin, packageRepo.metaData, "RATE");
@@ -767,7 +787,7 @@ app.get('/package/:id/upload_info',authenticateJWT, async (req, res) => {
       return;
   }
   // Get the package information by id
-  const packageRepo = await downloadRepo(packageID);
+  const packageRepo = await getRepoData(packageID);
   res.send({"name": packageRepo.name, "date": packageRepo["creation-date"]});
 });
 
