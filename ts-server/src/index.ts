@@ -180,7 +180,28 @@ app.post('/package', async (req, res) => {
 
     // Base64 encoded string is passed in req.body
     if (base64String) {
-        await decodeBase64(base64String, JSProgram, res, req);
+        const result = await decodeBase64(base64String, JSProgram, res, req);
+        //console.log('Error in decodeBase64:', result.message);
+
+        if (result.message.includes("homepage URL is missing in package.json")){
+            return res.status(400).send(result.message);
+        }
+        
+        if (result.message.includes("Package exists already")){
+            return res.status(409).send('Bad Request: Package exists already');
+        }
+        
+        if (result.message.includes("package.json file is missing")){
+            return res.status(400).send('Bad Request: package.json file is missing');      
+        }
+        
+        if (result.message.includes("Failed to add repository:")){
+            return res.status(400).send(result.message);
+        }
+
+        if (result.message.includes("An error occurred while updating metadata:")){
+            return res.status(400).send(result.message);
+        }
     } 
 
     // Package URL (for use in public ingest) is passed in req.body
@@ -230,7 +251,6 @@ app.post('/package', async (req, res) => {
         try {
             // Clone the GitHub package locally
             execSync(`git clone ${url} ${cloneDir}`);
-            console.log("0") 
 
             // Remove the .git directory
             const gitDir = `${cloneDir}/.git`;
@@ -244,8 +264,7 @@ app.post('/package', async (req, res) => {
             base64String = Buffer.from(buffer).toString('base64');
             
             const result = await decodeBase64(base64String, JSProgram, res, req);
-            console.log(result)
-            console.log('Error in decodeBase64:', result.message);
+            //console.log('Error in decodeBase64:', result.message);
 
             if (result.message.includes("homepage URL is missing in package.json")){
                 // Remove the locally downloaded GitHub directory
@@ -278,7 +297,7 @@ app.post('/package', async (req, res) => {
             }
             // Remove the locally downloaded GitHub directory
             fs.rmdirSync(cloneDir, { recursive: true });
-            console.log("Success!");
+            //console.log("Success!");
 
         } catch (error: any) {}
     }
@@ -507,7 +526,8 @@ app.put('/package/:id', authenticateJWT, async (req, res) => {
         }
 
         // if packageURL field is set
-        if (packageURL) {
+        if (packageURL) { 
+            
 
         }
 
