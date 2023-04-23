@@ -147,6 +147,27 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}): Promis
     });
 }
 
+async function incrementDownloadCount(packageID: string): Promise<void> {
+     // Get the datastore key for the repository ID
+    const key = getModuleKey(Number(packageID));
+    // Get the entity associated with the datastore key
+    const [entity] = await datastore.get(key);
+    // Update the metaData field of the entity with the new metaData
+    let curr_downloads = Number(entity.downloads);
+    if(isNaN(curr_downloads)) {
+        curr_downloads = 0;
+    }
+    curr_downloads += 1;
+    entity.downloads = String(curr_downloads);
+    // console.log(entity.metaData)
+
+    await datastore.save({
+        key: key,
+        data: entity,
+        excludeFromIndexes: ['readme']
+    });
+}
+
 /**
  *
  * @param PackageQuery
@@ -336,8 +357,5 @@ async function getPopularityInfo(repoID: number) {
 
 
 // functions to be used by the API endpoints
-export { createRepoData, addRepo, getModuleKey,
-    updateRepo, deleteRepo,
-    searchRepos, findReposByName,
-    findReposByNameAndVersion,findModuleById, updateMetaData, getAllReposPagenated, getAllRepos, updateRepoPackageAction, getPopularityInfo, getRepoData};
+export { createRepoData, addRepo, getModuleKey, updateRepo, deleteRepo, searchRepos, findReposByName, findReposByNameAndVersion,findModuleById, updateMetaData, getAllReposPagenated, getAllRepos, updateRepoPackageAction, getPopularityInfo, getRepoData, incrementDownloadCount};
 

@@ -18,7 +18,8 @@ import {
     createRepoData,
     findModuleById,
     getRepoData,
-    getPopularityInfo
+    getPopularityInfo,
+    incrementDownloadCount
 } from "./datastore/modules";
 //import { addUser } from "./datastore/users";
 import {deleteEntity, doesIdExistInKind, resetKind} from "./datastore/datastore";
@@ -462,11 +463,7 @@ app.get('/package/:id', authenticateJWT, async (req, res) => {
     let module = await getModuleAsBase64FromCloudStorage(packageInfo.name, packageInfo.version, ZIP_FILETYPE, MODULE_STORAGE_BUCKET);
     let metaData = packageInfo.metaData;
 
-    // Add the number of downloads and stars
-    // const popularityInfo = await getPopularityInfo(id);
-    // packageInfo['downloads'] = popularityInfo['downloads'];
-    // packageInfo['stars'] = popularityInfo['stars'];
-    // res.send(JSON.stringify(packageInfo));
+    await incrementDownloadCount(req.params.id);
 
 
     // code 200
@@ -987,6 +984,20 @@ app.delete('/user', async (req, res) => {
         await deleteUser(userId);
         return res.status(200).json({message: "User deleted successfully"});
     }
+});
+
+app.get("/popularity/:id", authenticateJWT, async (req, res) => {
+    // returns the download count of a module
+    if(req.params.id === undefined) {
+        res.status(400).send("Malformed request.");
+        return;
+    }
+    let id = Number(req.params.id);
+    if(isNaN(id)) { res.status(404).send("ID does not exist."); }
+    let packageInfo = await  getRepoData(id);
+    let download_count = Number(packageInfo.downloads);
+    let body = { "downloads": download_count }
+    res.status(200).json(body);
 });
 
 /* * * * * * * * * * * * * * *
