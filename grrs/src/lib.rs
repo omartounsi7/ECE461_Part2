@@ -3,6 +3,9 @@ use std::path::Path;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 
+use reqwest::blocking::Client;
+use reqwest::header;
+
 mod package;
 use package::Package;
 use package::PackageJSON;
@@ -10,6 +13,7 @@ use package::PackageJSON;
 use pyo3::prelude::*;
 
 use std::collections::BinaryHeap;
+use std::collections::HashMap;
 
 use serde_json;
 
