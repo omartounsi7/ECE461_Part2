@@ -228,7 +228,7 @@ app.post('/package', async (req, res) => {
         try {
             // Clone the GitHub package locally
             execSync(`git clone ${url} ${cloneDir}`);
-            console.log("0")
+            console.log("0") 
 
             // Remove the .git directory
             const gitDir = `${cloneDir}/.git`;
