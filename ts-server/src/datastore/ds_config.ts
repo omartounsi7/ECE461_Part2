@@ -7,7 +7,6 @@ const {Datastore} = require("@google-cloud/datastore");
 
 const datastore = new Datastore();
 
-
 const NAMESPACE = "ece461";
 
 const MODULE_KIND = "modules";
