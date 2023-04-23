@@ -18,6 +18,7 @@ import {
     createRepoData,
     findModuleById,
     downloadRepo
+    getPopularityInfo
 } from "./datastore/modules";
 //import { addUser } from "./datastore/users";
 import {deleteEntity, doesIdExistInKind, resetKind} from "./datastore/datastore";
@@ -37,6 +38,7 @@ const { execSync } = require('child_process');
 
 // Imports the npm package
 import dotenv from "dotenv"; 
+import { json } from 'stream/consumers';
 // Loads environment variables into process.env
 dotenv.config(); 
 
@@ -396,7 +398,20 @@ app.get('/package/:id', authenticateJWT, async (req, res) => {
     //logPackageAction(userName, isAdmin, packageRepo.metaData, "DOWNLOAD");
 
     // download package by ID
-    res.send(await downloadRepo(id));
+    let packageInfo = await downloadRepo(id);
+    if("password" in packageInfo){
+        delete packageInfo.password;
+    }
+    if("is_admin" in packageInfo){
+        delete packageInfo.is_admin;
+    }
+
+    // Add the number of downloads and stars
+    const popularityInfo = await getPopularityInfo(id);
+    packageInfo['downloads'] = popularityInfo['downloads'];
+    packageInfo['stars'] = popularityInfo['stars'];
+    res.send(JSON.stringify(packageInfo));
+
     // default response:
     // unexpected error (what error code do we return)
 
@@ -701,7 +716,25 @@ app.post('/package/byRegEx',authenticateJWT, async (req, res) => {
     }
 });
 
-// npm install jsonwebtoken
+
+// Fetch uploader name and upload date
+app.get('/package/:id/upload_info',authenticateJWT, async (req, res) => {
+  // Extract package ID and authentication token from request params and headers
+  const packageID = Number(req.params.id);
+
+  const result = await doesIdExistInKind(MODULE_KIND, packageID)
+  if(!result){
+      // 404: Package does not exist.
+      res.status(404).send({error: 'Package does not exist'});
+      return;
+  }
+  // Get the package information by id
+  const packageRepo = await downloadRepo(packageID);
+  res.send({"name": packageRepo.name, "date": packageRepo["creation-date"]});
+});
+
+
+//1. Install the jsonwebtoken library: npm install jsonwebtoken
 const jwt = require("jsonwebtoken");
 
 // Create a middleware function that checks for the JWT token in the Authorization header 
