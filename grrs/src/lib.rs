@@ -79,7 +79,7 @@ pub extern fn handle_url_file(url_file_path: String, log_path: String, log_level
         }
         Err(_e) => {
             simple_logging::log_to_stderr(level);
-            eprint!(format!("Failed to open log file '{}'!", log_path.clone()));
+            eprint!("{}",format!("Failed to open log file '{}'!", log_path.clone()));
             eprint!("Nothing will be logged!");
         }
     }

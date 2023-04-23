@@ -183,16 +183,16 @@ impl URLHandler {
             if response_res.is_err() {
                 info!("Failed to get response from npm url!");
                 info!("Returning Garbage!");
-                "GARBAGE".to_string()
+                return "GARBAGE".to_string();
             }
-            let response = response.unwrap();
+            let response = response_res.unwrap();
 
             // let json = response.json::<NpmJSON>().unwrap();
             let json_res = response.json::<NpmJSON>();
             if json_res.is_none() || json_res.is_err() {
                 info!("Failed to parse json from npm url");
                 info!("Returning Garbage");
-                "GARBAGE".to_string()
+                return "GARBAGE".to_string();
             }
             let json = json_res.unwrap();
 
@@ -201,7 +201,7 @@ impl URLHandler {
             if git_url_from_npm_res.is_err() || git_url_from_npm_res.is_none() {
                 info!("Failed to get github url from npm request");
                 info!("Returning Garbage");
-                "GARBAGE".to_string()
+                return "GARBAGE".to_string();
             }
             let git_url_from_npm = git_url_from_npm_res.unwrap();
 
@@ -212,8 +212,9 @@ impl URLHandler {
             if owner_repo_res.is_none() || owner_repo_res.is_err() {
                 info!("Failed to parse owner repo from npm request");
                 info!("Returning Garbage");
-                "GARBAGE".to_string()
+                return "GARBAGE".to_string();
             }
+            let owner_repo = owner_repo_res.unwrap();
 
             info!("{} is the owner repo!", &owner_repo[1]);
             // owner repo found successfully
@@ -221,7 +222,7 @@ impl URLHandler {
 
         } else {
             info!("Supplied URL is not npm or github! Returning Garbage!");
-            "GARBAGE".to_string()
+            return "GARBAGE".to_string();
         }
     }
 
