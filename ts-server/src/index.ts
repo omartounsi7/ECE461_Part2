@@ -526,7 +526,8 @@ app.put('/package/:id', authenticateJWT, async (req, res) => {
         }
 
         // if packageURL field is set
-        if (packageURL) {
+        if (packageURL) { 
+            
 
         }
 
