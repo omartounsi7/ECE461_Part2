@@ -23,22 +23,11 @@
     "ffi-napi": "^4.0.3",
     "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.0",
-<<<<<<< HEAD
-<<<<<<< HEAD
-    "jszip": "^3.10.1",
+    "util": "^0.12.5",
     "path": "^0.12.7",
     "requestify": "^0.2.5",
-    "util": "^0.12.5",
-    "zip-dir": "^2.0.0"
-=======
-    "path": "^0.12.7",
-    "requestify": "^0.2.5"
->>>>>>> 7f9a5438e41fed95b0d3eeb8db59e3be15c64e73
-=======
     "jszip": "^3.10.1",
-    "path": "^0.12.7",
     "zip-dir": "^2.0.0"
->>>>>>> afa8fa51418ec84020e878541ebb26ab72d0b4be
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
