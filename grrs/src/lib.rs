@@ -260,14 +260,17 @@ mod tests {
         // For example:
         assert_eq!(result, ());
     }
-
+    
     #[test]
-    fn test_package_by_id() {
+    fn test_get_package_by_id() {
+        let id = "";
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+        headers.insert(header::HeaderValue::from_static("X-Authorization"), header::HeaderValue::from_static("Bearer <your_token_here>"));
         let client = Client::new();
         let response_res = client
-            .post("https://npm-module-registry-381816.uc.r.appspot.com")
-            .headers()
-            .json()
+            .get(format!("https://npm-module-registry-381816.uc.r.appspot.com/package/{}", id))
+            .headers(headers)
             .send();
         if response_res.is_err() {
             println!("failed to send request to server");
