@@ -29,7 +29,7 @@ import { addUser , findUserByName, userLogin, accessSecret, updateApiCounter, de
 const fs = require('fs');
 const JSZip = require('jszip');
 const zlib = require('zlib');
-
+const { promisify } = require('util');
 const zipdir = require('zip-dir');
 const { execSync } = require('child_process');
 
@@ -139,6 +139,11 @@ app.delete('/reset', authenticateJWT, isAdmin, async (req, res) => {
 })
 
 
+type StatusMessage = {
+  statusCode: number;
+  message: string;
+};
+
 // Upload endpoint and module ingestion
 // (call logPackageAction) ACTION: CREATE 
 app.post('/package', async (req, res) => {
@@ -216,34 +221,64 @@ app.post('/package', async (req, res) => {
         
         const parts = url.split('/');
         const cloneDir = './' + parts[parts.length - 1];
-
-        // clones the GitHub package locally
-        try {
-            execSync(`git clone ${url} ${cloneDir}`);
-        } catch (error: any) {
-            throw new Error(`Failed to clone repository: ${error.message}`);
-        }
-
-        // Remove the .git directory using fs.rmSync
-        const gitDir = `${cloneDir}/.git`;
-        if (fs.existsSync(gitDir)) {
-            fs.rmSync(gitDir, { recursive: true, force: true });
-        }
-
+        const zipdirAsync = promisify(zipdir);
+        
         let base64String;
-        // Create a zipped file
-        zipdir(cloneDir, { saveTo: cloneDir + '.zip' }, async (err: any, buffer: any) => {
-            if (err) {
-                // remove the locally downloaded GitHub directory
-                fs.rmdirSync(cloneDir, { recursive: true });
-                throw new Error(`Failed to zip directory: ${err.message}`);
+
+        try {
+            // Clone the GitHub package locally
+            execSync(`git clone ${url} ${cloneDir}`);
+            console.log("0")
+
+            // Remove the .git directory
+            const gitDir = `${cloneDir}/.git`;
+            if (fs.existsSync(gitDir)) {
+                fs.rmSync(gitDir, { recursive: true, force: true });
             }
+            // Create a zipped file
+            const buffer: Buffer = await zipdirAsync(cloneDir, { saveTo: cloneDir + '.zip' });
+
             // Encode the zipped file to a Base64-encoded string
             base64String = Buffer.from(buffer).toString('base64');
-            await decodeBase64(base64String, JSProgram, res, req);
-            // remove the locally downloaded GitHub directory
-            fs.rm(cloneDir, { recursive: true });
-        });
+            
+            const result = await decodeBase64(base64String, JSProgram, res, req);
+            console.log(result)
+            console.log('Error in decodeBase64:', result.message);
+
+            if (result.message.includes("homepage URL is missing in package.json")){
+                // Remove the locally downloaded GitHub directory
+                fs.rmdirSync(cloneDir, { recursive: true });
+                return res.status(400).send(result.message);
+            }
+            
+            if (result.message.includes("Package exists already")){
+                // Remove the locally downloaded GitHub directory
+                fs.rmdirSync(cloneDir, { recursive: true });
+                return res.status(409).send('Bad Request: Package exists already');
+            }
+            
+            if (result.message.includes("package.json file is missing")){
+                // Remove the locally downloaded GitHub directory
+                fs.rmdirSync(cloneDir, { recursive: true });
+                return res.status(400).send('Bad Request: package.json file is missing');      
+            }
+            
+            if (result.message.includes("Failed to add repository:")){
+                // Remove the locally downloaded GitHub directory
+                fs.rmdirSync(cloneDir, { recursive: true });
+                return res.status(400).send(result.message);
+            }
+
+            if (result.message.includes("An error occurred while updating metadata:")){
+                // Remove the locally downloaded GitHub directory
+                fs.rmdirSync(cloneDir, { recursive: true });
+                return res.status(400).send(result.message);
+            }
+            // Remove the locally downloaded GitHub directory
+            fs.rmdirSync(cloneDir, { recursive: true });
+            console.log("Success!");
+
+        } catch (error: any) {}
     }
 });
 
@@ -285,14 +320,11 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
         packageName = packageJson.name;
         packageVersion = packageJson.version;
 
-        console.log(packageName);
-        console.log(packageVersion);
-
         // Extract`homepage` URL (links to the GitHub repository) from package.json
         packageURL = "https://github.com/jashkenas/underscore"; //packageJson.homepage;
 
         if (!packageURL) {
-            return res.status(400).send('Bad Request: homepage URL is missing in package.json');
+            return { statusCode: 400, message: 'Bad Request: homepage URL is missing in package.json' };
         }
 
         const readmeFile = await zip.file("README.md");
@@ -303,39 +335,48 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
             readmeContent = zlib.deflateSync(readmeContent);
         }
 
+        // Checks if package already exists in database
+        const result = await findReposByNameAndVersion(packageName, packageVersion);
+        if (result.length > 0) {
+            // package exists already (409 error code)
+            return { statusCode: 409, message: 'Conflict: Package exists already' };
+        }
+
     } catch (error: any) { // specify the type of the error variable
         if (error.message === "Cannot read properties of null (reading 'async')") {
             // The package.json file does not exist in the zip file
             // Return an appropriate HTTP error code like 400 Bad Request
-            return res.status(400).send('Bad Request: package.json file is missing');
+            return { statusCode: 400, message: 'Bad Request: package.json file is missing' };
         }
     }
-    const cloudStoragePath = cloudStorageFilePathBuilder(packageName + ".zip", packageVersion);
-    console.log(cloudStoragePath)
 
-    // Checks if package already exists in database
-    const result = await findReposByNameAndVersion(packageName, packageVersion);
-    if (result.length > 0) {
-        // package exists already
-        res.status(409).send("Package exists already");
-        return;
+    const cloudStoragePath = cloudStorageFilePathBuilder(packageName + ".zip", packageVersion);
+
+    let newPackageID;
+    let metadata;
+    try {
+        let data = createRepoData(packageName, packageVersion, new Date().toJSON(), packageURL, undefined, readmeContent, undefined, cloudStoragePath)
+        // attempt to create and save new package to database
+        newPackageID = await addRepo(data);
+    } catch (error: any) {
+        console.log(`Failed to add repository: ${error.message}`);
+        return { statusCode: 400, message: `Failed to add repository: ${error.message}` };
     }
 
-    let data = createRepoData(packageName, packageVersion, new Date().toJSON(), packageURL, undefined, readmeContent, undefined, cloudStoragePath)
-    // attempt to create and save new package to database
-    const newPackageID = await addRepo(data);
-    console.log("Success")
-
     // Create a JavaScript object with the metadata
-    const metadata = {
+    metadata = {
         "Name": packageName,
         "Version": packageVersion,
         "ID": newPackageID
-    }; 
+    };
 
-    if (newPackageID) {
-        await updateMetaData(newPackageID, metadata);
-        console.log("Success1")
+    if (newPackageID && newPackageID.length > 0) {
+        try {
+            await updateMetaData(newPackageID, metadata);
+        } catch (error: any) {
+            console.log(`An error occurred while updating metadata: ${error.message}`);
+            return { statusCode: 400, message: `An error occurred while updating metadata: ${error.message}` };
+        }
     }
 
     // Define the JWT secret (this should be stored securely and not hard-coded)
@@ -349,13 +390,10 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
     const decodedToken = jwt.verify(authToken, jwtSecret);
     // Find the user name by decoding the JWT_TOKEN
     const userName = decodedToken.name;
-    console.log(userName)
     // Find whether the user is an admin by decoding the JWT_TOKEN
     const isAdmin = decodedToken.admin;
-    console.log(isAdmin)
     // Package Action: CREATE
     logPackageAction(userName, isAdmin, metadata, "CREATE");
-    console.log("Success2")
 
     // Define response JSON object
     const responseObject = {
@@ -372,10 +410,10 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
 
     // Uploads module to Google Cloud Storage
     uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, base64String, MODULE_STORAGE_BUCKET);
-    console.log("Success3")
 
     // 201 Success. Check the ID in the returned metadata for the official ID.
     res.status(201).json(responseObject);
+    return { statusCode: 201, message: "Success" };
 }
 
 // Download Endpoint

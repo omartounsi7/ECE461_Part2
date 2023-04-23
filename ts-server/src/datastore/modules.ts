@@ -1,5 +1,4 @@
 import { Key} from '@google-cloud/datastore';
-const { StringValue } = require('@google-cloud/datastore/build/src/value');
 
 import {datastore, MODULE_KIND, NAMESPACE} from "./ds_config";
 import { getKey, deleteEntity } from "./datastore";
@@ -33,19 +32,10 @@ function createRepoData(name?: string, version?: string, creation_date?: string,
     if(version !== undefined)       data["version"]       = version;
     if(url !== undefined)           data["url"]           = url;
     if(creation_date !== undefined) data["creation-date"] = creation_date
-    
-    // Set the "readme" property as unindexed
-    if(readme !== undefined) {
-        data["readme"] = StringValue
-            .builder(readme)
-            .excludeFromIndexes()
-            .build();
-    }
-      
+    if (readme !== undefined)       data["readme"] = readme.toString()
     if(packageAction !== undefined) data["packageAction"] = packageAction;
     if(cloudStoragePath !== undefined) data["cloudStoragePath"] = cloudStoragePath;
     if(metaData !== undefined)      data["metaData"]      = metaData; 
-
     return data;
 }
 
@@ -79,17 +69,15 @@ function getModuleKey(id?: number): Key {
 async function addRepo(repoData: {[key: string]: any}): Promise<string | undefined> {
     // call createRepoData to create the repoData to pass into this function
     const key = getModuleKey();
-
-    console.log(repoData)
     const repo = {
         key: key,
         data: repoData,
+        excludeFromIndexes: ['readme']
     };
 
     await datastore.save(repo);
     return key.id;
 }
-
 
 /**
  * Updates a repo
@@ -106,7 +94,8 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}): Promis
     Object.assign(entity, newData);
     await datastore.save({
         key: key,
-        data: entity
+        data: entity,
+        excludeFromIndexes: ['readme']
     });
 }
 
@@ -129,7 +118,8 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}): Promis
     entity.packageAction = packageActions;
     await datastore.save({
         key: key,
-        data: entity
+        data: entity,
+        excludeFromIndexes: ['readme']
     });
 }
 
@@ -146,10 +136,12 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}): Promis
     const [entity] = await datastore.get(key);
     // Update the metaData field of the entity with the new metaData
     entity.metaData = metaData1;
-    console.log(entity)
+    console.log(entity.metaData)
+
     await datastore.save({
         key: key,
-        data: entity
+        data: entity,
+        excludeFromIndexes: ['readme']
     });
 }
 
