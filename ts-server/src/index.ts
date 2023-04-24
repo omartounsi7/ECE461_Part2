@@ -111,8 +111,9 @@ app.post('/packages', authenticateJWT, async (req, res) => {
     if (typeof queries === undefined || queries.length === 0 || offset === undefined) {
         // invalid request
         res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
+        return;
     } else {
-        let packages = [];
+        let packages: [any];
         // there are 1 more more queries and an offset is given. The request is valid.
          // do db actions
         let offset_num = Number(offset);
@@ -120,25 +121,47 @@ app.post('/packages', authenticateJWT, async (req, res) => {
             res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
         }
         try {
-            queries.forEach((e: any) => {
+            for (const e of queries) {
                 let versions = e["Version"];
                 let name = e["Name"];
                 if(versions === undefined || name === undefined) {
                     res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
-                    return;
+                    continue;
                 }
-                
-                let package_res = await findReposByNameAndVersion(name, );
 
-                packages.push({"Version": , "Name": name, "ID": });
-            });
+                const regex = /\((.*?)\)/g;
+                let matches = [];
+                let match;
+                while(match = versions.match(regex)) {
+                    matches.push(match[1]);
+                }
+                for (const version of matches) {
+                    let matched_repos = await findReposByNameAndVersion(name, version);
+
+                    if(matched_repos.length === 1 && matched_repos[0] === "invalid version") {
+                        res.status(400).send("");
+                    }
+                    queries.forEach((repo: any) => {
+                        let version = repo["version"];
+                        let id = repo["id"];
+                        packages.push({"Version": version, "Name": name, "ID": id });
+                    });
+                }
+
+            }
         }catch(e: any) {
             res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
         }
-         // iterate thru the list of queries.
-         // for each query, get its result
-         // store all results into a list
-         // return the list
+        let results;
+        // page nate here
+        const max_per_page = 10;
+        if(packages.length < offset_num * max_per_page) {
+            results = packages.slice(0,10);
+        } else {
+            results = packages.slice(offset_num * max_per_page, max_per_page);
+        }
+        // send results here
+
     }
 
 
@@ -516,7 +539,7 @@ app.put('/package/:id', authenticateJWT, async (req, res) => {
         return res.status(400).send({message: "Either 'Content' or 'URL' must be provided."});
     }
 
-   
+
     let id = Number(req.params.id);
     if (!id) {
         return res.status(400).json({ message: "There is a missing field in the PackageID" });
@@ -535,18 +558,44 @@ app.put('/package/:id', authenticateJWT, async (req, res) => {
     const packageID = req.body["metadata"]["ID"];
 
     // The name, version, and ID must match.
-    if ((entry.Name === packageName) && (entry.Version == packageVersion) && (entry.ID === packageID)) {
+    if ((entry.name === packageName) && (entry.version == packageVersion) && (entry.metaData.ID=== packageID)) {
 
         // if packageContents field is set
         if (packageContents) {
+
+            // Uploads module to Google Cloud Storage
+            await uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, packageContents, MODULE_STORAGE_BUCKET);
+
             // 200: Version is updated.
             // Package contents from PackageData schema will replace previous contents
-
+            return res.status(200).json({ message: "Version is updated" });
         }
 
         // if packageURL field is set
         if (packageURL) {
+            const parts = packageURL.split('/');
+            const cloneDir = './' + parts[parts.length - 1];
+            const zipdirAsync = promisify(zipdir);
 
+            // Clone the GitHub package locally
+            execSync(`git clone ${packageURL} ${cloneDir}`);
+
+            // Remove the .git directory
+            const gitDir = `${cloneDir}/.git`;
+            if (fs.existsSync(gitDir)) {
+                fs.rmSync(gitDir, { recursive: true, force: true });
+            }
+            // Create a zipped file
+            const buffer: Buffer = await zipdirAsync(cloneDir, { saveTo: cloneDir + '.zip' });
+
+            // Encode the zipped file to a Base64-encoded string
+            let base64Contents = Buffer.from(buffer).toString('base64');
+
+            await uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, base64Contents, MODULE_STORAGE_BUCKET);
+
+            // 200 Version is updated.
+            // the package contents from PackageData schema will replace previous contents
+            return res.status(200).json({ message: "Version is updated" });
         }
 
         // Package Action
@@ -554,8 +603,6 @@ app.put('/package/:id', authenticateJWT, async (req, res) => {
         // const isAdmin = true;
         //logPackageAction(userName, isAdmin, packageRepo.metaData, "UPDATE");
 
-        // 200 Version is updated.
-        // the package contents from PackageData schema will replace previous contents
     }
 });
 
