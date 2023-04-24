@@ -5,3 +5,5 @@ runtime_config:
   nodejs_version: '14'
 
 entrypoint: node src/index.js
+
+max_request_size: 100M
