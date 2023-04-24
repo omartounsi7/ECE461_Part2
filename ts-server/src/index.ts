@@ -110,10 +110,31 @@ app.post('/packages', authenticateJWT, async (req, res) => {
     // validate post request
     if (typeof queries === undefined || queries.length === 0 || offset === undefined) {
         // invalid request
+        res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
     } else {
+        let packages = [];
         // there are 1 more more queries and an offset is given. The request is valid.
          // do db actions
+        let offset_num = Number(offset);
+        if(isNaN(offset_num)) {
+            res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
+        }
+        try {
+            queries.forEach((e: any) => {
+                let versions = e["Version"];
+                let name = e["Name"];
+                if(versions === undefined || name === undefined) {
+                    res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
+                    return;
+                }
+                
+                let package_res = await findReposByNameAndVersion(name, );
 
+                packages.push({"Version": , "Name": name, "ID": });
+            });
+        }catch(e: any) {
+            res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
+        }
          // iterate thru the list of queries.
          // for each query, get its result
          // store all results into a list
@@ -830,7 +851,7 @@ async function authenticateJWT(req: any, res: any, next: any) {
   } else {
     return res.status(400).json({ message: 'Access Failed: Token not provided' });
   }
-};
+}
 
 // Checks if user has admin priviledges
 async function isAdmin(req: any, res: any, next: any) {
@@ -880,6 +901,7 @@ async function authentication(req: any, res: any) {
         return res.status(200).json({message: 'bearer ' + authToken});
     }
 }
+
 app.put('/authenticate', authentication)
 
 
