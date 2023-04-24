@@ -113,7 +113,7 @@ app.post('/packages', authenticateJWT, async (req, res) => {
         res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
         return;
     } else {
-        let packages: [any];
+        let packages: {Version: any, Name: any, ID: any}[] = [];
         // there are 1 more more queries and an offset is given. The request is valid.
          // do db actions
         let offset_num = Number(offset);
@@ -128,7 +128,6 @@ app.post('/packages', authenticateJWT, async (req, res) => {
                     res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
                     continue;
                 }
-
                 const regex = /\((.*?)\)/g;
                 let matches = [];
                 let match;
@@ -147,7 +146,6 @@ app.post('/packages', authenticateJWT, async (req, res) => {
                         packages.push({"Version": version, "Name": name, "ID": id });
                     });
                 }
-
             }
         }catch(e: any) {
             res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
