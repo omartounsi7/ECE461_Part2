@@ -181,7 +181,7 @@ app.delete('/reset', authenticateJWT, isAdmin, async (req, res) => {
     await resetCloudStorage(MODULE_STORAGE_BUCKET);
 
     // add the default admin account for the autograder
-    await addUser("ece30861defaultadminuser", "correcthorsebatterystaple123(!__+@**(A’”`;DROP TABLE packages;", true);
+    await addUser("ece30861defaultadminuser", "correcthorsebatterystaple123(!__+@**(A'"`;DROP TABLE packages;", true);
 
     // Code: 200  Registry is reset
     res.sendStatus(200);
@@ -1119,7 +1119,7 @@ app.get("/packages", authenticateJWT, async (req, res) => {
 app.put('/', async (req, res) => {
     await logRequest("put", "/", req);
     //uploadModuleToCloudStorage("testing_max", "1.5.0", ZIP_FILETYPE, "aGVsbG8gd29ybGQ=", 'ece461-repositories');
-    const password =  "correcthorsebatterystaple123(!__+@**(A’”`;DROP TABLE packages;"
+    const password =  "correcthorsebatterystaple123(!__+@**(A'"`;DROP TABLE packages;"
     const sanitzed_password = sanitizeInput(password)
 
     await addUser('ece30861defaultadminuser', sanitzed_password , true);
