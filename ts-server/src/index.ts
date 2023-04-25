@@ -17,8 +17,9 @@ import {
     updateRepoPackageAction,
     createRepoData,
     findModuleById,
-    downloadRepo,
-    getPopularityInfo
+    getRepoData,
+    getPopularityInfo,
+    incrementDownloadCount
 } from "./datastore/modules";
 //import { addUser } from "./datastore/users";
 import {deleteEntity, doesIdExistInKind, resetKind} from "./datastore/datastore";
@@ -109,14 +110,56 @@ app.post('/packages', authenticateJWT, async (req, res) => {
     // validate post request
     if (typeof queries === undefined || queries.length === 0 || offset === undefined) {
         // invalid request
+        res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
+        return;
     } else {
+        let packages: {Version: any, Name: any, ID: any}[] = [];
         // there are 1 more more queries and an offset is given. The request is valid.
          // do db actions
+        let offset_num = Number(offset);
+        if(isNaN(offset_num)) {
+            res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
+        }
+        try {
+            for (const e of queries) {
+                let versions = e["Version"];
+                let name = e["Name"];
+                if(versions === undefined || name === undefined) {
+                    res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
+                    continue;
+                }
+                const regex = /\((.*?)\)/g;
+                let matches = [];
+                let match;
+                while(match = versions.match(regex)) {
+                    matches.push(match[1]);
+                }
+                for (const version of matches) {
+                    let matched_repos = await findReposByNameAndVersion(name, version);
 
-         // iterate thru the list of queries.
-         // for each query, get its result
-         // store all results into a list
-         // return the list
+                    if(matched_repos.length === 1 && matched_repos[0] === "invalid version") {
+                        res.status(400).send("");
+                    }
+                    queries.forEach((repo: any) => {
+                        let version = repo["version"];
+                        let id = repo["id"];
+                        packages.push({"Version": version, "Name": name, "ID": id });
+                    });
+                }
+            }
+        }catch(e: any) {
+            res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
+        }
+        let results;
+        // page nate here
+        const max_per_page = 10;
+        if(packages.length < offset_num * max_per_page) {
+            results = packages.slice(0,10);
+        } else {
+            results = packages.slice(offset_num * max_per_page, max_per_page);
+        }
+        // send results here
+
     }
 
 
@@ -135,6 +178,9 @@ app.delete('/reset', authenticateJWT, isAdmin, async (req, res) => {
 
     // deletes all packages stored in Google Cloud storage
     await resetCloudStorage(MODULE_STORAGE_BUCKET);
+
+    // add the default admin account for the autograder
+    await addUser("ece30861defaultadminuser", "correcthorsebatterystaple123(!__+@**(A’”`;DROP TABLE packages;", true);
 
     // Code: 200  Registry is reset
     res.sendStatus(200);
@@ -442,10 +488,18 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
 app.get('/package/:id', authenticateJWT, async (req, res) => {
     console.log("package/" + req.params.id + " endpoint");
 
+    if (!req.params.id) {
+        res.status(400).send("There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.")
+    }
+
     let id = Number(req.params.id);
+    if(isNaN(id)) {
+        res.status(400).send("There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.")
+    }
+
     const result = await doesIdExistInKind(MODULE_KIND, id)
     if(!result){
-        res.send("req.params.id doesn't exist in MODULE_KIND.");
+        res.status(404).send("Package does not exist.");
         return;
     }
 
@@ -455,7 +509,7 @@ app.get('/package/:id', authenticateJWT, async (req, res) => {
     //logPackageAction(userName, isAdmin, packageRepo.metaData, "DOWNLOAD");
 
     // download package by ID
-    let packageInfo = await downloadRepo(id);
+    let packageInfo = await getRepoData(id);
     if("password" in packageInfo){
         delete packageInfo.password;
     }
@@ -463,21 +517,26 @@ app.get('/package/:id', authenticateJWT, async (req, res) => {
         delete packageInfo.is_admin;
     }
 
-    // Add the number of downloads and stars
-    const popularityInfo = await getPopularityInfo(id);
-    packageInfo['downloads'] = popularityInfo['downloads'];
-    packageInfo['stars'] = popularityInfo['stars'];
-    res.send(JSON.stringify(packageInfo));
+    if(packageInfo.name === undefined || packageInfo.version === undefined || packageInfo.metaData === undefined) {
+        res.status(400).send("There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.")
+    }
 
-    // default response:
-    // unexpected error (what error code do we return)
+    let module = await getModuleAsBase64FromCloudStorage(packageInfo.name, packageInfo.version, ZIP_FILETYPE, MODULE_STORAGE_BUCKET);
+    let metaData = packageInfo.metaData;
+
+    await incrementDownloadCount(req.params.id);
+
 
     // code 200
     // return package schema json object
     //  includes: metadata and data
-
-    // code 404
-    // package DNE
+    let body = {
+        "metadata": metaData,
+        "data": {
+            "Content": module
+        }
+    }
+    res.status(200).json(body);
 });
 
 
@@ -497,7 +556,7 @@ app.put('/package/:id', authenticateJWT, async (req, res) => {
         return res.status(400).send({message: "Either 'Content' or 'URL' must be provided."});
     }
 
-   
+
     let id = Number(req.params.id);
     if (!id) {
         return res.status(400).json({ message: "There is a missing field in the PackageID" });
@@ -516,19 +575,44 @@ app.put('/package/:id', authenticateJWT, async (req, res) => {
     const packageID = req.body["metadata"]["ID"];
 
     // The name, version, and ID must match.
-    if ((entry.Name === packageName) && (entry.Version == packageVersion) && (entry.ID === packageID)) {
+    if ((entry.name === packageName) && (entry.version == packageVersion) && (entry.metaData.ID=== packageID)) {
 
         // if packageContents field is set
         if (packageContents) {
+
+            // Uploads module to Google Cloud Storage
+            await uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, packageContents, MODULE_STORAGE_BUCKET);
+
             // 200: Version is updated.
             // Package contents from PackageData schema will replace previous contents
-
+            return res.status(200).json({ message: "Version is updated" });
         }
 
         // if packageURL field is set
-        if (packageURL) { 
-            
+        if (packageURL) {
+            const parts = packageURL.split('/');
+            const cloneDir = './' + parts[parts.length - 1];
+            const zipdirAsync = promisify(zipdir);
 
+            // Clone the GitHub package locally
+            execSync(`git clone ${packageURL} ${cloneDir}`);
+
+            // Remove the .git directory
+            const gitDir = `${cloneDir}/.git`;
+            if (fs.existsSync(gitDir)) {
+                fs.rmSync(gitDir, { recursive: true, force: true });
+            }
+            // Create a zipped file
+            const buffer: Buffer = await zipdirAsync(cloneDir, { saveTo: cloneDir + '.zip' });
+
+            // Encode the zipped file to a Base64-encoded string
+            let base64Contents = Buffer.from(buffer).toString('base64');
+
+            await uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, base64Contents, MODULE_STORAGE_BUCKET);
+
+            // 200 Version is updated.
+            // the package contents from PackageData schema will replace previous contents
+            return res.status(200).json({ message: "Version is updated" });
         }
 
         // Package Action
@@ -536,8 +620,6 @@ app.put('/package/:id', authenticateJWT, async (req, res) => {
         // const isAdmin = true;
         //logPackageAction(userName, isAdmin, packageRepo.metaData, "UPDATE");
 
-        // 200 Version is updated.
-        // the package contents from PackageData schema will replace previous contents
     }
 });
 
@@ -574,7 +656,7 @@ app.get('/package/:id/rate', authenticateJWT, async (req, res) => {
         return;
     }
     // Download the package entity
-    const packageRepo = await downloadRepo(packageID);
+    const packageRepo = await getRepoData(packageID);
     //const userName = "Max";
     //const isAdmin = true;
     //logPackageAction(userName, isAdmin, packageRepo.metaData, "RATE");
@@ -787,7 +869,7 @@ app.get('/package/:id/upload_info',authenticateJWT, async (req, res) => {
       return;
   }
   // Get the package information by id
-  const packageRepo = await downloadRepo(packageID);
+  const packageRepo = await getRepoData(packageID);
   res.send({"name": packageRepo.name, "date": packageRepo["creation-date"]});
 });
 
@@ -833,7 +915,7 @@ async function authenticateJWT(req: any, res: any, next: any) {
   } else {
     return res.status(400).json({ message: 'Access Failed: Token not provided' });
   }
-};
+}
 
 // Checks if user has admin priviledges
 async function isAdmin(req: any, res: any, next: any) {
@@ -883,6 +965,7 @@ async function authentication(req: any, res: any) {
         return res.status(200).json({message: 'bearer ' + authToken});
     }
 }
+
 app.put('/authenticate', authentication)
 
 
@@ -987,6 +1070,20 @@ app.delete('/user', async (req, res) => {
         await deleteUser(userId);
         return res.status(200).json({message: "User deleted successfully"});
     }
+});
+
+app.get("/popularity/:id", authenticateJWT, async (req, res) => {
+    // returns the download count of a module
+    if(req.params.id === undefined) {
+        res.status(400).send("Malformed request.");
+        return;
+    }
+    let id = Number(req.params.id);
+    if(isNaN(id)) { res.status(404).send("ID does not exist."); }
+    let packageInfo = await  getRepoData(id);
+    let download_count = Number(packageInfo.downloads);
+    let body = { "downloads": download_count }
+    res.status(200).json(body);
 });
 
 /* * * * * * * * * * * * * * *
