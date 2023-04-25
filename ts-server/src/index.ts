@@ -28,6 +28,7 @@ import { MODULE_STORAGE_BUCKET, storage } from "./cloud-storage/cs_config";
 import { uploadModuleToCloudStorage, getModuleAsBase64FromCloudStorage, cloudStorageFilePathBuilder, deleteModuleFromCloudStorage, resetCloudStorage, ZIP_FILETYPE, TXT_FILETYPE } from "./cloud-storage/cloud-storage";
 import {base64ToFile, fileToBase64} from "./util";
 import { addUser , findUserByName, userLogin, accessSecret, updateApiCounter, deleteUser} from "./datastore/users"
+import { logRequest } from "./cloud-storage/logging";
 const fs = require('fs');
 const JSZip = require('jszip');
 const zlib = require('zlib');
@@ -40,6 +41,7 @@ const { execSync } = require('child_process');
 // Imports the npm package
 import dotenv from "dotenv"; 
 import { json } from 'stream/consumers';
+import {log} from "util";
 // Loads environment variables into process.env
 dotenv.config(); 
 
@@ -68,8 +70,7 @@ app.use(express.static('assets/html'));
 
 // Fetch directory of packages
 app.post('/packages', authenticateJWT, async (req, res) => {
-    res.send("packages endpoint");
-
+    await logRequest("post", "/packages", req);
     // Overview:
     //  gets any package which fits the request
     //  to enumerate all packages: provide an array with a single PackageQuery whose name is "*"
@@ -169,7 +170,7 @@ app.post('/packages', authenticateJWT, async (req, res) => {
 
 // Reset the registry to a system default state (an empty registry with the default user))
 app.delete('/reset', authenticateJWT, isAdmin, async (req, res) => {
-    console.log("Reset endpoint");
+    await logRequest("delete", "/reset", req);
 
     // deletes all modules stored in firestore
     await resetKind(MODULE_KIND);
@@ -195,7 +196,7 @@ type StatusMessage = {
 // Upload endpoint and module ingestion
 // (call logPackageAction) ACTION: CREATE 
 app.post('/package', async (req, res) => {
-
+    await logRequest("post", "/package", req);
     /*
     Content: string *The uploaded content is a zipped version of the package*
     Package contents: zip file uploaded by the user. (Encoded as text using a Base64 encoding)
@@ -486,7 +487,7 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
 // Download Endpoint
 // (call logPackageAction) ACTION: DOWNLOAD
 app.get('/package/:id', authenticateJWT, async (req, res) => {
-    console.log("package/" + req.params.id + " endpoint");
+    await logRequest("get", "/package/:id", req);
 
     if (!req.params.id) {
         res.status(400).send("There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.")
@@ -542,7 +543,7 @@ app.get('/package/:id', authenticateJWT, async (req, res) => {
 
 // Update Endpoint
 app.put('/package/:id', authenticateJWT, async (req, res) => {
-
+    await logRequest("put", "/package/:id", req);
     // On package update, exactly one field should be set.
     // The package contents (from PackageData) will replace the previous contents.
     const packageContents = req.body["data"]["Content"];
@@ -625,7 +626,7 @@ app.put('/package/:id', authenticateJWT, async (req, res) => {
 
 // Delete endpoint
 app.delete('/package/:id', authenticateJWT, async (req, res) => {
-    console.log(req.params.id)
+    await logRequest("delete", "/package/:id", req);
 
     const id = req.params.id;
     // Check for missing id field in request
@@ -646,6 +647,8 @@ app.delete('/package/:id', authenticateJWT, async (req, res) => {
 
 // (call logPackageAction), ACTION: RATE
 app.get('/package/:id/rate', authenticateJWT, async (req, res) => {
+    await logRequest("get", "/package/:id/rate", req);
+
     // Extract package ID and authentication token from request params and headers
     const packageID = Number(req.params.id);
 
@@ -736,6 +739,8 @@ function nameConv(name: string): boolean {
 }
 // Return the history of this package (all versions).
 app.get('/package/byName/:name', authenticateJWT, async (req, res) => {
+    await logRequest("get", "/package/byName/:name", req);
+
     try {
       // get package name from header
       const packageName = req.params.name;
@@ -773,8 +778,8 @@ app.get('/package/byName/:name', authenticateJWT, async (req, res) => {
 
 // Deletes all versions of a package from the datastore with the given name.
 app.delete('/package/byName/:name', async (req, res) => {
+    await logRequest("delete", "/package/byName/:name", req);
     // get package name from header
-    console.log(req.params.name);
     const packageName = req.params.name;
 
     if (!packageName){
@@ -811,7 +816,7 @@ app.delete('/package/byName/:name', async (req, res) => {
 // authentication, like the /package/byRegEx endpoint
 // Get any packages fitting the regular expression
 app.post('/package/byRegEx',authenticateJWT, async (req, res) => {
-
+    await logRequest("post", "/package/byRegEx", req);
     // Check if the request has a JSON body
     if (Object.keys(req.body).length === 0) {
         return res.status(400).json({ message: 'Malformed JSON: Request must have a JSON body.' });
@@ -859,6 +864,7 @@ app.post('/package/byRegEx',authenticateJWT, async (req, res) => {
 
 // Fetch uploader name and upload date
 app.get('/package/:id/upload_info',authenticateJWT, async (req, res) => {
+    await logRequest("get", "/package/:id/upload_info", req);
   // Extract package ID and authentication token from request params and headers
   const packageID = Number(req.params.id);
 
@@ -928,12 +934,16 @@ async function isAdmin(req: any, res: any, next: any) {
 }
 
 app.get('/isAdmin', authenticateJWT, isAdmin, async (req, res) => {
+    await logRequest("get", "/isAdmin",req);
+
     return res.status(200).json({ message: "User is an admin." });
 });
 
 
 // When the user first logs-in
 async function authentication(req: any, res: any) {
+    await logRequest("put", "authentication", req);
+
     const { User, Secret } = req.body;
 
     // Check that the User and Secret objects are present in the request body
@@ -966,7 +976,7 @@ async function authentication(req: any, res: any) {
     }
 }
 
-app.put('/authenticate', authentication)
+app.put('/authenticate', authentication);
 
 
 
@@ -1037,6 +1047,8 @@ async function logPackageAction(userName: string, isAdmin: boolean, packageRepo:
 
 
 app.get('/user/:name', authenticateJWT, async (req, res) => {
+    await logRequest("get", "/user/:name", req);
+
     // name of user we want to query
     const name = req.params.name;
     const results = await findUserByName(name);
@@ -1045,6 +1057,7 @@ app.get('/user/:name', authenticateJWT, async (req, res) => {
 });
 
 app.post('/new_user', authenticateJWT, async (req, res) => {
+    await logRequest("post", "/new_user", req);
     // name of user we want to register
     const username = req.body["username"];
     const password = req.body["password"];
@@ -1055,6 +1068,8 @@ app.post('/new_user', authenticateJWT, async (req, res) => {
 
 // Reset to default state
 app.delete('/user', async (req, res) => {
+    await logRequest("delete", "/user",req);
+
     // Define the JWT secret (this should be stored securely and not hard-coded)
     let jwtSecret = "apple"
 
@@ -1073,6 +1088,8 @@ app.delete('/user', async (req, res) => {
 });
 
 app.get("/popularity/:id", authenticateJWT, async (req, res) => {
+    await logRequest("get", "/popularity/:id", req);
+
     // returns the download count of a module
     if(req.params.id === undefined) {
         res.status(400).send("Malformed request.");
@@ -1091,6 +1108,7 @@ app.get("/popularity/:id", authenticateJWT, async (req, res) => {
  * * * * * * * * * * * * * * */
 
 app.get("/packages", authenticateJWT, async (req, res) => {
+    await logRequest("get", "/packages", req);
     console.log("Redirecting user to packages.html")
     // server webpage (If successfully logged in, redirect to packages.html)
     res.status(200).sendFile(path.join(__dirname, HTML_PATH + "/packages.html"));
@@ -1099,6 +1117,7 @@ app.get("/packages", authenticateJWT, async (req, res) => {
 
 // Uploads default user to database upon registry reset
 app.put('/', async (req, res) => {
+    await logRequest("put", "/", req);
     //uploadModuleToCloudStorage("testing_max", "1.5.0", ZIP_FILETYPE, "aGVsbG8gd29ybGQ=", 'ece461-repositories');
     const password =  "correcthorsebatterystaple123(!__+@**(A’”`;DROP TABLE packages;"
     const sanitzed_password = sanitizeInput(password)
