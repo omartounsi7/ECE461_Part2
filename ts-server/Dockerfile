@@ -7,6 +7,10 @@ WORKDIR /ts-server
 # Copy the current directory contents into the container at /app
 COPY . /ts-server
 
+# Install nginx
+RUN apt-get update && \
+    apt-get install -y nginx
+
 # Install Make
 RUN apt-get update && apt-get install -y build-essential
 RUN apt-get update && apt-get install -y make
@@ -36,15 +40,20 @@ RUN npm install zip-dir
 RUN npm install child_process
 RUN npm install rimraf
 
-
 # Build the TypeScript application
 RUN npm run build
+
+# Copy the Nginx configuration file
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # Set the environment variable to tell the runtime that it's running in a container
 ENV PORT 8080
 
 # Make the container's port 8080 available to the outside world
 EXPOSE 8080
+
+# Start Nginx 
+CMD [ "service", "nginx" , "start"]
 
 # Start the server
 CMD [ "npm", "run" , "server"]
