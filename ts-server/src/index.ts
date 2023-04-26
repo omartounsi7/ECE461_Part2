@@ -69,8 +69,12 @@ app.use(express.static('assets/html'));
  * * * * * * * * * * * */
 
 // Fetch directory of packages
-app.post('/packages', authenticateJWT, async (req, res) => {
+app.post('/packages', async (req, res) => {
     await logRequest("post", "/packages", req);
+
+    if(!await authenticateJWT(req, res)) {
+        return;
+    }
     // Overview:
     //  gets any package which fits the request
     //  to enumerate all packages: provide an array with a single PackageQuery whose name is "*"
@@ -169,9 +173,14 @@ app.post('/packages', authenticateJWT, async (req, res) => {
 });
 
 // Reset the registry to a system default state (an empty registry with the default user))
-app.delete('/reset', authenticateJWT, isAdmin, async (req, res) => {
+app.delete('/reset', async (req, res) => {
     await logRequest("delete", "/reset", req);
-
+    if(!await authenticateJWT(req, res)) {
+        return;
+    }
+    if(!await isAdmin(req, res)) {
+        return;
+    }
     // deletes all modules stored in firestore
     await resetKind(MODULE_KIND);
     // deletes all users stored in firestore (add the default user in return function)
@@ -181,7 +190,9 @@ app.delete('/reset', authenticateJWT, isAdmin, async (req, res) => {
     await resetCloudStorage(MODULE_STORAGE_BUCKET);
 
     // add the default admin account for the autograder
-    await addUser("ece30861defaultadminuser", "correcthorsebatterystaple123(!__+@**(A'\"`;DROP TABLE packages;", true);
+    const password =  "correcthorsebatterystaple123(!__+@**(A'\"`;DROP TABLE packages;"
+    const sanitzed_password = sanitizeInput(password)
+    await addUser('ece30861defaultadminuser', sanitzed_password , true);
 
     // Code: 200  Registry is reset
     res.sendStatus(200);
@@ -197,6 +208,10 @@ type StatusMessage = {
 // (call logPackageAction) ACTION: CREATE 
 app.post('/package', async (req, res) => {
     await logRequest("post", "/package", req);
+    if(!await authenticateJWT(req, res)) {
+        return;
+    }
+
     /*
     Content: string *The uploaded content is a zipped version of the package*
     Package contents: zip file uploaded by the user. (Encoded as text using a Base64 encoding)
@@ -486,8 +501,11 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
 
 // Download Endpoint
 // (call logPackageAction) ACTION: DOWNLOAD
-app.get('/package/:id', authenticateJWT, async (req, res) => {
+app.get('/package/:id', async (req, res) => {
     await logRequest("get", "/package/:id", req);
+    if(!await authenticateJWT(req, res)) {
+        return;
+    }
 
     if (!req.params.id) {
         res.status(400).send("There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.")
@@ -542,8 +560,11 @@ app.get('/package/:id', authenticateJWT, async (req, res) => {
 
 
 // Update Endpoint
-app.put('/package/:id', authenticateJWT, async (req, res) => {
+app.put('/package/:id', async (req, res) => {
     await logRequest("put", "/package/:id", req);
+    if(!await authenticateJWT(req, res)) {
+        return;
+    }
     // On package update, exactly one field should be set.
     // The package contents (from PackageData) will replace the previous contents.
     const packageContents = req.body["data"]["Content"];
@@ -625,8 +646,11 @@ app.put('/package/:id', authenticateJWT, async (req, res) => {
 });
 
 // Delete endpoint
-app.delete('/package/:id', authenticateJWT, async (req, res) => {
+app.delete('/package/:id', async (req, res) => {
     await logRequest("delete", "/package/:id", req);
+    if(!await authenticateJWT(req, res)) {
+        return;
+    }
 
     const id = req.params.id;
     // Check for missing id field in request
@@ -646,8 +670,11 @@ app.delete('/package/:id', authenticateJWT, async (req, res) => {
 });
 
 // (call logPackageAction), ACTION: RATE
-app.get('/package/:id/rate', authenticateJWT, async (req, res) => {
+app.get('/package/:id/rate', async (req, res) => {
     await logRequest("get", "/package/:id/rate", req);
+    if(!await authenticateJWT(req, res)) {
+        return;
+    }
 
     // Extract package ID and authentication token from request params and headers
     const packageID = Number(req.params.id);
@@ -738,8 +765,11 @@ function nameConv(name: string): boolean {
   return true;
 }
 // Return the history of this package (all versions).
-app.get('/package/byName/:name', authenticateJWT, async (req, res) => {
+app.get('/package/byName/:name', async (req, res) => {
     await logRequest("get", "/package/byName/:name", req);
+    if(!await authenticateJWT(req, res)) {
+        return;
+    }
 
     try {
       // get package name from header
@@ -779,6 +809,9 @@ app.get('/package/byName/:name', authenticateJWT, async (req, res) => {
 // Deletes all versions of a package from the datastore with the given name.
 app.delete('/package/byName/:name', async (req, res) => {
     await logRequest("delete", "/package/byName/:name", req);
+    if(!await authenticateJWT(req, res)) {
+        return;
+    }
     // get package name from header
     const packageName = req.params.name;
 
@@ -815,8 +848,11 @@ app.delete('/package/byName/:name', async (req, res) => {
 // We use the authenticateJWT middleware function to protect routes that require 
 // authentication, like the /package/byRegEx endpoint
 // Get any packages fitting the regular expression
-app.post('/package/byRegEx',authenticateJWT, async (req, res) => {
+app.post('/package/byRegEx', async (req, res) => {
     await logRequest("post", "/package/byRegEx", req);
+    if(!await authenticateJWT(req, res)) {
+        return;
+    }
     // Check if the request has a JSON body
     if (Object.keys(req.body).length === 0) {
         return res.status(400).json({ message: 'Malformed JSON: Request must have a JSON body.' });
@@ -863,8 +899,11 @@ app.post('/package/byRegEx',authenticateJWT, async (req, res) => {
 
 
 // Fetch uploader name and upload date
-app.get('/package/:id/upload_info',authenticateJWT, async (req, res) => {
+app.get('/package/:id/upload_info', async (req, res) => {
     await logRequest("get", "/package/:id/upload_info", req);
+    if(!await authenticateJWT(req, res)) {
+        return;
+    }
   // Extract package ID and authentication token from request params and headers
   const packageID = Number(req.params.id);
 
@@ -887,7 +926,7 @@ const jwt = require("jsonwebtoken");
 // of incoming requests and verifies its authenticity using the jsonwebtoken library:
 
 // ERROR 400: There is missing field(s) in the AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.
-async function authenticateJWT(req: any, res: any, next: any) {
+async function authenticateJWT(req: any, res: any) {
   // Retrieve the value of the 'X-Authorization' header from the request headers
   const authHeader = req.headers['x-authorization'];
   // console.log(req.headers['x-authorization'])
@@ -896,7 +935,8 @@ async function authenticateJWT(req: any, res: any, next: any) {
     // Retrieve the JWT secret key 
     let jwtSecret = "apple";//await accessSecret();
     if (!jwtSecret) {
-        return res.status(400).json({message: 'Access Failed: Server Error retrieving secret key' });}
+        res.status(400).json({message: 'Access Failed: Server Error retrieving secret key' });}
+        return false;
     try {
         const decodedToken = jwt.verify(token, jwtSecret);
         console.log(decodedToken)
@@ -908,33 +948,46 @@ async function authenticateJWT(req: any, res: any, next: any) {
         }
         // Admin boolean of current user will be passed to the next middleware function 
         req.admin = decodedToken.admin; 
-        next();
+        // next();
+        return true;
     } catch (err: any) {
         // If the token is expired or used more than 1000 times
         if (err instanceof jwt.TokenExpiredError || (typeof err.message === 'string' && err.message === 'API counter went below 0')) {
             // Generate a new token by asking the user to log back in!
-            return res.status(400).json({message: 'Access Failed: Token expired for current user. Please log in again' });
+            res.status(400).json({message: 'Access Failed: Token expired for current user. Please log in again' });
+            return false;
         }
         // If the token seems to have an invalid signature (JsonWebTokenError) *someone tempered with it* or other errors
-        return res.status(400).json({message: 'Access Failed: Invalid token or Misformed token' });
+        res.status(400).json({message: 'Access Failed: Invalid token or Misformed token' });
+        return false;
     }
   } else {
-    return res.status(400).json({ message: 'Access Failed: Token not provided' });
+    res.status(400).json({ message: 'Access Failed: Token not provided' });
+    return false;
   }
+  return true;
 }
 
 // Checks if user has admin priviledges
-async function isAdmin(req: any, res: any, next: any) {
+async function isAdmin(req: any, res: any) {
     console.log(req.admin)
     if (req.admin === true) {
-      next();
+        return true;
     } else {
-        return res.status(401).json({ message: "Insufficient permissions." });
+        res.status(401).json({ message: "Insufficient permissions." });
+        return false;
     }
+    return true;
 }
 
-app.get('/isAdmin', authenticateJWT, isAdmin, async (req, res) => {
+app.get('/isAdmin', async (req, res) => {
     await logRequest("get", "/isAdmin",req);
+    if (!await authenticateJWT(req, res)) {
+        return;
+    }
+    if(!await isAdmin(req, res)) {
+        return;
+    }
 
     return res.status(200).json({ message: "User is an admin." });
 });
@@ -1119,10 +1172,7 @@ app.get("/packages", authenticateJWT, async (req, res) => {
 app.put('/', async (req, res) => {
     await logRequest("put", "/", req);
     //uploadModuleToCloudStorage("testing_max", "1.5.0", ZIP_FILETYPE, "aGVsbG8gd29ybGQ=", 'ece461-repositories');
-    const password =  "correcthorsebatterystaple123(!__+@**(A'\"`;DROP TABLE packages;"
-    const sanitzed_password = sanitizeInput(password)
 
-    await addUser('ece30861defaultadminuser', sanitzed_password , true);
     // Code: 200  Default user is added
     res.sendStatus(200);
 });
