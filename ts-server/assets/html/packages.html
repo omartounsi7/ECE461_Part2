@@ -655,10 +655,6 @@
               return;
           } else {
             // adds default user with admin priviledges to database upon reset
-            const response = await fetch('/', {
-              method: 'PUT'
-            });
-            
             // Handles success response
             alert('Registry successfully reset.');
             window.location.href = '/';
