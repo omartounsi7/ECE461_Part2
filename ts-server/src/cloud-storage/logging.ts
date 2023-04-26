@@ -56,15 +56,23 @@ async function writeToLog(log: any) {
         contentType,
         contentEncoding
     });
-    console.log("test4");
 }
 
 function get24hourTime() {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const seconds = now.getSeconds();
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    // const now = new Date();
+    // const hours = now.getHours();
+    // const minutes = now.getMinutes();
+    // const seconds = now.getSeconds();
+    // return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    const currentDate = new Date();
+    const options: Intl.DateTimeFormatOptions = {
+        timeZone: 'America/New_York',
+        hour12: false,
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric'
+    };
+    return currentDate.toLocaleString('en-US', options);
 }
 
 function getLogFileName() {
