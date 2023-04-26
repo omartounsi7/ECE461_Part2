@@ -33,7 +33,7 @@ const zlib = require('zlib');
 const { promisify } = require('util');
 const zipdir = require('zip-dir');
 const { execSync } = require('child_process');
-
+const jwt = require("jsonwebtoken");
 
 
 // Imports the npm package
@@ -135,6 +135,16 @@ app.delete('/reset', authenticateJWT, isAdmin, async (req, res) => {
 
     // deletes all packages stored in Google Cloud storage
     await resetCloudStorage(MODULE_STORAGE_BUCKET);
+
+    // Add default user directly to the database
+    const password = "correcthorsebatterystaple123(!__+@**(A’”`;DROP TABLE packages;"
+    const sanitized_password = sanitizeInput(password)
+    const defaultUser = {
+        username: 'ece30861defaultadminuser',
+        password: sanitized_password,
+        isAdmin: true
+    };
+    await addUser(defaultUser.username, defaultUser.password, defaultUser.isAdmin);
 
     // Code: 200  Registry is reset
     res.sendStatus(200);
@@ -400,21 +410,7 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
         }
     }
 
-    // Define the JWT secret (this should be stored securely and not hard-coded)
-    let jwtSecret = "apple"
-
-    // Retrieve the value of the 'X-Authorization' header from the request headers
-    const authHeader = req.headers['x-authorization'];
-    const authToken = (authHeader as string).split(' ')[1];
-    
-    // Decode the JWT token and extract the payload
-    const decodedToken = jwt.verify(authToken, jwtSecret);
-    // Find the user name by decoding the JWT_TOKEN
-    const userName = decodedToken.name;
-    // Find whether the user is an admin by decoding the JWT_TOKEN
-    const isAdmin = decodedToken.admin;
-    // Package Action: CREATE
-    logPackageAction(userName, isAdmin, metadata, "CREATE");
+    await logPackageActionEntry("CREATE", req, metadata);
 
     // Define response JSON object
     const responseObject = {
@@ -438,7 +434,6 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
 }
 
 // Download Endpoint
-// (call logPackageAction) ACTION: DOWNLOAD
 app.get('/package/:id', authenticateJWT, async (req, res) => {
     console.log("package/" + req.params.id + " endpoint");
 
@@ -449,10 +444,8 @@ app.get('/package/:id', authenticateJWT, async (req, res) => {
         return;
     }
 
-    //Package Action
-    //const userName = "Max";
-    //const isAdmin = true;
-    //logPackageAction(userName, isAdmin, packageRepo.metaData, "DOWNLOAD");
+    // ACTION: DOWNLOAD
+    // await logPackageActionEntry("DOWNLOAD", req, packageRepo.metaData);
 
     // download package by ID
     let packageInfo = await downloadRepo(id);
@@ -479,7 +472,6 @@ app.get('/package/:id', authenticateJWT, async (req, res) => {
     // code 404
     // package DNE
 });
-
 
 // Update Endpoint
 app.put('/package/:id', authenticateJWT, async (req, res) => {
@@ -516,19 +508,50 @@ app.put('/package/:id', authenticateJWT, async (req, res) => {
     const packageID = req.body["metadata"]["ID"];
 
     // The name, version, and ID must match.
-    if ((entry.Name === packageName) && (entry.Version == packageVersion) && (entry.ID === packageID)) {
+    if ((entry.name === packageName) && (entry.version == packageVersion) && (entry.metaData.ID=== packageID)) {
 
         // if packageContents field is set
         if (packageContents) {
+
+            // Uploads module to Google Cloud Storage
+            await uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, packageContents, MODULE_STORAGE_BUCKET);
+
+            // ACTION: UPDATE
+            await logPackageActionEntry("UPDATE", req, req.body["metadata"]);
+
             // 200: Version is updated.
             // Package contents from PackageData schema will replace previous contents
-
+            return res.status(200).json({ message: "Version is updated" });
         }
 
         // if packageURL field is set
         if (packageURL) { 
-            
+            const parts = packageURL.split('/');
+            const cloneDir = './' + parts[parts.length - 1];
+            const zipdirAsync = promisify(zipdir);
+                
+            // Clone the GitHub package locally
+            execSync(`git clone ${packageURL} ${cloneDir}`);
 
+            // Remove the .git directory
+            const gitDir = `${cloneDir}/.git`;
+            if (fs.existsSync(gitDir)) {
+                fs.rmSync(gitDir, { recursive: true, force: true });
+            }
+            // Create a zipped file
+            const buffer: Buffer = await zipdirAsync(cloneDir, { saveTo: cloneDir + '.zip' });
+
+            // Encode the zipped file to a Base64-encoded string
+            let base64Contents = Buffer.from(buffer).toString('base64');
+
+            await uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, base64Contents, MODULE_STORAGE_BUCKET);
+            
+            // ACTION: UPDATE
+            await logPackageActionEntry("UPDATE", req, req.body["metadata"]);
+
+            // 200 Version is updated.
+            // the package contents from PackageData schema will replace previous contents
+            return res.status(200).json({ message: "Version is updated" });
         }
 
         // Package Action
@@ -536,9 +559,9 @@ app.put('/package/:id', authenticateJWT, async (req, res) => {
         // const isAdmin = true;
         //logPackageAction(userName, isAdmin, packageRepo.metaData, "UPDATE");
 
-        // 200 Version is updated.
-        // the package contents from PackageData schema will replace previous contents
     }
+
+    return res.status(404).json({ message: "Package Metadata mismatch with provided data" });
 });
 
 // Delete endpoint
@@ -562,7 +585,7 @@ app.delete('/package/:id', authenticateJWT, async (req, res) => {
     }
 });
 
-// (call logPackageAction), ACTION: RATE
+// Rate endpoint
 app.get('/package/:id/rate', authenticateJWT, async (req, res) => {
     // Extract package ID and authentication token from request params and headers
     const packageID = Number(req.params.id);
@@ -575,9 +598,6 @@ app.get('/package/:id/rate', authenticateJWT, async (req, res) => {
     }
     // Download the package entity
     const packageRepo = await downloadRepo(packageID);
-    //const userName = "Max";
-    //const isAdmin = true;
-    //logPackageAction(userName, isAdmin, packageRepo.metaData, "RATE");
 
     // Needed for Rate
     console.log(packageRepo.url);
@@ -625,9 +645,12 @@ app.get('/package/:id/rate', authenticateJWT, async (req, res) => {
         PullRequest: codeReview,
         NetScore: netScore
       };
-      
+
+      // ACTION: RATE
+      await logPackageActionEntry("RATE", req, packageRepo.metaData);
+  
       // 200: Only send a 200 response if each metric was computed successfully
-      if (busFactor !== undefined && correctness !== undefined && rampUp !== undefined && responsiveMaintainer !== undefined && license !== undefined && version !== undefined && codeReview !== undefined && netScore !== undefined) {
+      if (busFactor && correctness && rampUp && responsiveMaintainer && license && version && codeReview && netScore) {
         // Send the response object to the client
         res.status(200).send(responseObject);
       } else {
@@ -665,14 +688,14 @@ app.get('/package/byName/:name', authenticateJWT, async (req, res) => {
       // Check if the package name adheres to the naming conventions
       if (!nameConv(packageName) || packageName === '*') {
         // 400 - invalid package name
-        res.status(400).json({error: 'Invalid package name'});
+        res.status(400).json({message: 'Invalid package name'});
       } else {
         // Retrieve all packages from the datastore with that package name
         const allPackages = await findReposByName(packageName);
     
         if (allPackages.length === 0) {
             // 404 - package does not exist
-            res.status(404).json({error: 'Package does not exist'});
+            res.status(404).json({message: 'Package does not exist'});
         } else {
             // Combine the packageAction fields of all packages into a single array
             const combinedActions = allPackages.reduce((acc: string | any[], pkg: { packageAction: any; }) => {
@@ -685,12 +708,12 @@ app.get('/package/byName/:name', authenticateJWT, async (req, res) => {
       }
     } catch (error) {
       // 400 - malformed JSON or invalid authentiation
-      res.status(400).json({error: 'Bad request'});
+      res.status(400).json({message: 'Bad request'});
     }
 });
 
 // Deletes all versions of a package from the datastore with the given name.
-app.delete('/package/byName/:name', async (req, res) => {
+app.delete('/package/byName/:name',authenticateJWT, async (req, res) => {
     // get package name from header
     console.log(req.params.name);
     const packageName = req.params.name;
@@ -792,11 +815,7 @@ app.get('/package/:id/upload_info',authenticateJWT, async (req, res) => {
 });
 
 
-//1. Install the jsonwebtoken library: npm install jsonwebtoken
-const jwt = require("jsonwebtoken");
 
-// Create a middleware function that checks for the JWT token in the Authorization header 
-// of incoming requests and verifies its authenticity using the jsonwebtoken library:
 
 // ERROR 400: There is missing field(s) in the AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.
 async function authenticateJWT(req: any, res: any, next: any) {
@@ -950,6 +969,28 @@ async function logPackageAction(userName: string, isAdmin: boolean, packageRepo:
     const jsonString = JSON.stringify(packageAction);
     // Updates the packageAction field of a package in the datastore for the given repository ID.
     await updateRepoPackageAction(Number(packageRepo.ID), jsonString);
+}
+
+
+async function logPackageActionEntry(action: string, req: any, metadata: any) {
+    // Define the JWT secret (this should be stored securely and not hard-coded)
+    const jwtSecret = "apple";
+  
+    // Retrieve the value of the 'X-Authorization' header from the request headers
+    const authHeader = req.headers['x-authorization'];
+    const authToken = (authHeader as string).split(' ')[1];
+  
+    // Decode the JWT token and extract the payload
+    const decodedToken = jwt.verify(authToken, jwtSecret);
+  
+    // Find the user name by decoding the JWT_TOKEN
+    const userName = decodedToken.name;
+  
+    // Find whether the user is an admin by decoding the JWT_TOKEN
+    const isAdmin = decodedToken.admin;
+  
+   // Package Action: STRING
+    await logPackageAction(userName, isAdmin, metadata, action);
 }
 
 
