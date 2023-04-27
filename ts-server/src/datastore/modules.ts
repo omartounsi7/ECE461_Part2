@@ -253,8 +253,8 @@ async function findReposByNameAndVersion(name: string, version: string) {
             .filter("version", "<=", range[1]);
         return (await datastore.runQuery(query))[0];
     } else { // version invalid
-        console.log("invalid version");
-        return ["invalid version"];
+        const myList: any[] = [];
+        return myList
     }
 }
 

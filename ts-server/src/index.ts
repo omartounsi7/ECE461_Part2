@@ -420,7 +420,6 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
         const result = await findReposByNameAndVersion(packageName, packageVersion);
         if (result.length > 0) {
             // package exists already (409 error code)
-            console.log('true')
             return { statusCode: 409, message: 'Conflict: Package exists already' };
         }
 
