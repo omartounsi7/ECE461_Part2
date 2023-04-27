@@ -152,21 +152,6 @@
       executeScripts(doc);
     }
 
-    async function renderPackagesView() {
-      const packagesHtmlResponse = await fetch('/packages.html');
-      const packagesHtml = await packagesHtmlResponse.text();
-
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(packagesHtml, 'text/html');
-
-      // Replace the current document's head with the fetched head
-      document.head.innerHTML = doc.head.innerHTML;
-
-      document.body.innerHTML = doc.documentElement.innerHTML;
-      // Execute scripts in the fetched packages.html
-      executeScripts(doc);
-    }
-
     // executes the JavaScript within the <script> tags in the fetched error.html file.
     function executeScripts(element) {
       // Get all script tags in the element
@@ -212,12 +197,12 @@
               renderErrorView(errorMessage, '/');
             } else {
               // Handle successful response
-              renderPackagesView();
+              window.location.href = 'packages.html';
             };
           })
         }
       })
-      .catch(error => {
+      .catch(error => {s
         if (error.message) {
           document.getElementById('errorMessage').innerText =  error.message
           errorBox.classList.add('active');

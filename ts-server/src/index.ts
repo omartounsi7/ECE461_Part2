@@ -40,8 +40,6 @@ const jwt = require("jsonwebtoken");
 
 // Imports the npm package
 import dotenv from "dotenv"; 
-import { json } from 'stream/consumers';
-import {log} from "util";
 // Loads environment variables into process.env
 dotenv.config(); 
 
@@ -202,6 +200,7 @@ app.delete('/reset', async (req, res) => {
 // Upload endpoint and module ingestion
 // (call logPackageAction) ACTION: CREATE 
 app.post('/package', async (req, res) => {
+    console.log("In package")
     await logRequest("post", "/package", req);
     if(!await authenticateJWT(req, res)) {
         return;
@@ -241,23 +240,23 @@ app.post('/package', async (req, res) => {
         //console.log('Error in decodeBase64:', result.message);
 
         if (result.message.includes("homepage URL is missing in package.json")){
-            return res.status(400).send(result.message);
+            return res.status(400).send({message: result.message});
         }
         
         if (result.message.includes("Package exists already")){
-            return res.status(409).send('Bad Request: Package exists already');
+            return res.status(409).send({message: 'Bad Request: Package exists already'});
         }
         
         if (result.message.includes("package.json file is missing")){
-            return res.status(400).send('Bad Request: package.json file is missing');      
+            return res.status(400).send({message: 'Bad Request: package.json file is missing'});      
         }
         
         if (result.message.includes("Failed to add repository:")){
-            return res.status(400).send(result.message);
+            return res.status(400).send({message: result.message});
         }
 
         if (result.message.includes("An error occurred while updating metadata:")){
-            return res.status(400).send(result.message);
+            return res.status(400).send({message: result.message});
         }
     } 
 
@@ -321,36 +320,36 @@ app.post('/package', async (req, res) => {
             base64String = Buffer.from(buffer).toString('base64');
             
             const result = await decodeBase64(base64String, JSProgram, res, req);
-            //console.log('Error in decodeBase64:', result.message);
+            console.log('Error in decodeBase64:', result.message);
 
             if (result.message.includes("homepage URL is missing in package.json")){
                 // Remove the locally downloaded GitHub directory
                 fs.rmdirSync(cloneDir, { recursive: true });
-                return res.status(400).send(result.message);
+                return res.status(400).send({message: result.message});
             }
             
             if (result.message.includes("Package exists already")){
                 // Remove the locally downloaded GitHub directory
                 fs.rmdirSync(cloneDir, { recursive: true });
-                return res.status(409).send('Bad Request: Package exists already');
+                return res.status(409).send({message:'Bad Request: Package exists already'});
             }
             
             if (result.message.includes("package.json file is missing")){
                 // Remove the locally downloaded GitHub directory
                 fs.rmdirSync(cloneDir, { recursive: true });
-                return res.status(400).send('Bad Request: package.json file is missing');      
+                return res.status(400).send({message:'Bad Request: package.json file is missing'});      
             }
             
             if (result.message.includes("Failed to add repository:")){
                 // Remove the locally downloaded GitHub directory
                 fs.rmdirSync(cloneDir, { recursive: true });
-                return res.status(400).send(result.message);
+                return res.status(400).send({message: result.message});
             }
 
             if (result.message.includes("An error occurred while updating metadata:")){
                 // Remove the locally downloaded GitHub directory
                 fs.rmdirSync(cloneDir, { recursive: true });
-                return res.status(400).send(result.message);
+                return res.status(400).send({message: result.message});
             }
             // Remove the locally downloaded GitHub directory
             fs.rmdirSync(cloneDir, { recursive: true });
@@ -363,17 +362,11 @@ app.post('/package', async (req, res) => {
 async function decodeBase64(base64String: string, JSProgram: string, res: any, req: any) {
 
     // Decode the Base64 string
-    const binaryData = Buffer.from(base64String, 'base64').toString('binary');
-    
-    // Convert the binary data to a Uint8Array
-    const byteArray = new Uint8Array(binaryData.length);
-    for (let i = 0; i < binaryData.length; i++) {
-        byteArray[i] = binaryData.charCodeAt(i);
-    }
+    const buffer = Buffer.from(base64String, 'base64');
     
     // Load the zip file using JSZip
-    const zip = await JSZip.loadAsync(byteArray);
-
+    const zip = await JSZip.loadAsync(buffer);
+    
     // Will store the package name from package.json
     let packageName;
 
@@ -417,6 +410,7 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
         const result = await findReposByNameAndVersion(packageName, packageVersion);
         if (result.length > 0) {
             // package exists already (409 error code)
+            console.log('true')
             return { statusCode: 409, message: 'Conflict: Package exists already' };
         }
 
@@ -839,9 +833,9 @@ app.delete('/package/byName/:name', async (req, res) => {
 // Get any packages fitting the regular expression
 app.post('/package/byRegEx', async (req, res) => {
     await logRequest("post", "/package/byRegEx", req);
-    if(!await authenticateJWT(req, res)) {
-        return;
-    }
+    //if(!await authenticateJWT(req, res)) {
+    //    return;
+    //}
     // Check if the request has a JSON body
     if (Object.keys(req.body).length === 0) {
         return res.status(400).json({ message: 'Malformed JSON: Request must have a JSON body.' });
@@ -914,14 +908,14 @@ app.get('/package/:id/upload_info', async (req, res) => {
 async function authenticateJWT(req: any, res: any) {
   // Retrieve the value of the 'X-Authorization' header from the request headers
   const authHeader = req.headers['x-authorization'];
-  // console.log(req.headers['x-authorization'])
   if (authHeader) {
     const token = authHeader.split(' ')[1];
     // Retrieve the JWT secret key 
     let jwtSecret = "apple";//await accessSecret();
     if (!jwtSecret) {
-        res.status(400).json({message: 'Access Failed: Server Error retrieving secret key' });}
+        res.status(400).json({message: 'Access Failed: Server Error retrieving secret key' });
         return false;
+    }
     try {
         const decodedToken = jwt.verify(token, jwtSecret);
         console.log(decodedToken)
@@ -933,7 +927,6 @@ async function authenticateJWT(req: any, res: any) {
         }
         // Admin boolean of current user will be passed to the next middleware function 
         req.admin = decodedToken.admin; 
-        // next();
         return true;
     } catch (err: any) {
         // If the token is expired or used more than 1000 times
@@ -950,7 +943,6 @@ async function authenticateJWT(req: any, res: any) {
     res.status(400).json({ message: 'Access Failed: Token not provided' });
     return false;
   }
-  return true;
 }
 
 // Checks if user has admin priviledges
@@ -962,7 +954,6 @@ async function isAdmin(req: any, res: any) {
         res.status(401).json({ message: "Insufficient permissions." });
         return false;
     }
-    return true;
 }
 
 app.get('/isAdmin', async (req, res) => {
@@ -1003,13 +994,12 @@ async function authentication(req: any, res: any) {
     const isadmin = req.body["User"]["isAdmin"];
     const password = req.body["Secret"]["password"];
 
-    console.log(password)
     const sanitzed_password = sanitizeInput(password)
-    console.log(sanitzed_password)
-    let authToken =  await userLogin(username, sanitzed_password);
+    let authToken =  await userLogin(username, isadmin, sanitzed_password);
     if (authToken === "") {
         return res.status(401).json({message: 'Username or Password is invalid!'});
     } else {
+        console.log(authToken)
         return res.status(200).json({message: 'bearer ' + authToken});
     }
 }
@@ -1106,9 +1096,11 @@ async function logPackageActionEntry(action: string, req: any, metadata: any) {
 }
 
 
-app.get('/user/:name', authenticateJWT, async (req, res) => {
+app.get('/user/:name', async (req, res) => {
     await logRequest("get", "/user/:name", req);
-
+    if(!await authenticateJWT(req, res)) {
+        return;
+    }
     // name of user we want to query
     const name = req.params.name;
     const results = await findUserByName(name);
@@ -1116,8 +1108,11 @@ app.get('/user/:name', authenticateJWT, async (req, res) => {
     return res.send(results.length > 0);
 });
 
-app.post('/new_user', authenticateJWT, async (req, res) => {
+app.post('/new_user', async (req, res) => {
     await logRequest("post", "/new_user", req);
+    if(!await authenticateJWT(req, res)) {
+        return;
+    }
     // name of user we want to register
     const username = req.body["username"];
     const password = req.body["password"];
@@ -1129,7 +1124,9 @@ app.post('/new_user', authenticateJWT, async (req, res) => {
 // Reset to default state
 app.delete('/user', async (req, res) => {
     await logRequest("delete", "/user",req);
-
+    if(!await authenticateJWT(req, res)) {
+        return;
+    }
     // Define the JWT secret (this should be stored securely and not hard-coded)
     let jwtSecret = "apple"
 
@@ -1147,9 +1144,11 @@ app.delete('/user', async (req, res) => {
     }
 });
 
-app.get("/popularity/:id", authenticateJWT, async (req, res) => {
+app.get("/popularity/:id", async (req, res) => {
     await logRequest("get", "/popularity/:id", req);
-
+    if(!await authenticateJWT(req, res)) {
+        return;
+    }
     // returns the download count of a module
     if(req.params.id === undefined) {
         res.status(400).send("Malformed request.");
@@ -1167,8 +1166,19 @@ app.get("/popularity/:id", authenticateJWT, async (req, res) => {
  * Website Serving endpoints *
  * * * * * * * * * * * * * * */
 
-app.get("/packages", authenticateJWT, async (req, res) => {
+/*
+app.put("/", async (req, res) => {
+    await addUser('kevin', 'kevin' , true);
+    await addUser('max', 'max' , true);
+    await addUser('lemon', 'drop' , true);
+});
+*/
+
+app.get("/packages", async (req, res) => {
     await logRequest("get", "/packages", req);
+    if(!await authenticateJWT(req, res)) {
+        return;
+    }
     console.log("Redirecting user to packages.html")
     // server webpage (If successfully logged in, redirect to packages.html)
     res.status(200).sendFile(path.join(__dirname, HTML_PATH + "/packages.html"));
