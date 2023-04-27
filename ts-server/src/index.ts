@@ -838,15 +838,16 @@ app.delete('/package/byName/:name', async (req, res) => {
 // Get any packages fitting the regular expression
 app.post('/package/byRegEx', async (req, res) => {
     await logRequest("post", "/package/byRegEx", req);
-    //if(!await authenticateJWT(req, res)) {
-    //    return;
-    //}
+    if(!await authenticateJWT(req, res)) {
+        return;
+    }
     // Check if the request has a JSON body
     if (Object.keys(req.body).length === 0) {
         return res.status(400).json({ message: 'Malformed JSON: Request must have a JSON body.' });
     }
     // Check if the 'regex' field is present in the request body
     const regex = req.body["RegEx"];
+    console.log(regex)
     if (!regex) { 
         return res.status(400).json({ message: 'Malformed JSON: Request must include a regex field.' });
     }
