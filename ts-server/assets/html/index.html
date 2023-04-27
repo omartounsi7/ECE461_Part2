@@ -175,7 +175,7 @@
           errorBox.classList.add('active');
         } else {
           // Set the authentication token in local storage
-          localStorage.setItem('authToken', data.message);
+          localStorage.setItem('authToken', data);
 
           // Get the authentication token from local storage
           const authToken = localStorage.getItem('authToken');

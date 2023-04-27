@@ -193,7 +193,7 @@ app.delete('/reset', async (req, res) => {
     await addUser('ece30861defaultadminuser', sanitzed_password , true);
 
     // Code: 200  Registry is reset
-    res.sendStatus(200);
+    return res.status(200).send({message: "Registry is reset"});
 })
 
 
@@ -237,7 +237,8 @@ app.post('/package', async (req, res) => {
     // Base64 encoded string is passed in req.body
     if (base64String) {
         const result = await decodeBase64(base64String, JSProgram, res, req);
-        //console.log('Error in decodeBase64:', result.message);
+        console.log('Error in decodeBase64:', result.message);
+
 
         if (result.message.includes("homepage URL is missing in package.json")){
             return res.status(400).send({message: result.message});
@@ -363,10 +364,10 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
 
     // Decode the Base64 string
     const buffer = Buffer.from(base64String, 'base64');
-    
+
     // Load the zip file using JSZip
     const zip = await JSZip.loadAsync(buffer);
-    
+
     // Will store the package name from package.json
     let packageName;
 
@@ -382,17 +383,26 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
 
     try {
         // Extract the package.json file
-        const packageJsonContent = await zip.file('package.json').async('string');
-        
+        const packageJsonFile = zip.file("package.json");
+        if (!packageJsonFile) {
+            throw new Error("No package.json file found in the zip archive");
+          }
+
         // Parse the package.json content as a JSON object
+        const packageJsonContent = await packageJsonFile.async("text");
         const packageJson = JSON.parse(packageJsonContent);
+
+        //const packageJsonContent = await zip.file('package.json').async('string');
+        //console.log(packageJsonContent)
+        // Parse the package.json content as a JSON object
+        //const packageJson = JSON.parse(packageJsonContent);
         
         // Extract the name and version fields from package.json
         packageName = packageJson.name;
         packageVersion = packageJson.version;
 
         // Extract`homepage` URL (links to the GitHub repository) from package.json
-        packageURL = "https://github.com/jashkenas/underscore"; //packageJson.homepage;
+        packageURL = packageJson.homepage;
 
         if (!packageURL) {
             return { statusCode: 400, message: 'Bad Request: homepage URL is missing in package.json' };
@@ -415,11 +425,13 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
         }
 
     } catch (error: any) { // specify the type of the error variable
+        console.log(error)
         if (error.message === "Cannot read properties of null (reading 'async')") {
             // The package.json file does not exist in the zip file
             // Return an appropriate HTTP error code like 400 Bad Request
             return { statusCode: 400, message: 'Bad Request: package.json file is missing' };
         }
+        return  { statusCode: 400, message: 'Bad Request: Bad' };
     }
 
     const cloudStoragePath = cloudStorageFilePathBuilder(packageName + ".zip", packageVersion);
@@ -614,12 +626,6 @@ app.put('/package/:id', async (req, res) => {
             // the package contents from PackageData schema will replace previous contents
             return res.status(200).json({ message: "Version is updated" });
         }
-
-        // Package Action
-        // const userName = "Max";
-        // const isAdmin = true;
-        //logPackageAction(userName, isAdmin, packageRepo.metaData, "UPDATE");
-
     }
 
     return res.status(404).json({ message: "Package Metadata mismatch with provided data" });
@@ -906,8 +912,9 @@ app.get('/package/:id/upload_info', async (req, res) => {
 
 // ERROR 400: There is missing field(s) in the AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.
 async function authenticateJWT(req: any, res: any) {
+
   // Retrieve the value of the 'X-Authorization' header from the request headers
-  const authHeader = req.headers['X-Authorization'];
+  const authHeader = req.headers['x-authorization'];
   if (authHeader) {
     const token = authHeader.split(' ')[1];
     // Retrieve the JWT secret key 
@@ -1000,7 +1007,7 @@ async function authentication(req: any, res: any) {
         return res.status(401).json({message: 'Username or Password is invalid!'});
     } else {
         console.log(authToken)
-        return res.status(200).json({message: 'bearer ' + authToken});
+        return res.status(200).json('bearer ' + authToken);
     }
 }
 
@@ -1079,7 +1086,7 @@ async function logPackageActionEntry(action: string, req: any, metadata: any) {
     const jwtSecret = "apple";
   
     // Retrieve the value of the 'X-Authorization' header from the request headers
-    const authHeader =  req.headers['X-Authorization'];
+    const authHeader =  req.headers['x-authorization'];
     const authToken = (authHeader as string).split(' ')[1];
   
     // Decode the JWT token and extract the payload
@@ -1105,7 +1112,8 @@ app.get('/user/:name', async (req, res) => {
     const name = req.params.name;
     const results = await findUserByName(name);
     // return a boolean value based on the length of the results
-    return res.send(results.length > 0);
+    const boolValue = results.length > 0;
+    return res.status(406).json({ message: boolValue });
 });
 
 app.post('/new_user', async (req, res) => {
@@ -1131,7 +1139,7 @@ app.delete('/user', async (req, res) => {
     let jwtSecret = "apple"
 
     // Retrieve the value of the 'X-Authorization' header from the request headers
-    const authHeader = req.headers['X-Authorization']; 
+    const authHeader = req.headers['x-authorization']; 
     if (authHeader) {
         const authToken = (authHeader as string).split(' ')[1];
         
