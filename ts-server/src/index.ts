@@ -907,7 +907,7 @@ app.get('/package/:id/upload_info', async (req, res) => {
 // ERROR 400: There is missing field(s) in the AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.
 async function authenticateJWT(req: any, res: any) {
   // Retrieve the value of the 'X-Authorization' header from the request headers
-  const authHeader = req.headers['x-authorization'];
+  const authHeader = req.headers['X-Authorization'];
   if (authHeader) {
     const token = authHeader.split(' ')[1];
     // Retrieve the JWT secret key 
@@ -1079,7 +1079,7 @@ async function logPackageActionEntry(action: string, req: any, metadata: any) {
     const jwtSecret = "apple";
   
     // Retrieve the value of the 'X-Authorization' header from the request headers
-    const authHeader = req.headers['x-authorization'];
+    const authHeader =  req.headers['X-Authorization'];
     const authToken = (authHeader as string).split(' ')[1];
   
     // Decode the JWT token and extract the payload
@@ -1131,7 +1131,7 @@ app.delete('/user', async (req, res) => {
     let jwtSecret = "apple"
 
     // Retrieve the value of the 'X-Authorization' header from the request headers
-    const authHeader = req.headers['x-authorization'];
+    const authHeader = req.headers['X-Authorization']; 
     if (authHeader) {
         const authToken = (authHeader as string).split(' ')[1];
         

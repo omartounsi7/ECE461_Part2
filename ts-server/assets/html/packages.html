@@ -408,7 +408,7 @@
             const response_two = await fetch('/isAdmin', {
               method: 'GET',
               headers: {
-                'x-authorization': localStorage.getItem('authToken'),
+                'X-Authorization': localStorage.getItem('authToken'),
               },
             });
 
