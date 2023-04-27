@@ -328,11 +328,15 @@ async function getRepoData(id: number) {
  * 
  */
 async function getPopularityInfo(repoID: number) {
-    // The datastore doesn't record the number of downloads, so I use zero to replace it
-    const numDownloads = 0;
+    const packageRepo = await getRepoData(repoID);
+
+    // Retrieve the number of downloads
+    let numDownloads = 0;
+    if("api_counter" in packageRepo){
+        numDownloads = packageRepo.api_counter;
+    }
 
     // Retrieve the github stars of the package
-    const packageRepo = await getRepoData(repoID);
     const url = packageRepo.url;
     let stars = 0;
 
