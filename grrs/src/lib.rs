@@ -20,6 +20,7 @@ use std::collections::BinaryHeap;
 use std::collections::HashMap;
 
 use serde_json;
+use serde::{Serialize, Deserialize};
 
 use log::LevelFilter;
 use log::{info, debug};
@@ -167,31 +168,142 @@ pub extern fn handle_url_file(url_file_path: String, log_path: String, log_level
     };
 }
 
-// global variable for testing
+/// /// /// /// /// /// ///
+/// * * * * * * * * * * ///
+/// UNIT TEST FUNCTIONS ///
+/// * * * * * * * * * * ///
+/// /// /// /// /// /// ///
+
+///
+/// UNIT TEST GLOBAL VARIABLES
+///
 lazy_static! {
-    static ref MY_GLOBAL_STRING: String = "https://npm-module-registry-381816.uc.r.appspot.com".to_string();
+    static ref WEBSITE_NAME: String = "https://npm-module-registry-381816.uc.r.appspot.com".to_string();
+    static ref DEFAULT_USERNAME: String = "ece30861defaultadminuser".to_string();
+    static ref DEFAULT_PASSWORD: String = "correcthorsebatterystaple123(!__+@**(A'\"`;DROP TABLE packages;".to_string();
+    static ref AUTH_TOKEN: String = "".to_string();
 }
 
 ///
-/// module tests
+/// MISC FUNCTIONS
 ///
-/// Contains all of the tests we run in Rust
+pub fn get_website_url() -> String {
+    WEBSITE_NAME.clone()
+}
+pub fn get_default_username() -> String {
+    DEFAULT_USERNAME.clone()
+}
+pub fn get_default_password() -> String {
+    DEFAULT_PASSWORD.clone()
+}
+pub fn get_auth_token() -> String {
+    AUTH_TOKEN.clone()
+}
+
+pub fn get_valid_module_name() -> String {
+    "".to_string()
+}
+
+pub fn get_valid_module_name_and_version() -> (String, String) {
+    ("".to_string(), "".to_string())
+}
+
+pub fn get_valid_module_id() -> String {
+    "".to_string()
+}
+
 ///
-/// Current tests:
-/// test_main -                      tests the main function from 'main.rs' by
-///                                  calling the function handle_url_file with a log level of 3
-/// test_handle_url_file_loglevel1 - tests the handle_url_file function by calling it with a
-///                                  log level of 1
-/// test_handle_url_file_loglevel2 - tests the handle_url_file function by calling it with a
-///                                  log level of 2
-/// test_handle_url_file_loglevel3 - tests the handle_url_file function by calling it with a
-///                                  log level of 3
+/// UNIT TEST STRUCTS
+///
+
+//
+// PUT /authenticate
+//
+#[derive(Serialize)]
+struct User {
+    name: String,
+    isAdmin: bool,
+}
+
+#[derive(Serialize)]
+struct Secret {
+    password: String,
+}
+
+#[derive(Serialize)]
+struct AuthenticateRequestBody {
+    User: User,
+    Secret: Secret,
+}
+
+#[derive(Serialize)]
+struct MalformedAuthenticateRequestBody {
+    User: User
+}
+
+//
+// POST /packages
+//
+#[derive(Serialize)]
+struct PostPackagesRequestBody {
+    Version: String,
+    Name: String,
+}
+
+//
+// PUT /package/{id}
+//
+#[derive(Serialize)]
+struct PutPackageRequestBody {
+    metadata: PutPackageMetadata,
+    data: PutPackageData,
+}
+
+#[derive(Serialize)]
+struct PutPackageMetadata {
+    Name: String,
+    Version: String,
+    ID: String,
+}
+
+#[derive(Serialize)]
+struct PutPackageData {
+    Content: String,
+    URL: String,
+    JSProgram: String,
+}
+
+//
+// POST /package
+//
+#[derive(Serialize)]
+struct PostPackageRequestBody {
+    Content: String,
+    JSProgram: String
+}
+
+//
+// POST /package/byRegEx
+//
+#[derive(Serialize)]
+struct PostPackageRegexRequestBody {
+    RegEx: String
+}
+
+///
+/// UNIT TEST FUNCTIONS
 ///
 #[cfg(test)]
 mod tests {
+    use log::log;
+    use reqwest::blocking::get;
+    use serde::__private::de::IdentifierDeserializer;
     use super::*;
 
-    // tests the main function
+    //
+    // TEST THIS LIBRARY
+    //
+
     #[test]
     fn test_main() {
         let _args = vec![
@@ -203,11 +315,9 @@ mod tests {
 
         let result = handle_url_file("task".to_owned(), "log_path".to_owned(), 3);
         assert_eq!(result, ());
+        return;
     }
 
-    // tests the 'test_handle_url_file' function
-    // using log level 1
-    // this should output debug logs
     #[test]
     fn test_handle_url_file_loglevel1() {
         let url_file_path = "URLs.txt".to_owned();
@@ -219,11 +329,9 @@ mod tests {
         // Perform your assertions here.
         // For example:
         assert_eq!(result, ());
+        return;
     }
 
-    // tests the 'test_handle_url_file' function
-    // using log level 2
-    // this should only output info logs
     #[test]
     fn test_handle_url_file_loglevel2() {
         let url_file_path = "URLs.txt".to_owned();
@@ -235,11 +343,9 @@ mod tests {
         // Perform your assertions here.
         // For example:
         assert_eq!(result, ());
+        return;
     }
 
-    // tests the 'test_handle_url_file' function
-    // using log level 3
-    // this should not give any logs
     #[test]
     fn test_handle_url_file_loglevel3() {
         let url_file_path = "URLs.txt".to_owned();
@@ -251,24 +357,1243 @@ mod tests {
         // Perform your assertions here.
         // For example:
         assert_eq!(result, ());
+        return;
     }
-    
+
+    //
+    // TEST API ENDPOINTS
+    //
+
+    // POST /authenticate
+
+    // input correct username and password
     #[test]
-    fn test_get_package_by_id() {
-        let id = "";
+    fn test_post_authenticate_success() {
+        // variables
+        let username = get_default_username();
+        let password = get_default_password();
+        let url = get_website_url();
+
+        let correct_status = 200;
+
+        // create header
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static("Bearer <your_token_here>"));
-        let client = Client::new();
+
+        // create body
+        let request_body = AuthenticateRequestBody {
+            User: User {
+                name: username,
+                isAdmin: true
+            },
+            Secret: Secret {
+                password
+            }
+        };
+        let body_res = serde_json::to_String(&request_body);
+        if body_res.is_err() {
+            log!("Failed to parse body");
+            assert_eq!(body_res.is_err(), false);
+            return;
+        }
+        let body = body_res.unwrap();
+
+        // send request
+        let client = reqwest::blocking::Client::new();
         let response_res = client
-            .get(format!("https://npm-module-registry-381816.uc.r.appspot.com/package/{}", id))
+            .put(format!("{}/authenticate", get_website_url()))
+            .body(body)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return
+        }
+
+        return;
+    }
+
+    // input incorrect username and password
+    #[test]
+    fn test_post_authenticate_fail1() {
+        // variables
+        let username = "this is an incorrect username".to_string();
+        let password = "super secret incorrect password".to_string();
+        let url = get_website_url();
+
+        let correct_status = 401;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+
+        // create body
+        let request_body = AuthenticateRequestBody {
+            User: User {
+                name: username,
+                isAdmin: true
+            },
+            Secret: Secret {
+                password
+            }
+        };
+        let body_res = serde_json::to_String(&request_body);
+        if body_res.is_err() {
+            log!("Failed to parse body");
+            assert_eq!(body_res.is_err(), false);
+            return;
+        }
+        let body = body_res.unwrap();
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .put(format!("{}/authenticate", get_website_url()))
+            .body(body)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return
+        }
+        return;
+    }
+
+    // input incorrect username and correct password
+    #[test]
+    fn test_post_authenticate_fail2() {
+        // variables
+        let username = "this is an incorrect username".to_string();
+        let password = get_default_password();
+        let url = get_website_url();
+
+        let correct_status = 401;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+
+        // create body
+        let request_body = AuthenticateRequestBody {
+            User: User {
+                name: username,
+                isAdmin: true
+            },
+            Secret: Secret {
+                password
+            }
+        };
+        let body_res = serde_json::to_String(&request_body);
+        if body_res.is_err() {
+            log!("Failed to parse body");
+            assert_eq!(body_res.is_err(), false);
+            return;
+        }
+        let body = body_res.unwrap();
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .put(format!("{}/authenticate", get_website_url()))
+            .body(body)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return
+        }
+        return
+    }
+
+    // input correct username and incorrect password
+    #[test]
+    fn test_post_authenticate_fail3() {
+        // variables
+        let username = get_default_username();
+        let password = "super secret incorrect password".to_string();
+        let url = get_website_url();
+
+        let correct_status = 401;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+
+        // create body
+        let request_body = AuthenticateRequestBody {
+            User: User {
+                name: username,
+                isAdmin: true
+            },
+            Secret: Secret {
+                password
+            }
+        };
+        let body_res = serde_json::to_String(&request_body);
+        if body_res.is_err() {
+            log!("Failed to parse body");
+            assert_eq!(body_res.is_err(), false);
+            return;
+        }
+        let body = body_res.unwrap();
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .put(format!("{}/authenticate", get_website_url()))
+            .body(body)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return
+        }
+        return
+    }
+
+    // input malformed request
+    #[test]
+    fn test_post_authenticate_fail4() {
+        // variables
+        let username = get_default_username();
+        let password = get_default_password();
+        let url = get_website_url();
+
+        let correct_status = 400;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+
+        // create body
+        let request_body = MalformedAuthenticateRequestBody {
+            User: User {
+                name: username,
+                isAdmin: true
+            },
+        };
+        let body_res = serde_json::to_String(&request_body);
+        if body_res.is_err() {
+            log!("Failed to parse body");
+            assert_eq!(body_res.is_err(), false);
+            return;
+        }
+        let body = body_res.unwrap();
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .put(format!("{}/authenticate", get_website_url()))
+            .body(body)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return
+        }
+        return
+    }
+
+    // POST /packages
+
+    #[test]
+    fn test_post_packages_success() {
+        // variables
+        let name: String;
+        let version: String;
+        let (name, version) = get_valid_module_name_and_version();
+        let url = get_website_url();
+        let token = get_auth_token();
+        let offset = 1;
+
+        let correct_status = 200;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("offset", header::HeaderValue::from(offset));
+
+        // create body
+        let request_body = serde_json::json!([
+            PostPackagesRequestBody: {
+                Version: version,
+                Name: name
+            }
+        ]);
+        let body_res = serde_json::to_String(&request_body);
+        if body_res.is_err() {
+            log!("Failed to parse body");
+            assert_eq!(body_res.is_err(), false);
+            return;
+        }
+        let body = body_res.unwrap();
+
+        // send response
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .post(format!("{}/packages", url))
+            .headers(headers)
+            .body(body)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
+    }
+
+    // input invalid auth token
+    #[test]
+    fn test_post_packages_fail1() {
+        // variables
+        let name: String;
+        let version: String;
+        let (name, version) = get_valid_module_name_and_version();
+        let url = get_website_url();
+        let token = "anIncorrectAuthenticationTokenJfaorefl43923u094v";
+        let offset = 1;
+
+        let correct_status = 400;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("offset", header::HeaderValue::from(offset));
+
+        // create body
+        let request_body = serde_json::json!([
+            PostPackagesRequestBody: {
+                Version: version,
+                Name: name
+            }
+        ]);
+        let body_res = serde_json::to_String(&request_body);
+        if body_res.is_err() {
+            log!("Failed to parse body");
+            assert_eq!(body_res.is_err(), false);
+            return;
+        }
+        let body = body_res.unwrap();
+
+        // send response
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .post(format!("{}/packages", url))
+            .headers(headers)
+            .body(body)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
+    }
+
+    // DELETE /reset
+
+    #[test]
+    fn test_delete_reset_success() {
+        //variables
+        return; // don't test using this cause it will break the other tests
+        let token = get_auth_token();
+        let url = get_website_url();
+        let correct_status = 200;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .delete(format!("{}/reset",url))
+            .headers(headers)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process request
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
+    }
+
+    #[test]
+    fn test_delete_reset_fail1() {
+        //variables
+        let token = "superRealAuthTokenNotFakeAtallllllllllllllllllllfoijae4803j";
+        let url = get_website_url();
+        let correct_status = 400;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .delete(format!("{}/reset",url))
+            .headers(headers)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process request
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
+    }
+
+    // GET /package/{id}
+
+    #[test]
+    fn test_get_package_by_id_success() {
+        // variables
+        let id = get_valid_module_id();
+        let url = get_website_url();
+        let token = get_auth_token();
+
+        let correct_status = 200;
+
+        // create headers
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("id", header::HeaderValue::from(id));
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .get(format!("{}/package/{}", url, id))
             .headers(headers)
             .send();
         if response_res.is_err() {
             println!("failed to send request to server");
-            assert_eq!(false, true);
+            assert_eq!(response_res.is_err(), false);
+            return
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
         }
 
+        return;
+    }
+
+    // input invalid auth token
+    #[test]
+    fn test_get_package_by_id_fail1() {
+        // variables
+        let id = get_valid_module_id();
+        let url = get_website_url();
+        let token = "ultraREALAUTHTOKENiirergsiue437384732";
+
+        let correct_status = 200;
+
+        // create headers
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("id", header::HeaderValue::from(id));
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .get(format!("{}/package/{}", url, id))
+            .headers(headers)
+            .send();
+        if response_res.is_err() {
+            println!("failed to send request to server");
+            assert_eq!(response_res.is_err(), false);
+            return
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
+    }
+
+    // PUT /package/{id}
+
+    #[test]
+    fn test_put_package_by_id_success() {
+        // variables
+        let token = get_auth_token();
+        let url = get_website_url();
+        let name: String;
+        let version: String;
+        let (name, version) = get_valid_module_name_and_version();
+        let id = get_valid_module_id();
+        let content = "".to_string();
+        let jsProgram = "".to_string();
+
+        let correct_status = 200;
+
+        // create headers
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("id", header::HeaderValue::from(id.clone()));
+
+        // create body
+        let request_body = PutPackageRequestBody {
+            metadata: PutPackageMetadata {
+                Name: name.clone(),
+                Version: version.clone(),
+                ID: id.clone()
+            },
+            data: PutPackageData {
+                Content: content.clone(),
+                URL: url.clone(),
+                JSProgram: jsProgram.clone()
+            }
+        };
+        let body_res = serde_json::to_String(&request_body);
+        if body_res.is_err() {
+            log!("Failed to parse body");
+            assert_eq!(body_res.is_err(), false);
+            return;
+        }
+        let body = body_res.unwrap();
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .put(format!("{}/package/{}", url, id))
+            .headers(headers)
+            .body(body)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
+    }
+
+    // input invalid auth token
+    fn test_put_package_by_id_fail1() {
+        // variables
+        let token = "8493th4hfTOKENofAuthenticationwhomvstisreal23432432";
+        let url = get_website_url();
+        let name: String;
+        let version: String;
+        let (name, version) = get_valid_module_name_and_version();
+        let id = get_valid_module_id();
+        let content = "".to_string();
+        let jsProgram = "".to_string();
+
+        let correct_status = 400;
+
+        // create headers
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("id", header::HeaderValue::from(id.clone()));
+
+        // create body
+        let request_body = PutPackageRequestBody {
+            metadata: PutPackageMetadata {
+                Name: name.clone(),
+                Version: version.clone(),
+                ID: id.clone()
+            },
+            data: PutPackageData {
+                Content: content.clone(),
+                URL: url.clone(),
+                JSProgram: jsProgram.clone()
+            }
+        };
+        let body_res = serde_json::to_String(&request_body);
+        if body_res.is_err() {
+            log!("Failed to parse body");
+            assert_eq!(body_res.is_err(), false);
+            return;
+        }
+        let body = body_res.unwrap();
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .put(format!("{}/package/{}", url, id))
+            .headers(headers)
+            .body(body)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
+    }
+
+    // DELETE /package/{id}
+
+    #[test]
+    fn test_delete_package_by_id_success() {
+        return; // don't test this here because this may mess with the other unit tests
+        // variables
+        let token = get_auth_token();
+        let url = get_website_url();
+        let id = get_valid_module_id();
+
+        let correct_status = 200;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("id", header::HeaderValue::from(id.clone()));
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .delete(format!("{}/package/{}",url,id))
+            .headers(headers)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
+    }
+
+    // input invalid auth token
+    #[test]
+    fn test_delete_package_by_id_fail1() {
+        // variables
+        let token = "ISoi349THIS43fqioAfinfFAKE4832krTOKENakfwv23";
+        let url = get_website_url();
+        let id = get_valid_module_id();
+
+        let correct_status = 400;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("id", header::HeaderValue::from(id.clone()));
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .delete(format!("{}/package/{}",url,id))
+            .headers(headers)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
+    }
+
+    // POST /package
+
+    #[test]
+    fn test_post_package_success() {
+        // variables
+        let token = get_auth_token();
+        let url = get_website_url();
+        let content = "".to_string();
+        let jsProgram = "".to_string();
+
+        let correct_status = 200;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+
+        // create body
+        let request_body = PostPackageRequestBody {
+            Content: content.clone(),
+            JSProgram: jsProgram.clone()
+        };
+        let body_res = serde_json::to_String(&request_body);
+        if body_res.is_err() {
+            log!("Failed to parse body");
+            assert_eq!(body_res.is_err(), false);
+            return;
+        }
+        let body = body_res.unwrap();
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .post(format!("{}/package",url))
+            .headers(headers)
+            .body(body)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
+    }
+
+    // input invalid auth token
+    #[test]
+    fn test_post_package_fail1() {
+        // variables
+        let token = "48hfreifHUNNAPERCENTREALTOKEN4ifoh4oihefo";
+        let url = get_website_url();
+        let content = "".to_string();
+        let jsProgram = "".to_string();
+
+        let correct_status = 400;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+
+        // create body
+        let request_body = PostPackageRequestBody {
+            Content: content.clone(),
+            JSProgram: jsProgram.clone()
+        };
+        let body_res = serde_json::to_String(&request_body);
+        if body_res.is_err() {
+            log!("Failed to parse body");
+            assert_eq!(body_res.is_err(), false);
+            return;
+        }
+        let body = body_res.unwrap();
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .post(format!("{}/package",url))
+            .headers(headers)
+            .body(body)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
+    }
+
+    // GET /package/{id}/rate
+
+    #[test]
+    fn test_get_package_rate_by_id_success() {
+        // variables
+        let token = get_auth_token();
+        let url = get_website_url();
+        let id = get_valid_module_id();
+
+        let correct_status = 200;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("id", header::HeaderValue::from(id.clone()));
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .get(format!("{}/package/{}/rate",url,id))
+            .headers(headers)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+
+        // process response
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
+    }
+
+    // input invalid auth token
+    #[test]
+    fn test_get_package_rate_by_id_fail1() {
+        // variables
+        let token = "thisisthe46thauthtokenalive";
+        let url = get_website_url();
+        let id = get_valid_module_id();
+
+        let correct_status = 400;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("id", header::HeaderValue::from(id.clone()));
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .get(format!("{}/package/{}/rate",url,id))
+            .headers(headers)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+
+        // process response
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
+    }
+
+    // GET /package/byName
+
+    #[test]
+    fn test_get_package_by_name_success() {
+        // variables
+        let token = get_auth_token();
+        let name = get_valid_module_name();
+
+        let correct_status = 200;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("name", header::HeaderValue::from(name.clone()));
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .get(format!("{}/package/byName/{}", url, name))
+            .headers(headers)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ());
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
+    }
+
+    // input invalid auth token
+    #[test]
+    fn test_get_package_by_name_fail1() {
+        // variables
+        let token = "oirajg934this4knf4ioISj943jf30percentio43nirOFaoifourcode323209";
+        let name = get_valid_module_name();
+
+        let correct_status = 400;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("name", header::HeaderValue::from(name.clone()));
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .get(format!("{}/package/byName/{}", url, name))
+            .headers(headers)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ());
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
+    }
+
+    // DELETE /package/byName
+
+    #[test]
+    fn test_delete_package_by_name_success() {
+        // variables
+        let token = get_auth_token();
+        let url = get_website_url();
+        let name = get_valid_module_name();
+
+        let correct_status = 200;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("name", header::HeaderValue::from(name.clone()));
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .delete(format!("{}/package/byName/{}", url, name))
+            .headers(headers)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ());
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
+    }
+
+    // input invalid auth token
+    fn test_delete_package_by_name_fail1() {
+        // variables
+        let token = "4iotoidsff4390jithisn4ifoclass";
+        let name = get_valid_module_name();
+
+        let correct_status = 400;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("name", header::HeaderValue::from(name.clone()));
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .get(format!("{}/package/byName/{}", url, name))
+            .headers(headers)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ());
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
+    }
+
+    // POST /package/byRegEx
+
+    #[test]
+    fn test_post_package_by_regex_success() {
+        // variables
+        let token = get_auth_token();
+        let url = get_website_url();
+        let regex = "".to_string();
+
+        let correct_status = 200;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+
+        // create body
+        let request_body = PostPackageRegexRequestBody {
+            RegEx: regex.clone()
+        };
+        let body_res = serde_json::to_String(&request_body);
+        if body_res.is_err() {
+            log!("Failed to parse body");
+            assert_eq!(body_res.is_err(), false);
+            return;
+        }
+        let body = body_res.unwrap();
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .post(format!("{}/package/byRegEx", url))
+            .headers(headers)
+            .send();
+
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ());
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
+    }
+
+    // input invalid auth token
+    #[test]
+    fn test_post_package_by_regex_fai1() {
+        // variables
+        let token = "regexroienireosiosregexregexREGEXREGEXHELPPPPPPMEMEEEE438ut04";
+        let url = get_website_url();
+        let regex = "".to_string();
+
+        let correct_status = 400;
+
+        // create header
+        let mut headers = header::HeaderMap::new();
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+
+        // create body
+        let request_body = PostPackageRegexRequestBody {
+            RegEx: regex.clone()
+        };
+        let body_res = serde_json::to_String(&request_body);
+        if body_res.is_err() {
+            log!("Failed to parse body");
+            assert_eq!(body_res.is_err(), false);
+            return;
+        }
+        let body = body_res.unwrap();
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .post(format!("{}/package/byRegEx", url))
+            .headers(headers)
+            .send();
+
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ());
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
     }
 }
-
