@@ -34,7 +34,7 @@ function createRepoData(name?: string, version?: string, creation_date?: string,
     if(url !== undefined)               data["url"]           = url;
     if(creation_date !== undefined)     data["creation-date"] = creation_date
     if (readme !== undefined)           data["readme"] = readme.toString()
-    if(packageAction !== undefined)     data["packageAction"] = packageAction;
+    if(packageAction !== undefined)     data["packageAction"] = packageAction; else data["packageAction"] = []
     if(cloudStoragePath !== undefined)  data["cloudStoragePath"] = cloudStoragePath;
     if(metaData !== undefined)          data["metaData"]      = metaData; else data["metaData"] = "{}";
     if(downloads !== undefined)         data["downloads"] = downloads; else data["downloads"] = 0;
@@ -87,7 +87,7 @@ async function addRepo(repoData: {[key: string]: any}): Promise<string | undefin
  * @param repoID
  * @param newData
  */
-async function updateRepo(repoID: number, newData: {[key: string]: any}): Promise<void> {
+async function updateRepo(repoID: number, newData: {[key: string]: any}) {
     // Get the datastore key for the repository ID
     const key = getModuleKey(repoID);
     // Get the entity associated with the datastore key
@@ -107,7 +107,7 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}): Promis
  * @param {string} packageID - The ID of the repository whose package action is being updated.
  * @param {any} newPackageAction - The new package action (follows the PackageHistoryEntry Schema) to be added to the package actions.
  */
- async function updateRepoPackageAction(packageID: number, newPackageAction: any): Promise<void> {
+ async function updateRepoPackageAction(packageID: number, newPackageAction: any) {
     // Get the datastore key for the repository ID
     const key = getModuleKey(packageID);
     // Get the entity associated with the datastore key
@@ -131,7 +131,7 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}): Promis
  * @param {string} packageID - The ID of the repository whose package action is being updated.
  * @param {any} metaData1 - The new metaData (dictionary type) to be added to the package actions.
  */
- async function updateMetaData(packageID: string, metaData1: any): Promise<void> {
+ async function updateMetaData(packageID: string, metaData1: any) {
     // Get the datastore key for the repository ID
     const key = getModuleKey(Number(packageID));
     // Get the entity associated with the datastore key
