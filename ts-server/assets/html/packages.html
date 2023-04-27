@@ -114,7 +114,6 @@
             <button onclick="logOut()">Log Out</button>
         </nav>
     </header>
-
     <main>
       <div id="package-search" class="endpoint-div">
         <h2 style="margin-right: 20px;">Package Search</h2>
@@ -145,10 +144,8 @@
       <div id="upload-module" class="endpoint-div">
         <h2 style="margin-right: 20px;">Upload Module</h2>
         <form>
-          <div>
             <label for="module-upload-file">Upload your module as a zip file</label>
             <input type="file" id="module-upload-file" accept=".zip" class="input-file" />
-          </div>
             <label for="module-upload-url">OR provide a URL of your module</label>
             <input type="url" id="module-upload-url" class="input-text">
             <button type="button" class="submit-button" onclick="submitUploadModule()">Upload Module</button>
@@ -212,8 +209,8 @@
       
 
   </main>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/jszip@3.7.1/dist/jszip.min.js"></script>
   <script>
-
       let packageSearchDiv = document.getElementById("package-search");
       let uploadModuleDiv = document.getElementById("upload-module");
       let deleteModuleDiv = document.getElementById("delete-module");
@@ -261,7 +258,6 @@
           }
           return "";
       }
-
 
       async function submitDeleteModule() {
         // Get the selected radio input
@@ -503,10 +499,12 @@
       }
 
       // upload module
-      function submitUploadModule() {
+      async function submitUploadModule() {
+      
         // get input(s)
         const file = document.getElementById("module-upload-file").files[0];
-        const url = document.getElementById("module-upload-url").value;
+        const urlInput = document.getElementById("module-upload-url");
+        const url = urlInput.value;
 
         if (!file && !url) {
           alert('Either Content or URL must be provided');
@@ -517,17 +515,93 @@
         }
     
         if (file) {
-          alert('File present');
-          // ...
-        } else {
-          alert(url);
+          // Reads the content of the package, removes the .git directory, and encodes the compressed zip to base64
+          const x = new JSZip();
+          const base64 = await JSZip.loadAsync(file).then(zip => {
+            zip.remove(".git");
+            return zip.generateAsync({ type: "base64" });
+          });
+
           // User entered a URL
+          const response = await fetch('/package/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Authorization': localStorage.getItem('authToken')
+            },
+            body: JSON.stringify({"Content": base64})
+          });
+
+          const data = await response.json();
+          const errorMessage = data.message;
+
+          if (response.status === 400) {
+            if (errorMessage.includes("Expired Token")) {
+              // Session needs to restart, prompt user to log out
+              alert("Your session needs to be restarted. You will be logged out now.");
+              // remove expired JWT authentication token from local storage
+              localStorage.removeItem('authToken');
+              // Redirect the user to the login page
+              window.location.href = "/";
+            } else if (errorMessage.includes("Invalid Token")) {
+              renderErrorView(errorMessage, 'packages.html');
+            } else if (errorMessage.includes("No Token Provided")) {
+              renderErrorView(errorMessage, 'login.html');
+            } else if (errorMessage.includes("SyntaxError:")) {
+              renderErrorView(errorMessage, 'packages.html');
+            }
+          } else if (response.status === 409) {
+            // Package exists already.
+            renderErrorView(errorMessage, 'packages.html');
+          } else if (response.status === 424) {
+            // Package is not uploaded due to the disqualified rating.
+            renderErrorView(errorMessage, 'packages.html');
+          } else {
+            alert('Success. Check the ID in the returned metadata for the official ID');
+            // Clear the URL text field
+            url.value = "";
+          }
           
-          // get input(s)
-          // confirm input(s) are correct
-          // send request
-          // recv request
-          // display results
+        } else {
+          // User entered a URL
+          const response = await fetch('/package/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Authorization': localStorage.getItem('authToken')
+            },
+            body: JSON.stringify({"URL": url})
+          });
+
+          const data = await response.json();
+          const errorMessage = data.message;
+
+          if (response.status === 400) {
+            if (errorMessage.includes("Expired Token")) {
+              // Session needs to restart, prompt user to log out
+              alert("Your session needs to be restarted. You will be logged out now.");
+              // remove expired JWT authentication token from local storage
+              localStorage.removeItem('authToken');
+              // Redirect the user to the login page
+              window.location.href = "/";
+            } else if (errorMessage.includes("Invalid Token")) {
+              renderErrorView(errorMessage, 'packages.html');
+            } else if (errorMessage.includes("No Token Provided")) {
+              renderErrorView(errorMessage, 'login.html');
+            } else if (errorMessage.includes("SyntaxError:")) {
+              renderErrorView(errorMessage, 'packages.html');
+            }
+          } else if (response.status === 409) {
+            // Package exists already.
+            renderErrorView(errorMessage, 'packages.html');
+          } else if (response.status === 424) {
+            // Package is not uploaded due to the disqualified rating.
+            renderErrorView(errorMessage, 'packages.html');
+          } else {
+            alert('Success. Check the ID in the returned metadata for the official ID');
+            // Clear the URL text field
+            url.value = "";
+          }
         }
       }
 
@@ -655,10 +729,6 @@
               return;
           } else {
             // adds default user with admin priviledges to database upon reset
-            const response = await fetch('/', {
-              method: 'PUT'
-            });
-            
             // Handles success response
             alert('Registry successfully reset.');
             window.location.href = '/';
@@ -669,8 +739,6 @@
           window.location.href = 'packages.html';
         }
       }
-
-
 
       async function submitDeleteAccount(confirmed) {
         if (confirmed) {
@@ -708,4 +776,5 @@
         }
       }
   </script>
+</body>
 </html>

@@ -66,7 +66,7 @@ async function findUserByName(name: string) {
     return results[0];
 }
 
-async function userLogin(username: string, password: string): Promise<string> {
+async function userLogin(username: string, is_admin: boolean, password: string): Promise<string> {
     const userInfoL: any[] = await findUserByName(username);
     if (userInfoL.length === 1) {
         const userInfo = userInfoL[0];
@@ -76,19 +76,10 @@ async function userLogin(username: string, password: string): Promise<string> {
         let realHashedPassword = userInfo.password;
         let match = await bcrypt.compare(password, realHashedPassword);
         if(match) {
-            // Checks if user already has a JWT authentication token in the database
-            //if (userInfo.authToken) {
-            //    return userInfo.authToken;
-            // }
-            // create auth token for user and replace the old one
             let secretKey = "apple"; //await accessSecret();
-            if (secretKey === undefined) {
-                console.log("failed to get secret key");
-                return "";
-            }
-            console.log(userInfo.name)
-            console.log(userInfo.is_admin)
-            console.log(Number(userKey.id))
+            //console.log(userInfo.name)
+            //console.log(userInfo.is_admin)
+            //console.log(Number(userKey.id))
 
             const payload = {
                 "name": userInfo.name,
@@ -136,7 +127,7 @@ async function createAuthToken(id: number, authToken: string) {
     const key = getUser1Key(id);
     // Get the entity associated with the datastore key
     const [entity] = await datastore.get(key);
-    console.log(entity)
+    //console.log(entity)
     // Merge the new data with the existing data of the entity
     Object.assign(entity, {authToken: authToken});
     await datastore.save({
