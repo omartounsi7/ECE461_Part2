@@ -614,12 +614,6 @@ app.put('/package/:id', async (req, res) => {
             // the package contents from PackageData schema will replace previous contents
             return res.status(200).json({ message: "Version is updated" });
         }
-
-        // Package Action
-        // const userName = "Max";
-        // const isAdmin = true;
-        //logPackageAction(userName, isAdmin, packageRepo.metaData, "UPDATE");
-
     }
 
     return res.status(404).json({ message: "Package Metadata mismatch with provided data" });
