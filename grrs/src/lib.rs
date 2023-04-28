@@ -1848,7 +1848,7 @@ mod tests {
         // send request
         let client = reqwest::blocking::Client::new();
         let response_res = client
-            .put(format!("{}/package/{}", url, id.clone()))
+            .put(format!("{}/package/{}", url, get_valid_module_id()))
             .headers(headers)
             .body(body)
             .send();
