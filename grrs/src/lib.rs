@@ -2683,7 +2683,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ());
+
         let status = response.status();
         if status != correct_status {
             println!("Incorrect status from response");
@@ -2722,7 +2722,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ());
+
         let status = response.status();
         if status != correct_status {
             println!("Incorrect status from response");
@@ -2761,7 +2761,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ());
+
         let status = response.status();
         if status != correct_status {
             println!("Incorrect status from response");
@@ -2800,7 +2800,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ());
+
         let status = response.status();
         if status != correct_status {
             println!("Incorrect status from response");
@@ -2842,7 +2842,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ());
+
 
         let status = response.status();
         if status != correct_status {
@@ -2882,7 +2882,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ());
+
         let status = response.status();
         if status != correct_status {
             println!("Incorrect status from response");
@@ -2921,7 +2921,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ());
+        
         let status = response.status();
         if status != correct_status {
             println!("Incorrect status from response");
@@ -2960,7 +2960,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ());
+
 
         let status = response.status();
         if status != correct_status {
@@ -3014,7 +3014,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ());
+
 
         let status = response.status();
         if status != correct_status {
@@ -3066,7 +3066,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ());
+
 
         let status = response.status();
         if status != correct_status {
@@ -3117,7 +3117,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ());
+
 
         let status = response.status();
         if status != correct_status {
@@ -3169,7 +3169,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ());
+
 
         let status = response.status();
         if status != correct_status {
