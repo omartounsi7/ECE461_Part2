@@ -370,9 +370,9 @@ struct MalformedPostPackageRegexRequestBody1 {
 
 }
 
-///
-/// UNIT TEST FUNCTIONS
-///
+//
+// MODULE CONTAINING THE UNIT TEST FUNCTIONS
+//
 #[cfg(test)]
 mod tests {
     use log::log;
