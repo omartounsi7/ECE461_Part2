@@ -442,6 +442,9 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
         return { statusCode: 400, message: 'package.json file is probably missing' };
     }
 
+    if (packageName === undefined || packageVersion === undefined) {
+        return { statusCode: 400, message: "Failed to get package name or version from package.json" };
+    }
     const cloudStoragePath = cloudStorageFilePathBuilder(packageName + ".zip", packageVersion);
 
     let newPackageID;
@@ -487,7 +490,7 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
     }
 
     // Uploads module to Google Cloud Storage
-    uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, base64String, MODULE_STORAGE_BUCKET);
+    await uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, base64String, MODULE_STORAGE_BUCKET);
 
     // 201 Success. Check the ID in the returned metadata for the official ID.
     res.status(201).json(responseObject);
@@ -593,6 +596,10 @@ app.put('/package/:id', async (req, res) => {
         if (packageContents) {
 
             // Uploads module to Google Cloud Storage
+            if (packageName === undefined || packageVersion === undefined) {
+                res.status(400).json({ message: "Failed to get package name or version" });
+                return;
+            }
             await uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, packageContents, MODULE_STORAGE_BUCKET);
 
             // ACTION: UPDATE
@@ -623,6 +630,10 @@ app.put('/package/:id', async (req, res) => {
             // Encode the zipped file to a Base64-encoded string
             let base64Contents = Buffer.from(buffer).toString('base64');
 
+            if (packageName === undefined || packageVersion === undefined) {
+                res.status(400).json( { message: "Failed to get package name or version"} );
+                return;
+            }
             await uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, base64Contents, MODULE_STORAGE_BUCKET);
             
             // ACTION: UPDATE
