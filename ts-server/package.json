@@ -16,6 +16,7 @@
     "@google-cloud/secret-manager": "^4.2.2",
     "@google-cloud/storage": "^6.9.5",
     "@types/ffi-napi": "^4.0.7",
+    "@types/jszip": "^3.4.1",
     "bcrypt": "^5.1.0",
     "child_process": "^1.0.2",
     "dotenv": "^16.0.3",

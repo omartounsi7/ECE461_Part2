@@ -237,7 +237,7 @@ app.post('/package', async (req, res) => {
     // Base64 encoded string is passed in req.body
     if (base64String) {
         const result = await decodeBase64(base64String, JSProgram, res, req);
-        console.log('Error in decodeBase64:', result.message);
+        //console.log('Error in decodeBase64:', result.message);
 
 
         if (result.message.includes("homepage URL is missing in package.json")){
@@ -245,11 +245,15 @@ app.post('/package', async (req, res) => {
         }
         
         if (result.message.includes("Package exists already")){
-            return res.status(409).send({message: 'Bad Request: Package exists already'});
+            return res.status(409).send({message: 'Package exists already'});
         }
         
         if (result.message.includes("package.json file is missing")){
-            return res.status(400).send({message: 'Bad Request: package.json file is missing'});      
+            return res.status(400).send({message: 'package.json file is missing'});      
+        }
+
+        if (result.message.includes("package.json file is probably missing")){
+            return res.status(400).send({message: 'package.json file is probably missing'});      
         }
         
         if (result.message.includes("Failed to add repository:")){
@@ -321,7 +325,7 @@ app.post('/package', async (req, res) => {
             base64String = Buffer.from(buffer).toString('base64');
             
             const result = await decodeBase64(base64String, JSProgram, res, req);
-            console.log('Error in decodeBase64:', result.message);
+            //console.log('Error in decodeBase64:', result.message);
 
             if (result.message.includes("homepage URL is missing in package.json")){
                 // Remove the locally downloaded GitHub directory
@@ -360,6 +364,7 @@ app.post('/package', async (req, res) => {
     }
 });
 
+// npm install jszip @types/jszip
 async function decodeBase64(base64String: string, JSProgram: string, res: any, req: any) {
 
     // Decode the Base64 string
@@ -381,21 +386,27 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
     let packageURL;
 
 
-    try {
+    try {    
+        // Finds the first package.json file
+        let packageJsonFile: any
+        let readmeFile: any
+        
+        await zip.file("README.md");
+
+        zip.forEach((relativePath: any, zipEntry: any) => {
+            if (relativePath.endsWith('package.json') && !packageJsonFile) {
+              packageJsonFile = zipEntry;
+            }
+            if (relativePath.endsWith('README.md')) {
+                readmeFile = zipEntry;
+              }
+          });
+
         // Extract the package.json file
-        const packageJsonFile = zip.file("package.json");
-        if (!packageJsonFile) {
-            throw new Error("No package.json file found in the zip archive");
-          }
+        const packageJsonContent = await packageJsonFile.async('string');
 
         // Parse the package.json content as a JSON object
-        const packageJsonContent = await packageJsonFile.async("text");
         const packageJson = JSON.parse(packageJsonContent);
-
-        //const packageJsonContent = await zip.file('package.json').async('string');
-        //console.log(packageJsonContent)
-        // Parse the package.json content as a JSON object
-        //const packageJson = JSON.parse(packageJsonContent);
         
         // Extract the name and version fields from package.json
         packageName = packageJson.name;
@@ -408,7 +419,6 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
             return { statusCode: 400, message: 'Bad Request: homepage URL is missing in package.json' };
         }
 
-        const readmeFile = await zip.file("README.md");
         if (readmeFile) {
             // readmeContent will be passed to the createRepo function
             readmeContent = await readmeFile.async('string');
@@ -424,13 +434,12 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
         }
 
     } catch (error: any) { // specify the type of the error variable
-        console.log(error)
-        if (error.message === "Cannot read properties of null (reading 'async')") {
+        if ((error.message === "Cannot read properties of null (reading 'async')") || (error.message === "No package.json file found in the zip archive")) {
             // The package.json file does not exist in the zip file
             // Return an appropriate HTTP error code like 400 Bad Request
-            return { statusCode: 400, message: 'Bad Request: package.json file is missing' };
+            return { statusCode: 400, message: 'package.json file is missing' };
         }
-        return  { statusCode: 400, message: 'Bad Request: Bad' };
+        return { statusCode: 400, message: 'package.json file is probably missing' };
     }
 
     const cloudStoragePath = cloudStorageFilePathBuilder(packageName + ".zip", packageVersion);
@@ -486,7 +495,6 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
 }
 
 // Download Endpoint
-// (call logPackageAction) ACTION: DOWNLOAD
 app.get('/package/:id', async (req, res) => {
     await logRequest("get", "/package/:id", req);
     if(!await authenticateJWT(req, res)) {
@@ -494,25 +502,22 @@ app.get('/package/:id', async (req, res) => {
     }
 
     if (!req.params.id) {
-        res.status(400).send("There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.")
+        return res.status(400).send({message: "There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid."});
     }
 
     let id = Number(req.params.id);
     if(isNaN(id)) {
-        res.status(400).send("There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.")
+        return res.status(400).send({message: "There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid."});
     }
 
     const result = await doesIdExistInKind(MODULE_KIND, id)
     if(!result){
-        res.status(404).send("Package does not exist.");
-        return;
+        return res.status(404).send({message: "Package does not exist."});
     }
-
-    // ACTION: DOWNLOAD
-    // await logPackageActionEntry("DOWNLOAD", req, packageRepo.metaData);
 
     // download package by ID
     let packageInfo = await getRepoData(id);
+
     if("password" in packageInfo){
         delete packageInfo.password;
     }
@@ -527,19 +532,21 @@ app.get('/package/:id', async (req, res) => {
     let module = await getModuleAsBase64FromCloudStorage(packageInfo.name, packageInfo.version, ZIP_FILETYPE, MODULE_STORAGE_BUCKET);
     let metaData = packageInfo.metaData;
 
+    // ACTION: DOWNLOAD
+    // await logPackageActionEntry("DOWNLOAD", req, metaData);
+
     await incrementDownloadCount(req.params.id);
 
-
-    // code 200
     // return package schema json object
     //  includes: metadata and data
-    let body = {
+    let returnObject = {
         "metadata": metaData,
         "data": {
             "Content": module
         }
     }
-    res.status(200).json(body);
+    console.log(returnObject);
+    return res.status(200).json(returnObject);
 });
 
 // Update Endpoint
@@ -847,7 +854,6 @@ app.post('/package/byRegEx', async (req, res) => {
     }
     // Check if the 'regex' field is present in the request body
     const regex = req.body["RegEx"];
-    console.log(regex)
     if (!regex) { 
         return res.status(400).json({ message: 'Malformed JSON: Request must include a regex field.' });
     }
@@ -858,8 +864,8 @@ app.post('/package/byRegEx', async (req, res) => {
     try {
         const results = allPackages.filter((pkg: { name: string; readme: string; }) => {
             // Decompress the readme content
-            const readmeContent = zlib.inflateSync(pkg.readme).toString(); 
-            return new RegExp(regex).test(pkg.name) || new RegExp(regex).test(readmeContent);
+            // const readmeContent = zlib.inflateSync(pkg.readme).toString(); 
+            return new RegExp(regex).test(pkg.name); //|| new RegExp(regex).test(readmeContent);
         });
 
         // Extract the name and version of each matching package
@@ -910,11 +916,11 @@ app.get('/package/:id/upload_info', async (req, res) => {
 
 
 
-// ERROR 400: There is missing field(s) in the AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.
 async function authenticateJWT(req: any, res: any) {
 
   // Retrieve the value of the 'X-Authorization' header from the request headers
-  const authHeader = req.headers['x-authorization'];
+  const authHeader = req.headers['X-Authorization'] || req.headers['x-authorization']; 
+  
   if (authHeader) {
     const token = authHeader.split(' ')[1];
     // Retrieve the JWT secret key 
@@ -1086,7 +1092,7 @@ async function logPackageActionEntry(action: string, req: any, metadata: any) {
     const jwtSecret = "apple";
   
     // Retrieve the value of the 'X-Authorization' header from the request headers
-    const authHeader =  req.headers['x-authorization'];
+    const authHeader = req.headers['X-Authorization'] || req.headers['x-authorization']; 
     const authToken = (authHeader as string).split(' ')[1];
   
     // Decode the JWT token and extract the payload
@@ -1139,7 +1145,8 @@ app.delete('/user', async (req, res) => {
     let jwtSecret = "apple"
 
     // Retrieve the value of the 'X-Authorization' header from the request headers
-    const authHeader = req.headers['x-authorization']; 
+    const authHeader = req.headers['X-Authorization'] || req.headers['x-authorization']; 
+
     if (authHeader) {
         const authToken = (authHeader as string).split(' ')[1];
         
