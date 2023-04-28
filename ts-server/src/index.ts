@@ -267,10 +267,10 @@ app.post('/package', async (req, res) => {
 
     // Package URL (for use in public ingest) is passed in req.body
     if (url) {
-        /* 
-        1. DO RATING of Package URL (for use in public ingest).
+
+        // 1. DO RATING of Package URL (for use in public ingest).
         // Write the url to a file called URLs.txt
-        fs.writeFileSync('URLs.txt', packageURL);
+        fs.writeFileSync('URLs.txt', url);
 
         // Define the type signature of the Rust function
         const handle_url_file = ffi.Library('./target/release/libmylib', {
@@ -301,7 +301,7 @@ app.post('/package', async (req, res) => {
             license < 0.5 || codeReview < 0.5 || version < 0.5) {
             res.status(424).send({message: 'Package is not uploaded due to the disqualified rating'});
         } 
-        */
+
         
         const parts = url.split('/');
         const cloneDir = './' + parts[parts.length - 1];
