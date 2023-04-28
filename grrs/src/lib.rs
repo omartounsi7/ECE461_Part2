@@ -3137,7 +3137,7 @@ mod tests {
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header.clone()));
+        headers.insert("X-Authorization", header::HeaderValue::from_str(&auth_header).unwrap());
 
         // create body
         let request_body = MalformedPostPackageRegexRequestBody1 {
