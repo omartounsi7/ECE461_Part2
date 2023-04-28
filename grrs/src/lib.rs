@@ -782,7 +782,6 @@ mod tests {
 
     #[test]
     fn test_post_packages_success() {
-        return;
         // variables
         let name: String;
         let version: String;
@@ -801,10 +800,10 @@ mod tests {
 
         // create body
         let request_body = serde_json::json!([
-            // PostPackagesRequestBody: {
-            //     Version: version,
-            //     Name: name
-            // }
+            {
+                Version: version,
+                Name: name
+            }
         ]);
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
@@ -861,7 +860,7 @@ mod tests {
 
         // create body
         let request_body = serde_json::json!([
-            PostPackagesRequestBody: {
+            {
                 Version: version,
                 Name: name
             }
@@ -921,7 +920,7 @@ mod tests {
 
         // create body
         let request_body = serde_json::json!([
-            MalformedPostPackagesRequestBody1: {
+            {
                 Name: name
             }
         ]);
@@ -980,7 +979,7 @@ mod tests {
 
         // create body
         let request_body = serde_json::json!([
-            MalformedPostPackagesRequestBody2: {
+            {
                 Version: version
             }
         ]);
@@ -1039,7 +1038,7 @@ mod tests {
 
         // create body
         let request_body = serde_json::json!([
-            PostPackagesRequestBody: {
+            {
                 Version: version,
                 Name: name
             }
