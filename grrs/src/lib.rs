@@ -3183,13 +3183,13 @@ mod tests {
         let token = get_auth_token();
         let url = get_website_url();
         let regex = "(((((((({{{{{.....****".to_string();
-        let auth_header = format!("bearer {}", token);
+        let auth_header = format!("bearer {}", token).clone();
 
         let correct_status = 404;
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header.clone()));
+        headers.insert("X-Authorization", header::HeaderValue::from_str(&auth_header).unwrap());
 
         // create body
         let request_body = PostPackageRegexRequestBody {
