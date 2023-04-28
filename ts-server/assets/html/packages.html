@@ -106,11 +106,12 @@
         <nav>
             <button onclick="toggleDiv(0)">Package Search</button>
             <button onclick="toggleDiv(1)">Upload Module</button>
-            <button onclick="toggleDiv(2)">Delete Module</button>
-            <button onclick="toggleDiv(3)">Register User</button>
-            <button onclick="toggleDiv(4)">Regex</button>
-            <button onclick="toggleDiv(5)">Delete Account</button>
-            <button onclick="toggleDiv(6)">Reset Registry</button>
+            <button onclick="toggleDiv(2)">Download Module</button>
+            <button onclick="toggleDiv(3)">Reset Registry </button>
+            <button onclick="toggleDiv(4)">Register User</button>
+            <button onclick="toggleDiv(5)">Regex</button>
+            <button onclick="toggleDiv(6)">Delete Account</button>
+            <button onclick="toggleDiv(7)">Reset Registry</button>
             <button onclick="logOut()">Log Out</button>
         </nav>
     </header>
@@ -152,8 +153,16 @@
         </form>
     </div>
 
+    <div id="package-download" class="endpoint-div">
+      <h2 style="margin-right: 20px;">Package Download</h2>
+      <form>
+        <label for="package-id-input">Enter package ID:</label>
+        <input type="text" id="package-id-input" class="input-text">
+        <br>
+        <button type="button" class="submit-button" onclick="downloadPackage()">Download</button>
+      </form>
+    </div>
 
-    
       <div id="delete-module" class="endpoint-div">
         <h2 style="margin-right: 20px;">Delete Module</h2>
         <form>
@@ -218,7 +227,8 @@
       let regexDiv = document.getElementById("regex-search");
       let deleteUser = document.getElementById("delete-account");
       let resetRegistry = document.getElementById("reset-registry");
-      let allDivs = [packageSearchDiv, uploadModuleDiv, deleteModuleDiv, registerModuleDiv, regexDiv, deleteUser, resetRegistry];
+      let downloadPack = document.getElementById("package-download");
+      let allDivs = [packageSearchDiv, uploadModuleDiv, downloadPack, deleteModuleDiv, registerModuleDiv, regexDiv, deleteUser, resetRegistry];
       
       function showDiv(div) {
           div.style.display = "flex";
@@ -259,11 +269,7 @@
           return "";
       }
 
-      async function handleResponseError(response) {
-        
-        const data = await response.json();
-        const errorMessage = data.message;
-
+      async function handleResponseError(response, errorMessage) {
         if (response.status === 400) {
           if (errorMessage.includes("Expired Token")) {
             // Session needs to restart, prompt user to log out
@@ -282,6 +288,8 @@
           } else if (errorMessage.includes("SyntaxError:")) {
             renderErrorView(errorMessage, 'packages.html');
             return false
+          } else {
+            renderErrorView(errorMessage, 'packages.html');
           }
         } else if (response.status === 404) {
             // Error: Package does not exist
@@ -341,7 +349,11 @@
               'X-Authorization': localStorage.getItem('authToken')
             } 
           });
-            const success_value = await handleResponseError(response);
+
+            const data = await response.json();
+            const errorMessage = data.message;
+
+            const success_value = await handleResponseError(response, errorMessage);
             if(success_value) {
               alert('Successfully deleted module by ID!');
               // Reset the form field
@@ -357,7 +369,11 @@
             } 
           });
 
-          const success_value = await handleResponseError(response);
+          const data = await response.json();
+          const errorMessage = data.message;
+
+          const success_value = await handleResponseError(response, errorMessage);
+
           if(success_value) {
             alert('Successfully deleted module by Name!');
             // Reset the form field
@@ -387,7 +403,10 @@
           }
         });
 
-        const success_value = await handleResponseError(response);
+        const data = await response.json();
+        const errorMessage = data.message;
+
+        const success_value = await handleResponseError(response, errorMessage);
         if (!success_value) {
           return;
         }
@@ -406,7 +425,10 @@
           },
         });
 
-        const success_value2 = await handleResponseError(response_two);
+        const data1 = await response_two.json();
+        const errorMessage2 = data1.message;
+
+        const success_value2 = await handleResponseError(response_two, errorMessage2);
         if (!success_value2) {
           return;
         }
@@ -421,8 +443,10 @@
             body: JSON.stringify(userData)
           });
 
-          
-          const success_value3 = await handleResponseError(registerResponse);
+          const data3 = await registerResponse.json();
+          const errorMessage3 = data3.message;
+
+          const success_value3 = await handleResponseError(registerResponse, errorMessage3);
           if (!success_value3) {
             return;
           }
@@ -450,6 +474,60 @@
       const passwordInput = document.getElementById('password-input');
       passwordInput.addEventListener('input', checkPasswordInput);
       */
+
+      async function downloadPackage() {
+        // Get the form fields
+        const packageID = document.getElementById('package-id-input');
+
+        // Check that all fields have been populated
+        if (!packageID.value) {
+          alert('Please provide a package ID');
+          return;
+        }
+
+        const response = await fetch('/package/' + packageID.value, {
+          method: 'GET',
+          headers: {
+            'X-Authorization': localStorage.getItem('authToken')
+          }
+        });
+
+        
+        const body_contents = await response.json();
+        const metadata = JSON.stringify(body_contents["metadata"]);
+        const base64 = JSON.stringify(body_contents["data"]["Content"]);
+
+        const success_value = await handleResponseError(response, body_contents);
+        if (!success_value) {
+          return;
+        }
+             
+        // Decode base64 to binary data
+        const base64WithoutQuotes = base64.replace(/"/g, '');
+        alert(base64WithoutQuotes);
+        const binaryStr = atob(base64WithoutQuotes);
+
+        // Create a new JSZip instance
+        const zip = new JSZip();
+
+        // Add the binary data to the JSZip instance
+        zip.file(metadata.Name, binaryStr, { binary: true });
+
+        // Generate the zip file
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+        // Create a download link for the Blob object
+        const downloadLink = document.createElement('a');
+        downloadLink.href = URL.createObjectURL(zipBlob);
+        downloadLink.download = metadata.filename;
+
+        // Click the download link to trigger the file download
+        downloadLink.click();
+
+        // Clear the URL text field
+        packageID.value = "";
+      }
+
 
       // package search
       function submitPackageSearch() {
@@ -493,7 +571,13 @@
             body: JSON.stringify({"Content": base64})
           });
 
-          const success_value = await handleResponseError(response);
+
+          const data = await response.json();
+          alert(data.status)
+          const errorMessage = data.message;
+          alert(errorMessage)
+
+          const success_value = await handleResponseError(response, errorMessage);
           if (!success_value) {
             return;
           }
@@ -512,7 +596,10 @@
             body: JSON.stringify({"URL": url})
           });
 
-          const success_value = await handleResponseError(response);
+          const data = await response.json();
+          const errorMessage = data.message;
+
+          const success_value = await handleResponseError(response, errorMessage);
           if (!success_value) {
             return;
           }
@@ -574,11 +661,14 @@
           body: JSON.stringify({"RegEx": regex})
         });
 
-        const success_value = await handleResponseError(response);
+        const packages = await response.json();
+        const errorMessage = packages.message;
+
+        const success_value = await handleResponseError(response, errorMessage)
         if (!success_value) {
           return;
         }
-        const packages = await response.json();
+         
         const packagesList = document.getElementById('packages-list');
         packagesList.innerHTML = '';
 
@@ -603,8 +693,10 @@
             }
           });
 
-          
-          const success_value = await handleResponseError(response);
+          const data = await response.json();
+          const errorMessage = data.message;
+
+          const success_value = await handleResponseError(response, errorMessage)
           if (!success_value) {
             return;
           }
@@ -627,7 +719,11 @@
               'X-Authorization': localStorage.getItem('authToken')
             }
           });
-          const success_value = await handleResponseError(deleteResponse);
+
+          const data = await deleteResponse.json();
+          const errorMessage = data.message;
+
+          const success_value = await handleResponseError(deleteResponse, errorMessage)
           if (!success_value) {
             return;
           }

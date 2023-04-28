@@ -2,7 +2,6 @@ import { Key} from '@google-cloud/datastore';
 
 import {datastore, MODULE_KIND, NAMESPACE} from "./ds_config";
 import { getKey, deleteEntity } from "./datastore";
-import { error } from 'console';
 
 /* * * * * * * * * * *
  * Helper Functions  *
@@ -236,7 +235,7 @@ async function findReposByName(name: string) {
 async function findReposByNameAndVersion(name: string, version: string) {
     // get version type using regex (exact[1.2.3], bounded[1.2.3-2.1.0], Carat[^1.2.3], Tilde[~1.2.0])
 
-    if (version.search(/^[~|^]?\d+\.\d+\.\d+$/) == 0) { // exact,carat,tilde
+    if (version.search(/^[~|^]?\d+\.\d+\.\d+(-([a-zA-Z]+)(.*))?$/) == 0) { // exact,carat,tilde
         const query = datastore
             .createQuery(NAMESPACE, MODULE_KIND)
             .filter('name', '=', name)
