@@ -1172,7 +1172,7 @@ mod tests {
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("id", header::HeaderValue::from(id));
+        headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -1213,7 +1213,7 @@ mod tests {
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("id", header::HeaderValue::from(id));
+        headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -1294,7 +1294,7 @@ mod tests {
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("id", header::HeaderValue::from(id));
+        headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -1343,7 +1343,7 @@ mod tests {
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("id", header::HeaderValue::from(id.clone()));
+        headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
         let request_body = PutPackageRequestBody {
@@ -1412,7 +1412,7 @@ mod tests {
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("id", header::HeaderValue::from(id.clone()));
+        headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
         let request_body = PutPackageRequestBody {
@@ -1481,7 +1481,7 @@ mod tests {
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("id", header::HeaderValue::from(id.clone()));
+        headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
         let request_body = MalformedPutPackageRequestBody1 {
@@ -1548,7 +1548,7 @@ mod tests {
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("id", header::HeaderValue::from(id.clone()));
+        headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
         let request_body = MalformedPutPackageRequestBody2 {
@@ -1612,7 +1612,7 @@ mod tests {
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("id", header::HeaderValue::from(id.clone()));
+        headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
         let request_body = MalformedPutPackageRequestBody3 {
@@ -1675,7 +1675,7 @@ mod tests {
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("id", header::HeaderValue::from(id.clone()));
+        headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
         let request_body = MalformedPutPackageRequestBody4 {
@@ -1742,7 +1742,7 @@ mod tests {
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("id", header::HeaderValue::from(id.clone()));
+        headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
         let request_body = MalformedPutPackageRequestBody5 {
@@ -1802,7 +1802,7 @@ mod tests {
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("id", header::HeaderValue::from(id.clone()));
+        headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
         let request_body = MalformedPutPackageRequestBody6 {
@@ -1869,7 +1869,7 @@ mod tests {
         let mut headers = header::HeaderMap::new();
         // headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("id", header::HeaderValue::from(id.clone()));
+        headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
         let request_body = MalformedPutPackageRequestBody5 {
@@ -1998,7 +1998,7 @@ mod tests {
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("id", header::HeaderValue::from(id.clone()));
+        headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
         let request_body = PutPackageRequestBody {
@@ -2064,7 +2064,7 @@ mod tests {
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("id", header::HeaderValue::from(id.clone()));
+        headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -2103,7 +2103,7 @@ mod tests {
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("id", header::HeaderValue::from(id.clone()));
+        headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -2142,7 +2142,7 @@ mod tests {
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        // headers.insert("id", header::HeaderValue::from(id.clone()));
+        // headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -2181,7 +2181,7 @@ mod tests {
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("id", header::HeaderValue::from(id.clone()));
+        headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -2499,7 +2499,7 @@ mod tests {
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("id", header::HeaderValue::from(id.clone()));
+        headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -2541,7 +2541,7 @@ mod tests {
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("id", header::HeaderValue::from(id.clone()));
+        headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -2583,7 +2583,7 @@ mod tests {
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        // headers.insert("id", header::HeaderValue::from(id.clone()));
+        // headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -2625,7 +2625,7 @@ mod tests {
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("id", header::HeaderValue::from(id.clone()));
+        headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -2668,7 +2668,7 @@ mod tests {
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("name", header::HeaderValue::from(name.clone()));
+        headers.insert("name", header::HeaderValue::from_static(&*name));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -2707,7 +2707,7 @@ mod tests {
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("name", header::HeaderValue::from(name.clone()));
+        headers.insert("name", header::HeaderValue::from_static(&*name));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -2746,7 +2746,7 @@ mod tests {
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        // headers.insert("name", header::HeaderValue::from(name.clone()));
+        // headers.insert("name", header::HeaderValue::from_static(&*name));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -2785,7 +2785,7 @@ mod tests {
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("name", header::HeaderValue::from(name.clone()));
+        headers.insert("name", header::HeaderValue::from_static(&*name));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -2827,7 +2827,7 @@ mod tests {
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("name", header::HeaderValue::from(name.clone()));
+        headers.insert("name", header::HeaderValue::from_static(&*name));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -2867,7 +2867,7 @@ mod tests {
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("name", header::HeaderValue::from(name.clone()));
+        headers.insert("name", header::HeaderValue::from_static(&*name));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -2906,7 +2906,7 @@ mod tests {
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        // headers.insert("name", header::HeaderValue::from(name.clone()));
+        // headers.insert("name", header::HeaderValue::from_static(&*name));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -2945,7 +2945,7 @@ mod tests {
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
-        headers.insert("name", header::HeaderValue::from(name.clone()));
+        headers.insert("name", header::HeaderValue::from_static(&*name));
 
         // send request
         let client = reqwest::blocking::Client::new();
