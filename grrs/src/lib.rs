@@ -320,9 +320,27 @@ struct MalformedPutPackageRequestBody4 {
     metadata: PutPackageMetadata
 }
 
+#[derive(Serialize)]
 struct MalformedPutPackageData2 {
     Content: String,
     JSProgram: String
+}
+
+#[derive(Serialize)]
+struct MalformedPutPackageRequestBody5 {
+
+}
+
+#[derive(Serialize)]
+struct MalformedPutPackageRequestBody6 {
+    data: PutPackageData,
+    metadata: MalformedPutPackageMetadata1
+}
+
+#[derive(Serialize)]
+struct MalformedPutPackageMetadata1 {
+    Version: String,
+    ID: String
 }
 
 //
@@ -1317,6 +1335,7 @@ mod tests {
         let id = get_valid_module_id();
         let content = "".to_string();
         let jsProgram = "".to_string();
+        let package_url = "".to_string();
 
         let correct_status = 200;
 
@@ -1335,7 +1354,7 @@ mod tests {
             },
             data: PutPackageData {
                 Content: content.clone(),
-                URL: url.clone(),
+                URL: package_url.clone(),
                 JSProgram: jsProgram.clone()
             }
         };
@@ -1385,6 +1404,7 @@ mod tests {
         let id = get_valid_module_id();
         let content = "".to_string();
         let jsProgram = "".to_string();
+        let package_url = "".to_string();
 
         let correct_status = 400;
 
@@ -1403,7 +1423,7 @@ mod tests {
             },
             data: PutPackageData {
                 Content: content.clone(),
-                URL: url.clone(),
+                URL: package_url.clone(),
                 JSProgram: jsProgram.clone()
             }
         };
@@ -1453,6 +1473,7 @@ mod tests {
         let id = get_valid_module_id();
         let content = "".to_string();
         let jsProgram = "".to_string();
+        let package_url = "".to_string();
 
         let correct_status = 400;
 
@@ -1470,7 +1491,7 @@ mod tests {
                 ID: id.clone()
             },
             data: MalformedPutPackageData1 {
-                URL: url.clone(),
+                URL: package_url.clone(),
                 JSProgram: jsProgram.clone()
             }
         };
@@ -1583,6 +1604,7 @@ mod tests {
         let id = get_valid_module_id();
         let content = "".to_string();
         let jsProgram = "".to_string();
+        let package_url = "".to_string();
 
         let correct_status = 400;
 
@@ -1596,7 +1618,7 @@ mod tests {
         let request_body = MalformedPutPackageRequestBody3 {
             data: PutPackageData {
                 Content: content.clone(),
-                URL: url.clone(),
+                URL: package_url.clone(),
                 JSProgram: jsProgram.clone()
             }
         };
@@ -1647,7 +1669,7 @@ mod tests {
         let content = "".to_string();
         let jsProgram = "".to_string();
 
-        let correct_status = 200;
+        let correct_status = 400;
 
         // create headers
         let mut headers = header::HeaderMap::new();
@@ -1704,16 +1726,131 @@ mod tests {
     // input malformed body
     #[test]
     fn test_put_package_by_id_fail6() {
+        // variables
+        let token = get_auth_token();
+        let url = get_website_url();
+        let name: String;
+        let version: String;
+        let (name, version) = get_valid_module_name_and_version();
+        let id = get_valid_module_id();
+        let content = "".to_string();
+        let jsProgram = "".to_string();
 
+        let correct_status = 400;
+
+        // create headers
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("id", header::HeaderValue::from(id.clone()));
+
+        // create body
+        let request_body = MalformedPutPackageRequestBody5 {
+
+        };
+        let body_res = serde_json::to_String(&request_body);
+        if body_res.is_err() {
+            log!("Failed to parse body");
+            assert_eq!(body_res.is_err(), false);
+            return;
+        }
+        let body = body_res.unwrap();
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .put(format!("{}/package/{}", url, id))
+            .headers(headers)
+            .body(body)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
     }
 
     // input malformed body
     #[test]
     fn test_put_package_by_id_fail7() {
-        
+        // variables
+        let token = get_auth_token();
+        let url = get_website_url();
+        let name: String;
+        let version: String;
+        let (name, version) = get_valid_module_name_and_version();
+        let id = get_valid_module_id();
+        let content = "".to_string();
+        let jsProgram = "".to_string();
+        let package_url = "".to_string();
+
+        let correct_status = 400;
+
+        // create headers
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("id", header::HeaderValue::from(id.clone()));
+
+        // create body
+        let request_body = MalformedPutPackageRequestBody6 {
+            data: PutPackageData {
+                Content: content,
+                URL: package_url,
+                JSProgram: jsProgram
+            },
+            metadata: MalformedPutPackageMetadata1 {
+                Version: version,
+                ID: id
+            }
+        };
+        let body_res = serde_json::to_String(&request_body);
+        if body_res.is_err() {
+            log!("Failed to parse body");
+            assert_eq!(body_res.is_err(), false);
+            return;
+        }
+        let body = body_res.unwrap();
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .put(format!("{}/package/{}", url, id))
+            .headers(headers)
+            .body(body)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
     }
 
-    // input with missing header(s)
+    // input with missing body
     #[test]
     fn test_put_package_by_id_fail8() {
         // variables
@@ -1725,6 +1862,66 @@ mod tests {
         let id = get_valid_module_id();
         let content = "".to_string();
         let jsProgram = "".to_string();
+
+        let correct_status = 400;
+
+        // create headers
+        let mut headers = header::HeaderMap::new();
+        // headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("id", header::HeaderValue::from(id.clone()));
+
+        // create body
+        let request_body = MalformedPutPackageRequestBody5 {
+
+        };
+        let body_res = serde_json::to_String(&request_body);
+        if body_res.is_err() {
+            log!("Failed to parse body");
+            assert_eq!(body_res.is_err(), false);
+            return;
+        }
+        let body = body_res.unwrap();
+
+        // send request
+        let client = reqwest::blocking::Client::new();
+        let response_res = client
+            .put(format!("{}/package/{}", url, id))
+            .headers(headers)
+            // .body(body)
+            .send();
+        if response_res.is_err() {
+            log!("Failed to get response");
+            assert_eq!(response_res.is_err(), false);
+            return;
+        }
+        let response = response_res.unwrap();
+        // process response
+        assert_eq!(response, ()); // response returned OK
+
+        let status = response.status();
+        if status != correct_status {
+            log!("Incorrect status from response");
+            assert_eq!(response.status(), correct_status);
+            return;
+        }
+
+        return;
+    }
+
+    // input with missing header(s)
+    #[test]
+    fn test_put_package_by_id_fail9() {
+        // variables
+        let token = get_auth_token();
+        let url = get_website_url();
+        let name: String;
+        let version: String;
+        let (name, version) = get_valid_module_name_and_version();
+        let id = get_valid_module_id();
+        let content = "".to_string();
+        let jsProgram = "".to_string();
+        let package_url = "".to_string();
 
         let correct_status = 400;
 
@@ -1743,7 +1940,7 @@ mod tests {
             },
             data: PutPackageData {
                 Content: content.clone(),
-                URL: url.clone(),
+                URL: package_url.clone(),
                 JSProgram: jsProgram.clone()
             }
         };
@@ -1783,7 +1980,7 @@ mod tests {
 
     // input with invalid id
     #[test]
-    fn test_put_package_by_id_fail9() {
+    fn test_put_package_by_id_fail10() {
         // variables
         let token = get_auth_token();
         let url = get_website_url();
@@ -1793,6 +1990,7 @@ mod tests {
         let id = "therealistidintheworld".to_string();
         let content = "".to_string();
         let jsProgram = "".to_string();
+        let package_url = "".to_string();
 
         let correct_status = 404;
 
@@ -1812,7 +2010,7 @@ mod tests {
             },
             data: PutPackageData {
                 Content: content.clone(),
-                URL: url.clone(),
+                URL: package_url.clone(),
                 JSProgram: jsProgram.clone()
             }
         };
