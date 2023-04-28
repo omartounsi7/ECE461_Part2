@@ -371,7 +371,7 @@ struct MalformedPostPackageRegexRequestBody1 {
 }
 
 //
-//  MODULE CONTAINING THE UNIT TEST FUNCTIONS
+// MODULE CONTAINING THE UNIT TEST FUNCTIONS
 //
 #[cfg(test)]
 mod tests {
@@ -2921,7 +2921,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        
+
         let status = response.status();
         if status != correct_status {
             println!("Incorrect status from response");
