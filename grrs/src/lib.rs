@@ -492,7 +492,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -549,7 +549,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -605,7 +605,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -661,7 +661,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -714,7 +714,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -766,7 +766,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -801,8 +801,8 @@ mod tests {
         // create body
         let request_body = serde_json::json!([
             {
-                Version: version,
-                Name: name
+                "Version": version,
+                "Name": name
             }
         ]);
         let body_res = serde_json::to_string(&request_body);
@@ -827,7 +827,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -861,8 +861,8 @@ mod tests {
         // create body
         let request_body = serde_json::json!([
             {
-                Version: version,
-                Name: name
+                "Version": version,
+                "Name": name
             }
         ]);
         let body_res = serde_json::to_string(&request_body);
@@ -887,7 +887,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -921,7 +921,7 @@ mod tests {
         // create body
         let request_body = serde_json::json!([
             {
-                Name: name
+                "Name": name
             }
         ]);
         let body_res = serde_json::to_string(&request_body);
@@ -946,7 +946,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -980,7 +980,7 @@ mod tests {
         // create body
         let request_body = serde_json::json!([
             {
-                Version: version
+                "Version": version
             }
         ]);
         let body_res = serde_json::to_string(&request_body);
@@ -1005,7 +1005,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -1039,8 +1039,8 @@ mod tests {
         // create body
         let request_body = serde_json::json!([
             {
-                Version: version,
-                Name: name
+                "Version": version,
+                "Name": name
             }
         ]);
         let body_res = serde_json::to_string(&request_body);
@@ -1065,7 +1065,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -1106,7 +1106,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process request
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -1144,7 +1144,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process request
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -1187,7 +1187,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -1228,7 +1228,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -1268,7 +1268,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -1309,7 +1309,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -1380,7 +1380,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -1449,7 +1449,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -1517,7 +1517,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -1580,7 +1580,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -1644,7 +1644,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -1711,7 +1711,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -1770,7 +1770,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -1838,7 +1838,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -1897,7 +1897,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -1966,7 +1966,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -2036,7 +2036,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -2252,7 +2252,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -2307,7 +2307,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -2361,7 +2361,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -2416,7 +2416,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -2471,7 +2471,7 @@ mod tests {
         }
         let response = response_res.unwrap();
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -2515,7 +2515,7 @@ mod tests {
         let response = response_res.unwrap();
 
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -2557,7 +2557,7 @@ mod tests {
         let response = response_res.unwrap();
 
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -2599,7 +2599,7 @@ mod tests {
         let response = response_res.unwrap();
 
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -2641,7 +2641,7 @@ mod tests {
         let response = response_res.unwrap();
 
         // process response
-        assert_eq!(response, ()); // response returned OK
+
 
         let status = response.status();
         if status != correct_status {
@@ -2661,6 +2661,7 @@ mod tests {
         // variables
         let token = get_auth_token();
         let name = get_valid_module_name();
+        let url = get_website_url();
 
         let correct_status = 200;
 
@@ -2699,6 +2700,7 @@ mod tests {
         // variables
         let token = "oirajg934this4knf4ioISj943jf30percentio43nirOFaoifourcode323209";
         let name = get_valid_module_name();
+        let url = get_website_url();
 
         let correct_status = 400;
 
@@ -2737,6 +2739,7 @@ mod tests {
         // variables
         let token = get_auth_token();
         let name = get_valid_module_name();
+        let url = get_website_url();
 
         let correct_status = 400;
 
@@ -2775,6 +2778,7 @@ mod tests {
         // variables
         let token = get_auth_token();
         let name = "superRealistingMoDuLeNAMEEEEE";
+        let url = get_website_url();
 
         let correct_status = 404;
 
@@ -2856,6 +2860,7 @@ mod tests {
         // variables
         let token = "4iotoidsff4390jithisn4ifoclass";
         let name = get_valid_module_name();
+        let url = get_website_url();
 
         let correct_status = 400;
 
@@ -2894,6 +2899,7 @@ mod tests {
         // variables
         let token = get_auth_token();
         let name = get_valid_module_name();
+        let url = get_website_url();
 
         let correct_status = 400;
 
