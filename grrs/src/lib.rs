@@ -1092,6 +1092,8 @@ mod tests {
         let token = get_auth_token();
         let url = get_website_url();
         let correct_status = 200;
+        let auth_header = format!("bearer {}", token);
+
 
         // create header
         let mut headers = header::HeaderMap::new();
