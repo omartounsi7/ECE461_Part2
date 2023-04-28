@@ -471,7 +471,7 @@ mod tests {
                 password
             }
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             print!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -528,7 +528,7 @@ mod tests {
                 password
             }
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -584,7 +584,7 @@ mod tests {
                 password
             }
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -640,7 +640,7 @@ mod tests {
                 password
             }
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -693,7 +693,7 @@ mod tests {
                 isAdmin: true
             },
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -745,7 +745,7 @@ mod tests {
                 password
             }
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -805,7 +805,7 @@ mod tests {
                 Name: name
             }
         ]);
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -865,7 +865,7 @@ mod tests {
                 Name: name
             }
         ]);
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -924,7 +924,7 @@ mod tests {
                 Name: name
             }
         ]);
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -983,7 +983,7 @@ mod tests {
                 Version: version
             }
         ]);
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -1043,7 +1043,7 @@ mod tests {
                 Name: name
             }
         ]);
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -1358,7 +1358,7 @@ mod tests {
                 JSProgram: jsProgram.clone()
             }
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -1427,7 +1427,7 @@ mod tests {
                 JSProgram: jsProgram.clone()
             }
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -1495,7 +1495,7 @@ mod tests {
                 JSProgram: jsProgram.clone()
             }
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -1558,7 +1558,7 @@ mod tests {
                 ID: id.clone()
             },
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -1622,7 +1622,7 @@ mod tests {
                 JSProgram: jsProgram.clone()
             }
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -1689,7 +1689,7 @@ mod tests {
                 JSProgram: jsProgram.clone()
             }
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -1748,7 +1748,7 @@ mod tests {
         let request_body = MalformedPutPackageRequestBody5 {
 
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -1816,7 +1816,7 @@ mod tests {
                 ID: id
             }
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -1875,7 +1875,7 @@ mod tests {
         let request_body = MalformedPutPackageRequestBody5 {
 
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -1944,7 +1944,7 @@ mod tests {
                 JSProgram: jsProgram.clone()
             }
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -2014,7 +2014,7 @@ mod tests {
                 JSProgram: jsProgram.clone()
             }
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -2230,7 +2230,7 @@ mod tests {
             Content: content.clone(),
             JSProgram: jsProgram.clone()
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -2285,7 +2285,7 @@ mod tests {
             Content: content.clone(),
             JSProgram: jsProgram.clone()
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -2339,7 +2339,7 @@ mod tests {
         let request_body = MalformedPostPackageRequestBody1 {
             JSProgram: jsProgram.clone()
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -2394,7 +2394,7 @@ mod tests {
             Content: content.clone(),
             JSProgram: jsProgram.clone()
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -2449,7 +2449,7 @@ mod tests {
             Content: content.clone(),
             JSProgram: jsProgram.clone()
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -2986,7 +2986,7 @@ mod tests {
         let request_body = PostPackageRegexRequestBody {
             RegEx: regex.clone()
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -3038,7 +3038,7 @@ mod tests {
         let request_body = PostPackageRegexRequestBody {
             RegEx: regex.clone()
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -3089,7 +3089,7 @@ mod tests {
         // create body
         let request_body = MalformedPostPackageRegexRequestBody1 {
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
@@ -3141,7 +3141,7 @@ mod tests {
         let request_body = PostPackageRegexRequestBody {
             RegEx: regex.clone()
         };
-        let body_res = serde_json::to_String(&request_body);
+        let body_res = serde_json::to_string(&request_body);
         if body_res.is_err() {
             println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
