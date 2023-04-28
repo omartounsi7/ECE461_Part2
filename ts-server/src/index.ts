@@ -698,7 +698,7 @@ app.get('/package/:id/rate', async (req, res) => {
     // Call the Rust function and output the result to the console
     handle_url_file("URLs.txt", "example.log", 1);
     
-    console.log("Success, Rate works!!!")
+    console.log("Success, Rate works!!!");
 
     // Read the contents of the metrics.txt file
     const metrics = fs.readFileSync('metrics.txt', 'utf-8');
