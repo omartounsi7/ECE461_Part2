@@ -492,10 +492,10 @@
           }
         });
 
-        
         const body_contents = await response.json();
         const metadata = JSON.stringify(body_contents["metadata"]);
         const base64 = JSON.stringify(body_contents["data"]["Content"]);
+        const name = JSON.stringify(body_contents["metadata"]["Name"]);
 
         const success_value = await handleResponseError(response, body_contents);
         if (!success_value) {
@@ -504,28 +504,24 @@
              
         // Decode base64 to binary data
         const base64WithoutQuotes = base64.replace(/"/g, '');
-        alert(base64WithoutQuotes);
-        const binaryStr = atob(base64WithoutQuotes);
+        const name_new = name.replace(/"/g, '');
 
-        // Create a new JSZip instance
-        const zip = new JSZip();
-
-        // Add the binary data to the JSZip instance
-        zip.file(metadata.Name, binaryStr, { binary: true });
-
-        // Generate the zip file
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
-
-        // Create a download link for the Blob object
+        // Create a new download link element
         const downloadLink = document.createElement('a');
-        downloadLink.href = URL.createObjectURL(zipBlob);
-        downloadLink.download = metadata.filename;
+        downloadLink.setAttribute('href', `data:application/zip;base64,${base64WithoutQuotes}`);
+        downloadLink.setAttribute('download', name_new);
 
-        // Click the download link to trigger the file download
+        // Hide the download link element
+        downloadLink.style.display = 'none';
+
+        // Append the download link element to the document body
+        document.body.appendChild(downloadLink);
+
+        // Click the download link to trigger the download
         downloadLink.click();
 
-        // Clear the URL text field
-        packageID.value = "";
+        // Remove the download link from the document body
+        document.body.removeChild(downloadLink);
       }
 
 
