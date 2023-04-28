@@ -473,7 +473,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            print!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -486,7 +486,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -496,7 +496,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return
         }
@@ -530,7 +530,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -543,7 +543,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -553,7 +553,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return
         }
@@ -586,7 +586,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -599,7 +599,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -609,7 +609,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return
         }
@@ -642,7 +642,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -655,7 +655,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -665,7 +665,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return
         }
@@ -695,7 +695,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -708,7 +708,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -718,7 +718,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -747,7 +747,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -760,7 +760,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -770,7 +770,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -807,7 +807,7 @@ mod tests {
         ]);
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -821,7 +821,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -831,7 +831,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -867,7 +867,7 @@ mod tests {
         ]);
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -881,7 +881,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -891,7 +891,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -926,7 +926,7 @@ mod tests {
         ]);
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -940,7 +940,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -950,7 +950,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -985,7 +985,7 @@ mod tests {
         ]);
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -999,7 +999,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -1009,7 +1009,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -1045,7 +1045,7 @@ mod tests {
         ]);
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -1059,7 +1059,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -1069,7 +1069,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -1100,7 +1100,7 @@ mod tests {
             .headers(headers)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -1110,7 +1110,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -1138,7 +1138,7 @@ mod tests {
             .headers(headers)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -1148,7 +1148,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -1191,7 +1191,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -1232,7 +1232,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -1272,7 +1272,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -1313,7 +1313,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -1360,7 +1360,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -1374,7 +1374,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -1384,7 +1384,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -1429,7 +1429,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -1443,7 +1443,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -1453,7 +1453,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -1497,7 +1497,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -1511,7 +1511,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -1521,7 +1521,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -1560,7 +1560,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -1574,7 +1574,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -1584,7 +1584,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -1624,7 +1624,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -1638,7 +1638,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -1648,7 +1648,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -1691,7 +1691,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -1705,7 +1705,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -1715,7 +1715,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -1750,7 +1750,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -1764,7 +1764,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -1774,7 +1774,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -1818,7 +1818,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -1832,7 +1832,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -1842,7 +1842,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -1877,7 +1877,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -1891,7 +1891,7 @@ mod tests {
             // .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -1901,7 +1901,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -1946,7 +1946,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -1960,7 +1960,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -1970,7 +1970,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2016,7 +2016,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -2030,7 +2030,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2040,7 +2040,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2073,7 +2073,7 @@ mod tests {
             .headers(headers)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2082,7 +2082,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2112,7 +2112,7 @@ mod tests {
             .headers(headers)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2121,7 +2121,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2151,7 +2151,7 @@ mod tests {
             .headers(headers)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2160,7 +2160,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2190,7 +2190,7 @@ mod tests {
             .headers(headers)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2199,7 +2199,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2232,7 +2232,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -2246,7 +2246,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2256,7 +2256,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2287,7 +2287,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -2301,7 +2301,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2311,7 +2311,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2341,7 +2341,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -2355,7 +2355,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2365,7 +2365,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2396,7 +2396,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -2410,7 +2410,7 @@ mod tests {
             // .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2420,7 +2420,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2451,7 +2451,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -2465,7 +2465,7 @@ mod tests {
             .body(body)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2475,7 +2475,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2508,7 +2508,7 @@ mod tests {
             .headers(headers)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2519,7 +2519,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2550,7 +2550,7 @@ mod tests {
             .headers(headers)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2561,7 +2561,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2592,7 +2592,7 @@ mod tests {
             .headers(headers)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2603,7 +2603,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2634,7 +2634,7 @@ mod tests {
             .headers(headers)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2645,7 +2645,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2676,7 +2676,7 @@ mod tests {
             .headers(headers)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2685,7 +2685,7 @@ mod tests {
         assert_eq!(response, ());
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2714,7 +2714,7 @@ mod tests {
             .headers(headers)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2723,7 +2723,7 @@ mod tests {
         assert_eq!(response, ());
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2752,7 +2752,7 @@ mod tests {
             .headers(headers)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2761,7 +2761,7 @@ mod tests {
         assert_eq!(response, ());
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2790,7 +2790,7 @@ mod tests {
             .headers(headers)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2799,7 +2799,7 @@ mod tests {
         assert_eq!(response, ());
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2832,7 +2832,7 @@ mod tests {
             .headers(headers)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2842,7 +2842,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2871,7 +2871,7 @@ mod tests {
             .headers(headers)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2880,7 +2880,7 @@ mod tests {
         assert_eq!(response, ());
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2909,7 +2909,7 @@ mod tests {
             .headers(headers)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2918,7 +2918,7 @@ mod tests {
         assert_eq!(response, ());
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2948,7 +2948,7 @@ mod tests {
             .headers(headers)
             .send();
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -2958,7 +2958,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -2988,7 +2988,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -3002,7 +3002,7 @@ mod tests {
             .send();
 
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -3012,7 +3012,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -3040,7 +3040,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -3054,7 +3054,7 @@ mod tests {
             .send();
 
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -3064,7 +3064,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -3091,7 +3091,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -3105,7 +3105,7 @@ mod tests {
             .send();
 
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -3115,7 +3115,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
@@ -3143,7 +3143,7 @@ mod tests {
         };
         let body_res = serde_json::to_String(&request_body);
         if body_res.is_err() {
-            log!("Failed to parse body");
+            println!("Failed to parse body");
             assert_eq!(body_res.is_err(), false);
             return;
         }
@@ -3157,7 +3157,7 @@ mod tests {
             .send();
 
         if response_res.is_err() {
-            log!("Failed to get response");
+            println!("Failed to get response");
             assert_eq!(response_res.is_err(), false);
             return;
         }
@@ -3167,7 +3167,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            log!("Incorrect status from response");
+            println!("Incorrect status from response");
             assert_eq!(response.status(), correct_status);
             return;
         }
