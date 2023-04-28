@@ -1822,7 +1822,7 @@ mod tests {
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
         headers.insert("X-Authorization", header::HeaderValue::from_str(&auth_header).unwrap());
-        headers.insert("id", header::HeaderValue::from_str(&id).unwrap());
+        headers.insert("id", header::HeaderValue::from_str(&id.clone()).unwrap());
 
         // create body
         let request_body = MalformedPutPackageRequestBody6 {
