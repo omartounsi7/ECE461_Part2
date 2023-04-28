@@ -789,13 +789,14 @@ mod tests {
         let url = get_website_url();
         let token = get_auth_token();
         let offset = 1;
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 200;
 
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("offset", header::HeaderValue::from(offset));
 
         // create body
@@ -849,13 +850,14 @@ mod tests {
         let url = get_website_url();
         let token = "anIncorrectAuthenticationTokenJfaorefl43923u094v";
         let offset = 1;
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("offset", header::HeaderValue::from(offset));
 
         // create body
@@ -909,13 +911,14 @@ mod tests {
         let url = get_website_url();
         let token = get_auth_token();
         let offset = 1;
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("offset", header::HeaderValue::from(offset));
 
         // create body
@@ -968,13 +971,14 @@ mod tests {
         let url = get_website_url();
         let token = get_auth_token();
         let offset = 1;
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("offset", header::HeaderValue::from(offset));
 
         // create body
@@ -1027,13 +1031,14 @@ mod tests {
         let url = get_website_url();
         let token = get_auth_token();
         let offset = 1;
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         // headers.insert("offset", header::HeaderValue::from(offset));
 
         // create body
@@ -1091,7 +1096,7 @@ mod tests {
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -1125,11 +1130,12 @@ mod tests {
         let token = "superRealAuthTokenNotFakeAtallllllllllllllllllllfoijae4803j";
         let url = get_website_url();
         let correct_status = 400;
+        let auth_header = format!("bearer {}", token);
 
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -1165,13 +1171,14 @@ mod tests {
         let id = get_valid_module_id();
         let url = get_website_url();
         let token = get_auth_token();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 200;
 
         // create headers
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
@@ -1206,13 +1213,14 @@ mod tests {
         let id = get_valid_module_id();
         let url = get_website_url();
         let token = "ultraREALAUTHTOKENiirergsiue437384732";
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 200;
 
         // create headers
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
@@ -1247,13 +1255,14 @@ mod tests {
         let id = get_valid_module_id();
         let url = get_website_url();
         let token = get_auth_token();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 200;
 
         // create headers
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
 
         // send request
         let client = reqwest::blocking::Client::new();
@@ -1287,19 +1296,20 @@ mod tests {
         let id = "totallylegggitpackageid".to_string();
         let url = get_website_url();
         let token = get_auth_token();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 404;
 
         // create headers
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
         let client = reqwest::blocking::Client::new();
         let response_res = client
-            .get(format!("{}/package/{}", url, id))
+            .get(format!("{}/package/{}", url, id.clone()))
             .headers(headers)
             .send();
         if response_res.is_err() {
@@ -1336,13 +1346,14 @@ mod tests {
         let content = "".to_string();
         let jsProgram = "".to_string();
         let package_url = "".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 200;
 
         // create headers
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
@@ -1405,13 +1416,14 @@ mod tests {
         let content = "".to_string();
         let jsProgram = "".to_string();
         let package_url = "".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create headers
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
@@ -1474,13 +1486,14 @@ mod tests {
         let content = "".to_string();
         let jsProgram = "".to_string();
         let package_url = "".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create headers
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
@@ -1541,13 +1554,14 @@ mod tests {
         let id = get_valid_module_id();
         let content = "".to_string();
         let jsProgram = "".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create headers
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
@@ -1605,13 +1619,14 @@ mod tests {
         let content = "".to_string();
         let jsProgram = "".to_string();
         let package_url = "".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create headers
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
@@ -1668,13 +1683,14 @@ mod tests {
         let id = get_valid_module_id();
         let content = "".to_string();
         let jsProgram = "".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create headers
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
@@ -1735,13 +1751,14 @@ mod tests {
         let id = get_valid_module_id();
         let content = "".to_string();
         let jsProgram = "".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create headers
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
@@ -1795,13 +1812,14 @@ mod tests {
         let content = "".to_string();
         let jsProgram = "".to_string();
         let package_url = "".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create headers
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
@@ -1862,13 +1880,14 @@ mod tests {
         let id = get_valid_module_id();
         let content = "".to_string();
         let jsProgram = "".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create headers
         let mut headers = header::HeaderMap::new();
         // headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
@@ -1922,13 +1941,14 @@ mod tests {
         let content = "".to_string();
         let jsProgram = "".to_string();
         let package_url = "".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create headers
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         // headers.insert("id", header::HeaderValue::from(id.clone()));
 
         // create body
@@ -1991,13 +2011,14 @@ mod tests {
         let content = "".to_string();
         let jsProgram = "".to_string();
         let package_url = "".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 404;
 
         // create headers
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // create body
@@ -2058,12 +2079,13 @@ mod tests {
         let token = get_auth_token();
         let url = get_website_url();
         let id = get_valid_module_id();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 200;
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
@@ -2097,12 +2119,13 @@ mod tests {
         let token = "ISoi349THIS43fqioAfinfFAKE4832krTOKENakfwv23";
         let url = get_website_url();
         let id = get_valid_module_id();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
@@ -2136,12 +2159,13 @@ mod tests {
         let token = get_auth_token();
         let url = get_website_url();
         let id = get_valid_module_id();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         // headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
@@ -2175,12 +2199,13 @@ mod tests {
         let token = get_auth_token();
         let url = get_website_url();
         let id = "packageidforsomepackagethatdoesntactuallyexist".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 404;
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
@@ -2217,13 +2242,14 @@ mod tests {
         let url = get_website_url();
         let content = get_valid_base64_zip();
         let jsProgram = "".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 201;
 
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
 
         // create body
         let request_body = PostPackageRequestBody {
@@ -2272,13 +2298,14 @@ mod tests {
         let url = get_website_url();
         let content = get_valid_base64_zip();
         let jsProgram = "".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
 
         // create body
         let request_body = PostPackageRequestBody {
@@ -2327,13 +2354,14 @@ mod tests {
         let url = get_website_url();
         let content = get_valid_base64_zip();
         let jsProgram = "".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
 
         // create body
         let request_body = MalformedPostPackageRequestBody1 {
@@ -2381,13 +2409,14 @@ mod tests {
         let url = get_website_url();
         let content = get_valid_base64_zip();
         let jsProgram = "".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
 
         // create body
         let request_body = PostPackageRequestBody {
@@ -2436,13 +2465,14 @@ mod tests {
         let url = get_website_url();
         let content = "clearlyaninvalidzipfileintheformofatechnicallyvalidbase64stringithink".to_string();
         let jsProgram = "".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
 
         // create body
         let request_body = PostPackageRequestBody {
@@ -2492,13 +2522,14 @@ mod tests {
         let token = get_auth_token();
         let url = get_website_url();
         let id = get_valid_module_id();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 200;
 
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
@@ -2534,13 +2565,14 @@ mod tests {
         let token = "thisisthe46thauthtokenalive";
         let url = get_website_url();
         let id = get_valid_module_id();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
@@ -2576,13 +2608,14 @@ mod tests {
         let token = get_auth_token();
         let url = get_website_url();
         let id = get_valid_module_id();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         // headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
@@ -2618,13 +2651,14 @@ mod tests {
         let token = get_auth_token();
         let url = get_website_url();
         let id = "theidofthepackagewearetryingtoget".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 404;
 
         // create header
         let mut headers = header::HeaderMap::new();
         headers.insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("id", header::HeaderValue::from_static(&*id));
 
         // send request
@@ -2662,12 +2696,13 @@ mod tests {
         let token = get_auth_token();
         let name = get_valid_module_name();
         let url = get_website_url();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 200;
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("name", header::HeaderValue::from_static(&*name));
 
         // send request
@@ -2701,12 +2736,13 @@ mod tests {
         let token = "oirajg934this4knf4ioISj943jf30percentio43nirOFaoifourcode323209";
         let name = get_valid_module_name();
         let url = get_website_url();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("name", header::HeaderValue::from_static(&*name));
 
         // send request
@@ -2740,12 +2776,13 @@ mod tests {
         let token = get_auth_token();
         let name = get_valid_module_name();
         let url = get_website_url();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         // headers.insert("name", header::HeaderValue::from_static(&*name));
 
         // send request
@@ -2779,12 +2816,13 @@ mod tests {
         let token = get_auth_token();
         let name = "superRealistingMoDuLeNAMEEEEE";
         let url = get_website_url();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 404;
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("name", header::HeaderValue::from_static(&*name));
 
         // send request
@@ -2821,12 +2859,13 @@ mod tests {
         let token = get_auth_token();
         let url = get_website_url();
         let name = get_valid_module_name();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 200;
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("name", header::HeaderValue::from_static(&*name));
 
         // send request
@@ -2861,12 +2900,13 @@ mod tests {
         let token = "4iotoidsff4390jithisn4ifoclass";
         let name = get_valid_module_name();
         let url = get_website_url();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("name", header::HeaderValue::from_static(&*name));
 
         // send request
@@ -2900,12 +2940,13 @@ mod tests {
         let token = get_auth_token();
         let name = get_valid_module_name();
         let url = get_website_url();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         // headers.insert("name", header::HeaderValue::from_static(&*name));
 
         // send request
@@ -2939,12 +2980,13 @@ mod tests {
         let token = get_auth_token();
         let url = get_website_url();
         let name = "fakepackagenametotryandtrickthebackendintomessingup";
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 404;
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
         headers.insert("name", header::HeaderValue::from_static(&*name));
 
         // send request
@@ -2981,12 +3023,13 @@ mod tests {
         let token = get_auth_token();
         let url = get_website_url();
         let regex = "".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 200;
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
 
         // create body
         let request_body = PostPackageRegexRequestBody {
@@ -3033,12 +3076,13 @@ mod tests {
         let token = "regexroienireosiosregexregexREGEXREGEXHELPPPPPPMEMEEEE438ut04";
         let url = get_website_url();
         let regex = "".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
 
         // create body
         let request_body = PostPackageRegexRequestBody {
@@ -3085,12 +3129,13 @@ mod tests {
         let token = get_auth_token();
         let url = get_website_url();
         let regex = "".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 400;
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
 
         // create body
         let request_body = MalformedPostPackageRegexRequestBody1 {
@@ -3136,12 +3181,13 @@ mod tests {
         let token = get_auth_token();
         let url = get_website_url();
         let regex = "(((((((({{{{{.....****".to_string();
+        let auth_header = format!("bearer {}", token);
 
         let correct_status = 404;
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*format!("bearer {}", token)));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
 
         // create body
         let request_body = PostPackageRegexRequestBody {
