@@ -2948,7 +2948,7 @@ mod tests {
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header.clone()));
         // headers.insert("name", header::HeaderValue::from_static(&*name));
 
         // send request
@@ -2988,7 +2988,7 @@ mod tests {
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header.clone()));
         headers.insert("name", header::HeaderValue::from_static(&*name));
 
         // send request
@@ -3031,7 +3031,7 @@ mod tests {
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header.clone()));
 
         // create body
         let request_body = PostPackageRegexRequestBody {
@@ -3084,7 +3084,7 @@ mod tests {
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header.clone()));
 
         // create body
         let request_body = PostPackageRegexRequestBody {
@@ -3137,7 +3137,7 @@ mod tests {
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header.clone()));
 
         // create body
         let request_body = MalformedPostPackageRegexRequestBody1 {
@@ -3189,7 +3189,7 @@ mod tests {
 
         // create header
         let mut headers = header::HeaderMap::new();
-        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header));
+        headers.insert("X-Authorization", header::HeaderValue::from_static(&*auth_header.clone()));
 
         // create body
         let request_body = PostPackageRegexRequestBody {
