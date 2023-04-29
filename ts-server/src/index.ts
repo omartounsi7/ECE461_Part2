@@ -176,9 +176,6 @@ app.delete('/reset', async (req, res) => {
     if(!await authenticateJWT(req, res)) {
         return;
     }
-    if(!await isAdmin(req, res)) {
-        return;
-    }
     // deletes all modules stored in firestore
     await resetKind(MODULE_KIND);
     // deletes all users stored in firestore (add the default user in return function)
@@ -267,13 +264,13 @@ app.post('/package', async (req, res) => {
 
     // Package URL (for use in public ingest) is passed in req.body
     if (url) {
-        /* 
-        1. DO RATING of Package URL (for use in public ingest).
+
+        //1. DO RATING of Package URL (for use in public ingest).
         // Write the url to a file called URLs.txt
-        fs.writeFileSync('URLs.txt', packageURL);
+        fs.writeFileSync('URLs.txt', url);
 
         // Define the type signature of the Rust function
-        const handle_url_file = ffi.Library('./target/release/libmylib', {
+        const handle_url_file = ffi.Library('./target/release/libgrrs', {
             'handle_url_file': ['void', ['string', 'string', 'int']]
         }).handle_url_file;
 
@@ -301,7 +298,6 @@ app.post('/package', async (req, res) => {
             license < 0.5 || codeReview < 0.5 || version < 0.5) {
             res.status(424).send({message: 'Package is not uploaded due to the disqualified rating'});
         } 
-        */
         
         const parts = url.split('/');
         const cloneDir = './' + parts[parts.length - 1];
@@ -920,6 +916,7 @@ async function authenticateJWT(req: any, res: any) {
 
   // Retrieve the value of the 'X-Authorization' header from the request headers
   const authHeader = req.headers['X-Authorization'] || req.headers['x-authorization']; 
+  console.log(authHeader)
   
   if (authHeader) {
     const token = authHeader.split(' ')[1];
@@ -986,6 +983,7 @@ app.get('/isAdmin', async (req, res) => {
 async function authentication(req: any, res: any) {
     await logRequest("put", "authentication", req);
 
+    console.log(req)
     const { User, Secret } = req.body;
 
     // Check that the User and Secret objects are present in the request body

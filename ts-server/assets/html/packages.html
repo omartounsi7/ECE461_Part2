@@ -107,11 +107,12 @@
             <button onclick="toggleDiv(0)">Package Search</button>
             <button onclick="toggleDiv(1)">Upload Module</button>
             <button onclick="toggleDiv(2)">Download Module</button>
-            <button onclick="toggleDiv(3)">Reset Registry </button>
-            <button onclick="toggleDiv(4)">Register User</button>
-            <button onclick="toggleDiv(5)">Regex</button>
-            <button onclick="toggleDiv(6)">Delete Account</button>
-            <button onclick="toggleDiv(7)">Reset Registry</button>
+            <button onclick="toggleDiv(3)">Update Module</button>
+            <button onclick="toggleDiv(4)">Reset Registry </button>
+            <button onclick="toggleDiv(5)">Register User</button>
+            <button onclick="toggleDiv(6)">Regex</button>
+            <button onclick="toggleDiv(7)">Delete Account</button>
+            <button onclick="toggleDiv(8)">Reset Registry</button>
             <button onclick="logOut()">Log Out</button>
         </nav>
     </header>
@@ -179,7 +180,6 @@
         </form>
       </div>
       
-      
       <div id="register-user" class="endpoint-div">
         <h2 style="margin-right: 20px;">Register User</h2>
         <form>
@@ -228,7 +228,8 @@
       let deleteUser = document.getElementById("delete-account");
       let resetRegistry = document.getElementById("reset-registry");
       let downloadPack = document.getElementById("package-download");
-      let allDivs = [packageSearchDiv, uploadModuleDiv, downloadPack, deleteModuleDiv, registerModuleDiv, regexDiv, deleteUser, resetRegistry];
+      let allDivs = [packageSearchDiv, uploadModuleDiv, downloadPack, updateModule, deleteModuleDiv, registerModuleDiv, regexDiv, deleteUser, resetRegistry];
+      
       
       function showDiv(div) {
           div.style.display = "flex";
