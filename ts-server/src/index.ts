@@ -105,13 +105,13 @@ app.post('/packages', async (req, res) => {
 
     // process request
 
-    let queries = req.body.PackageQuery;
-    let offset = req.query.offset;
+    let queries = req.body;
+    let offset = req.headers.offset;
 
-    console.log(`Got /package post request`);
+    // console.log(`Got /package post request`);
 
     // validate post request
-    if (typeof queries === undefined || queries.length === 0 || offset === undefined) {
+    if (typeof queries === undefined || offset === undefined) {
         // invalid request
         res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
         return;
@@ -122,6 +122,7 @@ app.post('/packages', async (req, res) => {
         let offset_num = Number(offset);
         if(isNaN(offset_num)) {
             res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
+            return;
         }
         try {
             for (const e of queries) {
@@ -129,29 +130,36 @@ app.post('/packages', async (req, res) => {
                 let name = e["Name"];
                 if(versions === undefined || name === undefined) {
                     res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
-                    continue;
+                    return;
                 }
+                // console.log(e)
                 const regex = /\((.*?)\)/g;
-                let matches = [];
-                let match;
-                while(match = versions.match(regex)) {
-                    matches.push(match[1]);
-                }
+                let matches_ = versions.match(regex)
+                let matches: string[] = [];
+                matches_.forEach((match: String) => {
+                        matches.push(match.substring(1, match.length - 1));
+                });
                 for (const version of matches) {
                     let matched_repos = await findReposByNameAndVersion(name, version);
-
                     if(matched_repos.length === 1 && matched_repos[0] === "invalid version") {
-                        res.status(400).send("");
+                        res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
+                        return;
                     }
-                    queries.forEach((repo: any) => {
+                    matched_repos.forEach((repo: any) => {
                         let version = repo["version"];
-                        let id = repo["id"];
+                        let id = repo["metaData"]["ID"];
+                        // let id = repo["id"];
+                        // console.log(`found repo: ${name} ${id} ${version}`)
                         packages.push({"Version": version, "Name": name, "ID": id });
+                        // packages.push(repo["metadata"].clone())
+                        // console.log(`found repo: ${repo["metadata"]}`)
                     });
                 }
             }
-        }catch(e: any) {
+        } catch(e: any) {
             res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
+            console.log(e)
+            return;
         }
         let results;
         // page nate here
@@ -162,7 +170,7 @@ app.post('/packages', async (req, res) => {
             results = packages.slice(offset_num * max_per_page, max_per_page);
         }
         // send results here
-
+        res.status(200).json(results);
     }
 
 
@@ -265,7 +273,7 @@ app.post('/package', async (req, res) => {
     // Package URL (for use in public ingest) is passed in req.body
     if (url) {
 
-        //1. DO RATING of Package URL (for use in public ingest).
+        // 1. DO RATING of Package URL (for use in public ingest).
         // Write the url to a file called URLs.txt
         fs.writeFileSync('URLs.txt', url);
 
@@ -436,6 +444,9 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
         return { statusCode: 400, message: 'package.json file is probably missing' };
     }
 
+    if (packageName === undefined || packageVersion === undefined) {
+        return { statusCode: 400, message: "Failed to get package name or version from package.json" };
+    }
     const cloudStoragePath = cloudStorageFilePathBuilder(packageName + ".zip", packageVersion);
 
     let newPackageID;
@@ -481,7 +492,7 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
     }
 
     // Uploads module to Google Cloud Storage
-    uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, base64String, MODULE_STORAGE_BUCKET);
+    await uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, base64String, MODULE_STORAGE_BUCKET);
 
     // 201 Success. Check the ID in the returned metadata for the official ID.
     res.status(201).json(responseObject);
@@ -720,6 +731,10 @@ app.put('/package/:id', async (req, res) => {
 
 
             // Uploads module to Google Cloud Storage
+            if (packageName === undefined || packageVersion === undefined) {
+                res.status(400).json({ message: "Failed to get package name or version" });
+                return;
+            }
             await uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, packageContents, MODULE_STORAGE_BUCKET);
 
             // ACTION: UPDATE
@@ -757,6 +772,10 @@ app.put('/package/:id', async (req, res) => {
             // Encode the zipped file to a Base64-encoded string
             let base64Contents = Buffer.from(buffer).toString('base64');
 
+            if (packageName === undefined || packageVersion === undefined) {
+                res.status(400).json( { message: "Failed to get package name or version"} );
+                return;
+            }
             await uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, base64Contents, MODULE_STORAGE_BUCKET);
             
             // ACTION: UPDATE
@@ -854,7 +873,7 @@ app.get('/package/:id/rate', async (req, res) => {
     // Call the Rust function and output the result to the console
     handle_url_file("URLs.txt", "example.log", 1);
     
-    console.log("Success, Rate works!!!")
+    console.log("Success, Rate works!!!");
 
     // Read the contents of the metrics.txt file
     const metrics = fs.readFileSync('metrics.txt', 'utf-8');

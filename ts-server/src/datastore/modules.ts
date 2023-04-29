@@ -325,22 +325,32 @@ async function getRepoData(id: number) {
  * Retreive the number of dowonloads and stars of the given package.
  * @param repoID the repository ID
  * 
+ * @return
+ * The popularity tracking information including the number of downloads and stars 
+ * of the package.
  */
 async function getPopularityInfo(repoID: number) {
-    // The datastore doesn't record the number of downloads, so I use zero to replace it
-    const numDownloads = 0;
+    const packageRepo = await getRepoData(repoID);
+
+    // Retrieve the number of downloads
+    let numDownloads = 0;
+    if("downloads" in packageRepo){
+        numDownloads = packageRepo.downloads;
+    }
 
     // Retrieve the github stars of the package
-    const packageRepo = await getRepoData(repoID);
     const url = packageRepo.url;
     let stars = 0;
 
     // Get owner and repo from the url
     const splitItems = url.split("/");
     if(splitItems.length > 2){
+        // Get the owner of the repository
         const owner = splitItems[splitItems.length-1];
+        // Get the repository name
         const repo = splitItems[splitItems.length-2];
 
+        // Requeest the basic information of this repository
         var requestify = require('requestify');
         await requestify.get('https://api.github.com/repos/' + owner + '/' + repo)
         .then(function(res: any) {

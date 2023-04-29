@@ -672,6 +672,13 @@
 
       // package search
       function submitPackageSearch() {
+          // Select the package-search-input element and read its value
+          const packageSearchInput = document.getElementById("package-search-input");
+          const searchQueries = packageSearchInput.value;
+
+          // Do something with the searchQueries variable, such as send it to the server for processing
+          console.log(searchQueries);
+
           // get input(s)
           // confirm input(s) are correct
           // send request
