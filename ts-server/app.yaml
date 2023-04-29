@@ -4,4 +4,8 @@ env: flex
 runtime_config:
   nodejs_version: '14'
 
+request_timeout_sec: 300
+
+max_concurrent_requests: 501
+
 entrypoint: node src/index.js
