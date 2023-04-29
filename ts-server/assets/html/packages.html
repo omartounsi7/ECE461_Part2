@@ -154,6 +154,18 @@
         </form>
     </div>
 
+    <div id="update-module" class="endpoint-div">
+      <h2 style="margin-right: 20px;">Upload Module</h2>
+      <form>
+          <label for="module-upload-file">Upload your module as a zip file</label>
+          <input type="file" id="module-upload-file" accept=".zip" class="input-file" />
+          <label for="module-upload-url">OR provide a URL of your module</label>
+          <input type="url" id="module-upload-url" class="input-text">
+          <button type="button" class="submit-button" onclick="submitUploadModule()">Upload Module</button>
+      </form>
+  </div>
+
+
     <div id="package-download" class="endpoint-div">
       <h2 style="margin-right: 20px;">Package Download</h2>
       <form>
@@ -222,6 +234,7 @@
   <script>
       let packageSearchDiv = document.getElementById("package-search");
       let uploadModuleDiv = document.getElementById("upload-module");
+      let updateModuleDiv = document.getElementById("update-module");
       let deleteModuleDiv = document.getElementById("delete-module");
       let registerModuleDiv = document.getElementById("register-user");
       let regexDiv = document.getElementById("regex-search");

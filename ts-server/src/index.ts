@@ -211,7 +211,7 @@ app.post('/package', async (req, res) => {
     It will, for example, include the "package.json" file that can be used to retrieve the project homepage.
     See https://docs.npmjs.com/cli/v7/configuring-npm/package-json#homepage.
     */
-    const base64String = req.body["Content"];
+    const base64String: string = req.body["Content"];
 
     /*
     URL: string
