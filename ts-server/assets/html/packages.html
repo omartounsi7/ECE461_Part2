@@ -151,28 +151,33 @@
             <label for="module-upload-url">OR provide a URL of your module</label>
             <input type="url" id="module-upload-url" class="input-text">
             <button type="button" class="submit-button" onclick="submitUploadModule()">Upload Module</button>
+            <div id="id-display" style="display: none;"></div>
         </form>
     </div>
 
     <div id="update-module" class="endpoint-div">
-      <h2 style="margin-right: 20px;">Upload Module</h2>
+      <h2 style="margin-right: 20px;">Update Module</h2>
       <form>
-          <label for="module-upload-file">Upload your module as a zip file</label>
-          <input type="file" id="module-upload-file" accept=".zip" class="input-file" />
-          <label for="module-upload-url">OR provide a URL of your module</label>
-          <input type="url" id="module-upload-url" class="input-text">
-          <button type="button" class="submit-button" onclick="submitUploadModule()">Upload Module</button>
+        <label for="package-id">Enter exisiting package ID:</label>
+        <input type="text" id="package-id" class="input-text">
+        <br>
+        <label for="upload-file">Upload new module as a zip file:</label>
+        <input type="file" id="upload-file" accept=".zip" class="input-file" />
+        <br>
+        <label for="upload-url">Or provide a URL of new module:</label>
+        <input type="url" id="upload-url" class="input-text">
+        <br>
+        <button type="button" class="submit-button" onclick="updateModule()">Update Module</button>
       </form>
-  </div>
-
+    </div>
+    
 
     <div id="package-download" class="endpoint-div">
       <h2 style="margin-right: 20px;">Package Download</h2>
       <form>
         <label for="package-id-input">Enter package ID:</label>
         <input type="text" id="package-id-input" class="input-text">
-        <br>
-        <button type="button" class="submit-button" onclick="downloadPackage()">Download</button>
+        <button type="button" class="submit-button" onclick="downloadPackage()">Download Module</button>
       </form>
     </div>
 
@@ -241,7 +246,7 @@
       let deleteUser = document.getElementById("delete-account");
       let resetRegistry = document.getElementById("reset-registry");
       let downloadPack = document.getElementById("package-download");
-      let allDivs = [packageSearchDiv, uploadModuleDiv, downloadPack, updateModule, deleteModuleDiv, registerModuleDiv, regexDiv, deleteUser, resetRegistry];
+      let allDivs = [packageSearchDiv, uploadModuleDiv, downloadPack, updateModuleDiv, deleteModuleDiv, registerModuleDiv, regexDiv, deleteUser, resetRegistry];
       
       
       function showDiv(div) {
@@ -357,6 +362,14 @@
 
         if (deleteById) {
           // Delete module by ID
+
+          // Check that package ID only contains numbers
+          const filter = /^[0-9]+$/;
+          if (!filter.test(moduleTextUser.value)) {
+            alert('Package ID must contain only numbers');
+            return;
+          }
+
           const response = await fetch('/package/' + moduleTextUser.value, {
             method: 'DELETE',
             headers: {
@@ -499,6 +512,13 @@
           return;
         }
 
+        // Check that package ID only contains numbers
+        const filter = /^[0-9]+$/;
+        if (!filter.test(packageID.value)) {
+          alert('Package ID must contain only numbers');
+          return;
+        }
+
         const response = await fetch('/package/' + packageID.value, {
           method: 'GET',
           headers: {
@@ -538,6 +558,117 @@
         document.body.removeChild(downloadLink);
       }
 
+      async function updateModule() {
+        // Get the form fields
+        const packageID = document.getElementById('package-id');
+
+        // Check that all fields have been populated
+        if (!packageID.value) {
+          alert('Please provide a package ID');
+          return;
+        }
+
+        // Check that package ID only contains numbers
+        const filter = /^[0-9]+$/;
+        if (!filter.test(packageID.value)) {
+          alert('Package ID must contain only numbers');
+          return;
+        }
+
+        // get input(s)
+        const file = document.getElementById("upload-file").files[0];
+        const urlInput = document.getElementById("upload-url");
+        const url = urlInput.value;
+
+        if (!file && !url) {
+          alert('Either Content or URL must be provided');
+          return;
+        } else if (file && url) {
+          alert('Both Content and URL cannot be provided at the same time.');
+          return;
+        }
+
+        // Call the server to retrieve the metadata for the respective package ID
+        const response = await fetch('/packageMeta/' + packageID.value, {
+          method: 'GET',
+          headers: {
+            'X-Authorization': localStorage.getItem('authToken')
+          }
+        });
+
+        const data = await response.json();
+        // Extract values from Metadata
+        const name = data.Name;
+        const version = data.Version;
+        const ID = data.ID;
+
+        // Error Message only defined when error occured
+        const errorMessage = response.message;
+
+        const success_value = await handleResponseError(response, errorMessage);
+        if (!success_value) {
+          return;
+        }
+
+        // Needs to adhere to the Package schema
+        let packageData;
+
+        if (file) {
+          // Reads the content of the package, removes the .git directory, and encodes the compressed zip to base64
+          const base64 = await JSZip.loadAsync(file).then(zip => {
+            zip.remove(".git");
+            return zip.generateAsync({ type: "base64" });
+          });
+
+          packageData = {
+            "metadata": {
+              "Name": name,
+              "Version": version,
+              "ID": ID
+            },
+            "data": {
+              "Content": base64
+            }
+          };
+        }
+
+        if (url) {
+          packageData = {
+            "metadata": {
+              "Name": name,
+              "Version": version,
+              "ID": ID
+            },
+            "data": {
+              "URL": url
+            }
+          };
+        }
+
+        const response2 = await fetch('/package/' + packageID.value, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Authorization': localStorage.getItem('authToken')
+          },
+          body: JSON.stringify(packageData)
+        });
+
+        const data2 = await response2.json();
+        const errorMessage2 = data2.message;
+
+        const success_value_2 = await handleResponseError(response2, errorMessage2);
+        if (!success_value_2) {
+          return;
+        }
+        alert('Success. Package Contents of specified package are updated.');
+        // Clear all text fields
+        urlInput.value = "";
+        packageID.value = "";
+      }
+
+
+
 
       // package search
       function submitPackageSearch() {
@@ -552,6 +683,8 @@
       async function submitUploadModule() {
       
         // get input(s)
+        const idDisplay = document.getElementById("id-display");
+        idDisplay.style.display = 'none';
         const file = document.getElementById("module-upload-file").files[0];
         const urlInput = document.getElementById("module-upload-url");
         const url = urlInput.value;
@@ -566,7 +699,6 @@
     
         if (file) {
           // Reads the content of the package, removes the .git directory, and encodes the compressed zip to base64
-          const x = new JSZip();
           const base64 = await JSZip.loadAsync(file).then(zip => {
             zip.remove(".git");
             return zip.generateAsync({ type: "base64" });
@@ -583,18 +715,20 @@
 
 
           const data = await response.json();
-          alert(data.status)
+          // Error Message only defined when error occured
           const errorMessage = data.message;
-          alert(errorMessage)
 
           const success_value = await handleResponseError(response, errorMessage);
           if (!success_value) {
             return;
           }
-          alert('Success. Check the ID in the returned metadata for the official ID');
+
+          // Extract values from Metadata
+          const ID = data["metadata"]["ID"];
+          idDisplay.innerHTML = `Success. The ID for the uploaded package is ${ID}.`;
+          idDisplay.style.display = 'block';
           // Clear the URL text field
-          url.value = "";
-          
+          url.value = "";          
         } else {
           // User entered a URL
           const response = await fetch('/package/', {
@@ -607,15 +741,20 @@
           });
 
           const data = await response.json();
+          // Error Message only defined when error occured
           const errorMessage = data.message;
 
           const success_value = await handleResponseError(response, errorMessage);
           if (!success_value) {
             return;
           }
-          alert('Success. Check the ID in the returned metadata for the official ID');
+
+          // Extract values from Metadata
+          const ID = data["metadata"]["ID"];
+          idDisplay.innerHTML = `Success. The ID for the uploaded package is ${ID}.`;
+          idDisplay.style.display = 'block';
           // Clear the URL text field
-          url.value = "";
+          url.value = "";      
         }
       }
 
