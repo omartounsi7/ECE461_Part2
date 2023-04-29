@@ -3,6 +3,4 @@ indexes:
   ancestor: no
   properties:
   - name: name
-    direction: asc
   - name: version
-    direction: desc
