@@ -1,11 +1,11 @@
 # Use an official Node.js runtime as a parent image
 FROM node:14-slim
 
-# Set the working directory to /app
-WORKDIR /ts-server
-
 # Copy the current directory contents into the container at /app
-COPY . /ts-server
+COPY . /
+
+# Set the working directory to /app
+WORKDIR /
 
 # Install nginx
 RUN apt-get update && \
@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y python3-pip
 ENV PYTHON /usr/bin/python3
 
 # Install Python dependencies
-RUN pip3 install --upgrade pip3
+RUN pip3 install --upgrade pip
 RUN pip3 install --upgrade setuptools
 RUN pip3 install cffi
 RUN pip3 install multidict
@@ -37,11 +37,14 @@ RUN apt-get update && apt-get install -y curl && \
     . $HOME/.cargo/env && \
     rustup default stable
 
+# Build the TypeScript application
+WORKDIR /grrs
+
 # Build the Rust program
-COPY grrs /ts-server/grrs
-WORKDIR /ts-server/grrs
 RUN cargo install grcov
 RUN cargo build --release
+
+COPY grrs/target/release/libmylib.so /ts-server/target/release/libmylib.so
 
 # Build the TypeScript application
 WORKDIR /ts-server
@@ -80,7 +83,10 @@ ENV PORT 8080
 EXPOSE 8080
 
 # Start Nginx 
-CMD [ "service", "nginx" , "start"]
+#CMD [ "service", "nginx" , "start"]
+
+# Set the entrypoint to start Nginx
+ENTRYPOINT ["nginx", "-g", "daemon off;"]
 
 # Start the server
 CMD [ "npm", "run" , "server"]
