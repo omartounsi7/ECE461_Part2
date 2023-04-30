@@ -3,8 +3,7 @@ import jwt from 'jsonwebtoken';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 
 import {datastore, MODULE_KIND, NAMESPACE, USER_KIND} from "./ds_config";
-import {createSecretKey} from "crypto";
-import {getModuleKey} from "./modules";
+import {getSecret, JWT_AUTH_SECRET} from "../cloud-storage/secret-key";
 import {Key} from "@google-cloud/datastore";
 import {getKey, getUserKey, deleteEntity} from "./datastore";
 
@@ -47,7 +46,6 @@ async function addUser(name: string, password: string, is_admin: boolean) {
     };
 
     await datastore.save(user)
-    console.log(getUser1Key())
     return getUser1Key();
 }
 
@@ -76,7 +74,7 @@ async function userLogin(username: string, is_admin: boolean, password: string):
         let realHashedPassword = userInfo.password;
         let match = await bcrypt.compare(password, realHashedPassword);
         if(match) {
-            let secretKey = "apple"; //await accessSecret();
+            const secretKey = await getSecret(JWT_AUTH_SECRET);
             //console.log(userInfo.name)
             //console.log(userInfo.is_admin)
             //console.log(Number(userKey.id))
@@ -88,21 +86,21 @@ async function userLogin(username: string, is_admin: boolean, password: string):
               };
             
             // JWT TOKEN WILL EXPIRE IN 10 HOURS
-            let authToken = jwt.sign(payload, secretKey,  { expiresIn: '10h' });
+            let authToken = jwt.sign(payload, secretKey.toString(),  { expiresIn: '10h' });
             // store auth token in datastore
             await createAuthToken(Number(userKey.id), authToken);
             return authToken;
         } else {
-            console.log("incorrect password");
+            //console.log("incorrect password");
             return "";
         }
     } else {
         //user dne
-        console.log("user does not exist");
+        //console.log("user does not exist");
         return "";
     }
 }
-
+/*
 async function accessSecret() {
     const client = new SecretManagerServiceClient();
 
@@ -121,6 +119,7 @@ async function accessSecret() {
 
     return token;
 }
+*/
 
 async function createAuthToken(id: number, authToken: string) {
     // Get the datastore key for the repository ID
@@ -130,7 +129,7 @@ async function createAuthToken(id: number, authToken: string) {
     //console.log(entity)
     // Merge the new data with the existing data of the entity
     Object.assign(entity, {authToken: authToken});
-    await datastore.save({
+    return await datastore.save({
         key: key,
         data: entity
     });
@@ -162,4 +161,4 @@ async function updateApiCounter(userId: number): Promise<boolean> {
 
 
 // functions to be used by the API endpoints
-export { addUser , findUserByName, userLogin, accessSecret, updateApiCounter, deleteUser};
+export { addUser , findUserByName, userLogin, updateApiCounter, deleteUser};

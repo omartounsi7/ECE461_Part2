@@ -97,9 +97,9 @@ async function deleteEntity(kind: string, entityID: number) {
 async function resetKind(kind: string) {
     const query = datastore.createQuery(NAMESPACE, kind);
     const [entities] = await datastore.runQuery(query);
-    console.log(entities);
     const keys = entities.map((entity: { [x: string]: any; }) => entity[datastore.KEY]);
     await datastore.delete(keys);
+    return;
 }
 
 export { getKey, deleteEntity, getUserKey, resetKind, doesIdExistInKind };

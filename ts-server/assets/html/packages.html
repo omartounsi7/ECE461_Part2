@@ -107,11 +107,13 @@
             <button onclick="toggleDiv(0)">Package Search</button>
             <button onclick="toggleDiv(1)">Upload Module</button>
             <button onclick="toggleDiv(2)">Download Module</button>
-            <button onclick="toggleDiv(3)">Reset Registry </button>
-            <button onclick="toggleDiv(4)">Register User</button>
-            <button onclick="toggleDiv(5)">Regex</button>
-            <button onclick="toggleDiv(6)">Delete Account</button>
-            <button onclick="toggleDiv(7)">Reset Registry</button>
+            <button onclick="toggleDiv(3)">Update Module</button>
+            <button onclick="toggleDiv(4)">Module History</button>
+            <button onclick="toggleDiv(5)">Delete Module </button>
+            <button onclick="toggleDiv(6)">Register User</button>
+            <button onclick="toggleDiv(7)">Regex</button>
+            <button onclick="toggleDiv(8)">Delete Account</button>
+            <button onclick="toggleDiv(9)">Reset Registry</button>
             <button onclick="logOut()">Log Out</button>
         </nav>
     </header>
@@ -150,16 +152,43 @@
             <label for="module-upload-url">OR provide a URL of your module</label>
             <input type="url" id="module-upload-url" class="input-text">
             <button type="button" class="submit-button" onclick="submitUploadModule()">Upload Module</button>
+            <div id="id-display" style="display: none;"></div>
         </form>
     </div>
+
+    <div id="update-module" class="endpoint-div">
+      <h2 style="margin-right: 20px;">Update Module</h2>
+      <form>
+        <label for="package-id">Enter exisiting package ID:</label>
+        <input type="text" id="package-id" class="input-text">
+        <br>
+        <label for="upload-file">Upload new module as a zip file:</label>
+        <input type="file" id="upload-file" accept=".zip" class="input-file" />
+        <br>
+        <label for="upload-url">Or provide a URL of new module:</label>
+        <input type="url" id="upload-url" class="input-text">
+        <br>
+        <button type="button" class="submit-button" onclick="updateModule()">Update Module</button>
+      </form>
+    </div>
+
+    <div id="log-history" class="endpoint-div">
+      <h2 style="margin-right: 20px;">Package History</h2>
+      <form>
+        <label for="package-name-input">Enter package name:</label>
+        <input type="text" id="package-name-input" class="input-text">
+        <button type="button" class="submit-button" onclick="getPackageHistory()">Get History</button>
+        <div id="package-history"></div>
+      </form>
+    </div>
+    
 
     <div id="package-download" class="endpoint-div">
       <h2 style="margin-right: 20px;">Package Download</h2>
       <form>
         <label for="package-id-input">Enter package ID:</label>
         <input type="text" id="package-id-input" class="input-text">
-        <br>
-        <button type="button" class="submit-button" onclick="downloadPackage()">Download</button>
+        <button type="button" class="submit-button" onclick="downloadPackage()">Download Module</button>
       </form>
     </div>
 
@@ -178,7 +207,6 @@
           <button type="button" class="submit-button" onclick="submitDeleteModule()">Delete Module</button>
         </form>
       </div>
-      
       
       <div id="register-user" class="endpoint-div">
         <h2 style="margin-right: 20px;">Register User</h2>
@@ -222,13 +250,16 @@
   <script>
       let packageSearchDiv = document.getElementById("package-search");
       let uploadModuleDiv = document.getElementById("upload-module");
+      let updateModuleDiv = document.getElementById("update-module");
       let deleteModuleDiv = document.getElementById("delete-module");
       let registerModuleDiv = document.getElementById("register-user");
       let regexDiv = document.getElementById("regex-search");
       let deleteUser = document.getElementById("delete-account");
       let resetRegistry = document.getElementById("reset-registry");
       let downloadPack = document.getElementById("package-download");
-      let allDivs = [packageSearchDiv, uploadModuleDiv, downloadPack, deleteModuleDiv, registerModuleDiv, regexDiv, deleteUser, resetRegistry];
+      let logHistory = document.getElementById("log-history");
+      let allDivs = [packageSearchDiv, uploadModuleDiv, downloadPack, updateModuleDiv, logHistory, deleteModuleDiv, registerModuleDiv, regexDiv, deleteUser, resetRegistry];
+      
       
       function showDiv(div) {
           div.style.display = "flex";
@@ -343,6 +374,14 @@
 
         if (deleteById) {
           // Delete module by ID
+
+          // Check that package ID only contains numbers
+          const filter = /^[0-9]+$/;
+          if (!filter.test(moduleTextUser.value)) {
+            alert('Package ID must contain only numbers');
+            return;
+          }
+
           const response = await fetch('/package/' + moduleTextUser.value, {
             method: 'DELETE',
             headers: {
@@ -485,6 +524,13 @@
           return;
         }
 
+        // Check that package ID only contains numbers
+        const filter = /^[0-9]+$/;
+        if (!filter.test(packageID.value)) {
+          alert('Package ID must contain only numbers');
+          return;
+        }
+
         const response = await fetch('/package/' + packageID.value, {
           method: 'GET',
           headers: {
@@ -492,45 +538,219 @@
           }
         });
 
-        
-        const body_contents = await response.json();
-        const metadata = JSON.stringify(body_contents["metadata"]);
-        const base64 = JSON.stringify(body_contents["data"]["Content"]);
+        // retrieve response data
+        const data = await response.json();
 
-        const success_value = await handleResponseError(response, body_contents);
+        // Error Message only defined when error occured
+        const errorMessage = data.message;
+
+        const success_value = await handleResponseError(response, errorMessage);
         if (!success_value) {
           return;
         }
-             
+
+        const metadata = JSON.stringify(body_contents["metadata"]);
+        const base64 = JSON.stringify(body_contents["data"]["Content"]);
+        const name = JSON.stringify(body_contents["metadata"]["Name"]);
+
         // Decode base64 to binary data
         const base64WithoutQuotes = base64.replace(/"/g, '');
-        alert(base64WithoutQuotes);
-        const binaryStr = atob(base64WithoutQuotes);
+        const name_new = name.replace(/"/g, '');
 
-        // Create a new JSZip instance
-        const zip = new JSZip();
-
-        // Add the binary data to the JSZip instance
-        zip.file(metadata.Name, binaryStr, { binary: true });
-
-        // Generate the zip file
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
-
-        // Create a download link for the Blob object
+        // Create a new download link element
         const downloadLink = document.createElement('a');
-        downloadLink.href = URL.createObjectURL(zipBlob);
-        downloadLink.download = metadata.filename;
+        downloadLink.setAttribute('href', `data:application/zip;base64,${base64WithoutQuotes}`);
+        downloadLink.setAttribute('download', name_new);
 
-        // Click the download link to trigger the file download
+        // Hide the download link element
+        downloadLink.style.display = 'none';
+
+        // Append the download link element to the document body
+        document.body.appendChild(downloadLink);
+
+        // Click the download link to trigger the download
         downloadLink.click();
 
-        // Clear the URL text field
+        // Remove the download link from the document body
+        document.body.removeChild(downloadLink);
+      }
+
+      async function updateModule() {
+        // Get the form fields
+        const packageID = document.getElementById('package-id');
+
+        // Check that all fields have been populated
+        if (!packageID.value) {
+          alert('Please provide a package ID');
+          return;
+        }
+
+        // Check that package ID only contains numbers
+        const filter = /^[0-9]+$/;
+        if (!filter.test(packageID.value)) {
+          alert('Package ID must contain only numbers');
+          return;
+        }
+
+        // get input(s)
+        const file = document.getElementById("upload-file").files[0];
+        const urlInput = document.getElementById("upload-url");
+        const url = urlInput.value;
+
+        if (!file && !url) {
+          alert('Either Content or URL must be provided');
+          return;
+        } else if (file && url) {
+          alert('Both Content and URL cannot be provided at the same time.');
+          return;
+        }
+
+        // Call the server to retrieve the metadata for the respective package ID
+        const response = await fetch('/packageMeta/' + packageID.value, {
+          method: 'GET',
+          headers: {
+            'X-Authorization': localStorage.getItem('authToken')
+          }
+        });
+
+        const data = await response.json();
+        // Extract values from Metadata
+        const name = data.Name;
+        const version = data.Version;
+        const ID = data.ID;
+
+        // Error Message only defined when error occured
+        const errorMessage = data.message;
+
+        const success_value = await handleResponseError(response, errorMessage);
+        if (!success_value) {
+          return;
+        }
+
+        // Needs to adhere to the Package schema
+        let packageData;
+
+        if (file) {
+          // Reads the content of the package, removes the .git directory, and encodes the compressed zip to base64
+          const base64 = await JSZip.loadAsync(file).then(zip => {
+            zip.remove(".git");
+            return zip.generateAsync({ type: "base64" });
+          });
+
+          packageData = {
+            "metadata": {
+              "Name": name,
+              "Version": version,
+              "ID": ID
+            },
+            "data": {
+              "Content": base64
+            }
+          };
+        }
+
+        if (url) {
+          packageData = {
+            "metadata": {
+              "Name": name,
+              "Version": version,
+              "ID": ID
+            },
+            "data": {
+              "URL": url
+            }
+          };
+        }
+
+        const response2 = await fetch('/package/' + packageID.value, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Authorization': localStorage.getItem('authToken')
+          },
+          body: JSON.stringify(packageData)
+        });
+
+        const data2 = await response2.json();
+        const errorMessage2 = data2.message;
+
+        const success_value_2 = await handleResponseError(response2, errorMessage2);
+        if (!success_value_2) {
+          return;
+        }
+        alert('Success. Package Contents of specified package are updated.');
+        // Clear all text fields
+        urlInput.value = "";
         packageID.value = "";
       }
 
+      async function getPackageHistory() {
+        // Get the form fields
+        const packageName = document.getElementById('package-name-input');
+
+        if (!packageName.value) {
+          alert('Please provide a package name');
+          return;
+        }
+
+        const response = await fetch('/package/byName/' + packageName.value, {
+          method: 'GET',
+          headers: {
+            'X-Authorization': localStorage.getItem('authToken')
+          }
+        });
+
+        const data = await response.json();
+        
+        // Get the HTML element to display the results
+        const resultDiv = document.getElementById('package-history');
+
+        // Error Message only defined when error occurs
+        const errorMessage = data.message;
+
+        const success_value = await handleResponseError(response, errorMessage);
+        if (!success_value) {
+          return;
+        }
+
+        // Clear any previous results
+        resultDiv.innerHTML = '';
+
+        // Loop through each element in the data list and create an HTML element for it
+        for (const element of data) {
+          const name = element.PackageMetadata.Name;
+          const version = element.PackageMetadata.Version;
+          const ID = element.PackageMetadata.ID;
+          const date = element.Date;
+          const user = element.User.name;
+          const admin = element.User.isAdmin;
+          const action = element.Action;
+
+          const listItem = document.createElement('div');
+          listItem.innerHTML = `
+            <br>
+            <strong>Package Name:</strong> ${name}<br>
+            <strong>Version:</strong> ${version}<br>
+            <strong>Package ID:</strong> ${ID}<br>
+            <strong>Date:</strong> ${date}<br>
+            <strong>User:</strong> ${user}<br>
+            <strong>Is Admin:</strong> ${admin}<br>
+            <strong>Action:</strong> ${action}<br>
+            <hr>
+          `;
+          resultDiv.appendChild(listItem);
+        }
+      }
 
       // package search
       function submitPackageSearch() {
+          // Select the package-search-input element and read its value
+          const packageSearchInput = document.getElementById("package-search-input");
+          const searchQueries = packageSearchInput.value;
+
+          // Do something with the searchQueries variable, such as send it to the server for processing
+          console.log(searchQueries);
+
           // get input(s)
           // confirm input(s) are correct
           // send request
@@ -542,6 +762,8 @@
       async function submitUploadModule() {
       
         // get input(s)
+        const idDisplay = document.getElementById("id-display");
+        idDisplay.style.display = 'none';
         const file = document.getElementById("module-upload-file").files[0];
         const urlInput = document.getElementById("module-upload-url");
         const url = urlInput.value;
@@ -556,7 +778,6 @@
     
         if (file) {
           // Reads the content of the package, removes the .git directory, and encodes the compressed zip to base64
-          const x = new JSZip();
           const base64 = await JSZip.loadAsync(file).then(zip => {
             zip.remove(".git");
             return zip.generateAsync({ type: "base64" });
@@ -573,18 +794,20 @@
 
 
           const data = await response.json();
-          alert(data.status)
+          // Error Message only defined when error occured
           const errorMessage = data.message;
-          alert(errorMessage)
 
           const success_value = await handleResponseError(response, errorMessage);
           if (!success_value) {
             return;
           }
-          alert('Success. Check the ID in the returned metadata for the official ID');
+
+          // Extract values from Metadata
+          const ID = data["metadata"]["ID"];
+          idDisplay.innerHTML = `Success. The ID for the uploaded package is ${ID}.`;
+          idDisplay.style.display = 'block';
           // Clear the URL text field
-          url.value = "";
-          
+          url.value = "";          
         } else {
           // User entered a URL
           const response = await fetch('/package/', {
@@ -597,15 +820,21 @@
           });
 
           const data = await response.json();
+          // Error Message only defined when error occured
           const errorMessage = data.message;
 
           const success_value = await handleResponseError(response, errorMessage);
           if (!success_value) {
             return;
           }
-          alert('Success. Check the ID in the returned metadata for the official ID');
+
+          // Extract values from Metadata
+          const ID = data["metadata"]["ID"];
+          alert("Success")
+          idDisplay.innerHTML = `Success. The ID for the uploaded package is ${ID}.`;
+          idDisplay.style.display = 'block';
           // Clear the URL text field
-          url.value = "";
+          url.value = "";      
         }
       }
 

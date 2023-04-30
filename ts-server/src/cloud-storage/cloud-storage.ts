@@ -1,5 +1,6 @@
 import { storage } from "./cs_config"
 import { createWriteStream } from "fs";
+import e from "express";
 
 
 // FILETYPES
@@ -18,9 +19,15 @@ const TXT_FILETYPE = "txt";
  * // which is contained in the bucket "bucketName"
  * getModuleAsBase64FromCloudStorage("module", "version", ZIP_FILETYPE, "bucketName");
  */
-async function getModuleAsBase64FromCloudStorage(moduleName: string, version: string, filetype: string, bucket: string): Promise<string> {
+async function getModuleFromCloudStorage(moduleName: string, version: string, filetype: string, bucket: string): Promise<string> {
     const path = cloudStorageFilePathBuilder(moduleName + "." + filetype, version);
-    return await getCloudStoragefileAsBase64(path, bucket);
+
+    if (filetype === TXT_FILETYPE) {
+        return await getCloudStoragefileAsUTF8(path, bucket);
+    }
+    else {
+        return await getCloudStoragefileAsBase64(path, bucket);
+    }
 }
 
 /**
@@ -38,9 +45,8 @@ async function getModuleAsBase64FromCloudStorage(moduleName: string, version: st
  */
 async function uploadModuleToCloudStorage(moduleName: string, version: string, filetype: string, base64Contents: string, bucket: string): Promise<void> {
     const path = cloudStorageFilePathBuilder(moduleName + "." + filetype, version);
-    return await uploadBase64FileToCloudStorage(path, base64Contents, bucket);
+    return await uploadBase64FileToCloudStorage(path, base64Contents, filetype, bucket);
 }
-
 /**
  * Deletes the specified module from gcp cloud storage
  * @param moduleName - name of the module
@@ -55,7 +61,7 @@ async function uploadModuleToCloudStorage(moduleName: string, version: string, f
  */
 
 async function deleteModuleFromCloudStorage(cloudStorageFile: string, bucket: string): Promise<void> {
-    await storage.bucket(bucket).file(cloudStorageFile).delete();
+    return await storage.bucket(bucket).file(cloudStorageFile).delete();
 }
 
 /**
@@ -109,12 +115,19 @@ function cloudStorageFilePathBuilder(moduleName: string, version: string): strin
             .replace("~", "tilde")
             .replace(/\./g, "_");
 
+    let cloudFilePath: string
     // create path
-    let cloudFilePath = "module/" + splitName[0] + "_" + version;
-
-    // add file extension if it exists
-    if (splitName.length === 2) cloudFilePath += "." + splitName[1];
-    return cloudFilePath;
+    if (splitName[1] === ZIP_FILETYPE) {
+        cloudFilePath = "module/" + splitName[0] + "_" + version;
+        // add file extension if it exists
+        if (splitName.length === 2) cloudFilePath += "." + splitName[1];
+        return cloudFilePath;
+    } else {
+        cloudFilePath = "readme/" + splitName[0] + "_" + version;
+        // add file extension if it exists
+        if (splitName.length === 2) cloudFilePath += "." + splitName[1];
+        return cloudFilePath;
+    }
 }
 
 
@@ -129,18 +142,34 @@ function cloudStorageFilePathBuilder(moduleName: string, version: string): strin
  * the fileToBase64 function is from ../utils.ts
  * MODULE_STORAGE_BUCKET is from ./cs_config.ts
  */
-async function uploadBase64FileToCloudStorage(destCloudPath: string, base64Contents: string, bucket: string): Promise<void> {
-    const contentType = "application/octet-stream";
-    const contentEncoding = "base64";
+async function uploadBase64FileToCloudStorage(destCloudPath: string, base64Contents: string, filetype: string, bucket: string): Promise<void> {
+    
+    if (filetype === TXT_FILETYPE){
+        const contentType2 = "text/plain";
+        const contentEncoding2 = "utf8";
 
-    const fileContents = Buffer.from(base64Contents, contentEncoding);
+        const fileContents = Buffer.from(base64Contents, contentEncoding2);
 
-    const file = storage.bucket(bucket).file(destCloudPath);
-    await file.save(fileContents, {
-        contentType,
-        contentEncoding
-    });
+        const file = storage.bucket(bucket).file(destCloudPath);
+        return await file.save(fileContents, {
+            contentType2,
+            contentEncoding2
+        })
+    } else {
+        const contentEncoding = "base64";
+        const contentType = "application/octet-stream";
+
+        const fileContents = Buffer.from(base64Contents, contentEncoding);
+
+        const file = storage.bucket(bucket).file(destCloudPath);
+        return await file.save(fileContents, {
+            contentType,
+            contentEncoding
+        })
+    }
+    
 }
+
 
 /**
  * Gets a cloud storage file as a base64 string.
@@ -157,6 +186,22 @@ async function getCloudStoragefileAsBase64(srcCloudPath: string, bucket: string)
     return fileContents.toString("base64");
 }
 
+
+/**
+ * Gets a cloud storage file as a UTF-8 string.
+ * @param srcCloudPath
+ * @param bucket
+ *
+ * @return
+ * the contents of the file in **srcCloudPath** as a UTF-8 string
+ */
+ async function getCloudStoragefileAsUTF8(srcCloudPath: string, bucket: string): Promise<string> {
+    const file = storage.bucket(bucket).file(srcCloudPath);
+    const [fileContents] = await file.download();
+
+    return fileContents.toString("utf-8");
+}
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Functions used for testing GCP Cloud Storage functionality  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -169,7 +214,7 @@ async function getCloudStoragefileAsBase64(srcCloudPath: string, bucket: string)
  * @param bucket
  */
 async function uploadFileToCloudStorage(srcFilePath: string, destCloudPath: string, bucket: string) {
-    await storage.bucket(bucket).upload(srcFilePath, {
+    return await storage.bucket(bucket).upload(srcFilePath, {
         destination: destCloudPath,
     });
 }
@@ -183,7 +228,7 @@ async function uploadFileToCloudStorage(srcFilePath: string, destCloudPath: stri
  */
 async function downloadFileFromCloudStorage(srcCloudPath: string, destFilePath: string, bucket: string) {
     const srcFile = storage.bucket(bucket).file(srcCloudPath);
-    await srcFile.createReadStream().pipe(createWriteStream(destFilePath));
+    return await srcFile.createReadStream().pipe(createWriteStream(destFilePath));
 }
 
-export { getModuleAsBase64FromCloudStorage, cloudStorageFilePathBuilder, uploadModuleToCloudStorage, deleteModuleFromCloudStorage, resetCloudStorage, ZIP_FILETYPE, TXT_FILETYPE };
+export { getModuleFromCloudStorage, uploadBase64FileToCloudStorage, getCloudStoragefileAsUTF8, cloudStorageFilePathBuilder, uploadModuleToCloudStorage, deleteModuleFromCloudStorage, resetCloudStorage, ZIP_FILETYPE, TXT_FILETYPE };
