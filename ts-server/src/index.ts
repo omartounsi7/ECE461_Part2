@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import path from 'path';
 import * as ffi from 'ffi-napi';
+import {getSecret, JWT_AUTH_SECRET} from "./cloud-storage/secret-key";
 
 // npm install -g ts-node
 // npm install --save ffi-napi @types/ffi-napi
@@ -24,10 +25,10 @@ import {
 //import { addUser } from "./datastore/users";
 import {deleteEntity, doesIdExistInKind, resetKind} from "./datastore/datastore";
 import {datastore, MODULE_KIND, USER_KIND, NAMESPACE} from "./datastore/ds_config";
-import { MODULE_STORAGE_BUCKET, storage } from "./cloud-storage/cs_config";
-import { uploadModuleToCloudStorage, getCloudStoragefileAsUTF8, getModuleFromCloudStorage, cloudStorageFilePathBuilder, deleteModuleFromCloudStorage, resetCloudStorage, ZIP_FILETYPE, TXT_FILETYPE } from "./cloud-storage/cloud-storage";
+import { MODULE_STORAGE_BUCKET, SECRET_STORAGE_BUCKET, storage } from "./cloud-storage/cs_config";
+import { uploadModuleToCloudStorage, uploadBase64FileToCloudStorage, getCloudStoragefileAsUTF8, getModuleFromCloudStorage, cloudStorageFilePathBuilder, deleteModuleFromCloudStorage, resetCloudStorage, ZIP_FILETYPE, TXT_FILETYPE } from "./cloud-storage/cloud-storage";
 import {base64ToFile, fileToBase64} from "./util";
-import { addUser , findUserByName, userLogin, accessSecret, updateApiCounter, deleteUser} from "./datastore/users"
+import { addUser , findUserByName, userLogin, updateApiCounter, deleteUser} from "./datastore/users"
 import { logRequest } from "./cloud-storage/logging";
 const fs = require('fs');
 const JSZip = require('jszip');
@@ -158,7 +159,7 @@ app.post('/packages', async (req, res) => {
             }
         } catch(e: any) {
             res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
-            console.log(e)
+            //console.log(e)
             return;
         }
         let results;
@@ -205,7 +206,7 @@ app.delete('/reset', async (req, res) => {
 // Upload endpoint and module ingestion
 // (call logPackageAction) ACTION: CREATE 
 app.post('/package', async (req, res) => {
-    console.log("In package")
+    //console.log("In package")
     await logRequest("post", "/package", req);
     if(!await authenticateJWT(req, res)) {
         return;
@@ -505,7 +506,7 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
         // attempt to create and save new package to database
         newPackageID = await addRepo(data);
     } catch (error: any) {
-        console.log(`Failed to add repository: ${error.message}`);
+        // console.log(`Failed to add repository: ${error.message}`);
         return { statusCode: 400, message: `Failed to add repository: ${error.message}` };
     }
 
@@ -598,7 +599,7 @@ app.get('/package/:id', async (req, res) => {
             "Content": module
         }
     }
-    console.log(returnObject);
+    // console.log(returnObject);
     return res.status(200).json(returnObject);
 });
 
@@ -745,7 +746,7 @@ app.delete('/package/:id', async (req, res) => {
     }
 
     const record = await findModuleById(Number(id));
-    console.log(record)
+    // console.log(record)
     if (record) {
         await deleteRepo(Number(id));
         await deleteModuleFromCloudStorage(record.cloudStoragePath, MODULE_STORAGE_BUCKET);
@@ -871,7 +872,6 @@ app.get('/package/byName/:name', async (req, res) => {
       } else {
         // Retrieve all packages from the datastore with that package name
         const allPackages = await findReposByName(packageName);
-        console.log(allPackages)
     
         if (allPackages.length === 0) {
             // 404 - package does not exist
@@ -1022,19 +1022,17 @@ async function authenticateJWT(req: any, res: any) {
 
   // Retrieve the value of the 'X-Authorization' header from the request headers
   const authHeader = req.headers['X-Authorization'] || req.headers['x-authorization']; 
-  console.log(authHeader)
   
   if (authHeader) {
     const token = authHeader.split(' ')[1];
     // Retrieve the JWT secret key 
-    let jwtSecret = "apple";//await accessSecret();
+    let jwtSecret = await getSecret(JWT_AUTH_SECRET);
     if (!jwtSecret) {
         res.status(400).json({message: 'Access Failed: Server Error retrieving secret key' });
         return false;
     }
     try {
-        const decodedToken = jwt.verify(token, jwtSecret);
-        console.log(decodedToken)
+        const decodedToken = jwt.verify(token, jwtSecret.toString());
 
         // Decrement API counter in database by one every time an API endpoint is called
         const apiCounterError = await updateApiCounter(decodedToken.id);
@@ -1063,7 +1061,6 @@ async function authenticateJWT(req: any, res: any) {
 
 // Checks if user has admin priviledges
 async function isAdmin(req: any, res: any) {
-    console.log(req.admin)
     if (req.admin === true) {
         return true;
     } else {
@@ -1089,7 +1086,6 @@ app.get('/isAdmin', async (req, res) => {
 async function authentication(req: any, res: any) {
     await logRequest("put", "authentication", req);
 
-    console.log(req)
     const { User, Secret } = req.body;
 
     // Check that the User and Secret objects are present in the request body
@@ -1116,7 +1112,6 @@ async function authentication(req: any, res: any) {
     if (authToken === "") {
         return res.status(401).json({message: 'Username or Password is invalid!'});
     } else {
-        console.log(authToken)
         return res.status(200).json('bearer ' + authToken);
     }
 }
@@ -1193,14 +1188,14 @@ async function logPackageAction(userName: string, isAdmin: boolean, packageRepo:
 
 async function logPackageActionEntry(action: string, req: any, metadata: any) {
     // Define the JWT secret (this should be stored securely and not hard-coded)
-    const jwtSecret = "apple";
+    const jwtSecret = await getSecret(JWT_AUTH_SECRET);
   
     // Retrieve the value of the 'X-Authorization' header from the request headers
     const authHeader = req.headers['X-Authorization'] || req.headers['x-authorization']; 
     const authToken = (authHeader as string).split(' ')[1];
   
     // Decode the JWT token and extract the payload
-    const decodedToken = jwt.verify(authToken, jwtSecret);
+    const decodedToken = jwt.verify(authToken, jwtSecret.toString());
   
     // Find the user name by decoding the JWT_TOKEN
     const userName = decodedToken.name;
@@ -1246,7 +1241,7 @@ app.delete('/user', async (req, res) => {
         return;
     }
     // Define the JWT secret (this should be stored securely and not hard-coded)
-    let jwtSecret = "apple"
+    let jwtSecret = await getSecret(JWT_AUTH_SECRET);
 
     // Retrieve the value of the 'X-Authorization' header from the request headers
     const authHeader = req.headers['X-Authorization'] || req.headers['x-authorization']; 
@@ -1255,7 +1250,7 @@ app.delete('/user', async (req, res) => {
         const authToken = (authHeader as string).split(' ')[1];
         
         // Decode the JWT token and extract the payload
-        const decodedToken = jwt.verify(authToken, jwtSecret);
+        const decodedToken = jwt.verify(authToken, jwtSecret.toString());
         // Find the user_id by decoding the JWT_TOKEN
         const userId = decodedToken.id;
         await deleteUser(userId);
@@ -1293,12 +1288,17 @@ app.put("/", async (req, res) => {
 });
 */
 
+app.put("/secret", async (req, res) => {
+    await uploadBase64FileToCloudStorage("jwt_auth.txt", "apple", TXT_FILETYPE, SECRET_STORAGE_BUCKET);
+    return res.status(200).send({message: "Secret added successfully"});
+});
+
 app.get("/packages", async (req, res) => {
     await logRequest("get", "/packages", req);
     if(!await authenticateJWT(req, res)) {
         return;
     }
-    console.log("Redirecting user to packages.html")
+    //console.log("Redirecting user to packages.html")
     // server webpage (If successfully logged in, redirect to packages.html)
     res.status(200).sendFile(path.join(__dirname, HTML_PATH + "/packages.html"));
 });

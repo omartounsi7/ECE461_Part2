@@ -61,7 +61,7 @@ async function uploadModuleToCloudStorage(moduleName: string, version: string, f
  */
 
 async function deleteModuleFromCloudStorage(cloudStorageFile: string, bucket: string): Promise<void> {
-    await storage.bucket(bucket).file(cloudStorageFile).delete();
+    return await storage.bucket(bucket).file(cloudStorageFile).delete();
 }
 
 /**
@@ -151,10 +151,10 @@ async function uploadBase64FileToCloudStorage(destCloudPath: string, base64Conte
         const fileContents = Buffer.from(base64Contents, contentEncoding2);
 
         const file = storage.bucket(bucket).file(destCloudPath);
-        await file.save(fileContents, {
+        return await file.save(fileContents, {
             contentType2,
             contentEncoding2
-        });
+        })
     } else {
         const contentEncoding = "base64";
         const contentType = "application/octet-stream";
@@ -162,10 +162,10 @@ async function uploadBase64FileToCloudStorage(destCloudPath: string, base64Conte
         const fileContents = Buffer.from(base64Contents, contentEncoding);
 
         const file = storage.bucket(bucket).file(destCloudPath);
-        await file.save(fileContents, {
+        return await file.save(fileContents, {
             contentType,
             contentEncoding
-        });
+        })
     }
     
 }
@@ -214,7 +214,7 @@ async function getCloudStoragefileAsBase64(srcCloudPath: string, bucket: string)
  * @param bucket
  */
 async function uploadFileToCloudStorage(srcFilePath: string, destCloudPath: string, bucket: string) {
-    await storage.bucket(bucket).upload(srcFilePath, {
+    return await storage.bucket(bucket).upload(srcFilePath, {
         destination: destCloudPath,
     });
 }
@@ -228,7 +228,7 @@ async function uploadFileToCloudStorage(srcFilePath: string, destCloudPath: stri
  */
 async function downloadFileFromCloudStorage(srcCloudPath: string, destFilePath: string, bucket: string) {
     const srcFile = storage.bucket(bucket).file(srcCloudPath);
-    await srcFile.createReadStream().pipe(createWriteStream(destFilePath));
+    return await srcFile.createReadStream().pipe(createWriteStream(destFilePath));
 }
 
-export { getModuleFromCloudStorage, getCloudStoragefileAsUTF8, cloudStorageFilePathBuilder, uploadModuleToCloudStorage, deleteModuleFromCloudStorage, resetCloudStorage, ZIP_FILETYPE, TXT_FILETYPE };
+export { getModuleFromCloudStorage, uploadBase64FileToCloudStorage, getCloudStoragefileAsUTF8, cloudStorageFilePathBuilder, uploadModuleToCloudStorage, deleteModuleFromCloudStorage, resetCloudStorage, ZIP_FILETYPE, TXT_FILETYPE };
