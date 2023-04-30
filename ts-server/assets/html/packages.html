@@ -615,7 +615,7 @@
         const ID = data.ID;
 
         // Error Message only defined when error occured
-        const errorMessage = response.message;
+        const errorMessage = data.message;
 
         const success_value = await handleResponseError(response, errorMessage);
         if (!success_value) {
@@ -825,6 +825,7 @@
 
           // Extract values from Metadata
           const ID = data["metadata"]["ID"];
+          alert("Success")
           idDisplay.innerHTML = `Success. The ID for the uploaded package is ${ID}.`;
           idDisplay.style.display = 'block';
           // Clear the URL text field

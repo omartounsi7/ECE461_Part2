@@ -712,7 +712,8 @@ async function decodeBase64OnUpdate(base64String: string, JSProgram: string, res
             if (err.message === "Cannot read properties of null (reading 'async')") {
                 return { statusCode: 400, message: 'package.json file is missing' };
             } else {
-                return { statusCode: 400, message: 'Error parsing package.json file: ' + err.message };
+                console.log('Error parsing package.json file: ' + err.message)
+                return { statusCode: 400, message: 'Error parsing package.json file or package.json file is missing'};
             }
         }
 
@@ -852,11 +853,11 @@ app.put('/package/:id', async (req, res) => {
             }
             
             if (result.message.includes("package.json file is missing")){
-                return res.status(400).send({message: 'package.json file is missing'});      
+                return res.status(400).send({message: 'Package.json file is missing'});      
             }
     
             if (result.message.includes("Failed to get package name or version from package.json")){
-                return res.status(400).send({message: result.message});
+                return res.status(400).send({message: "Failed to get package name or version from package.json"});
             }
     
             if (result.message.includes("Error parsing package.json file")){
