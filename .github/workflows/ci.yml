@@ -41,5 +41,5 @@ jobs:
         cd grrs
         cargo clean
         cargo install grcov
-        cargo build
+        cargo build --release
         cargo test --verbose
