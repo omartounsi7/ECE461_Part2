@@ -5,6 +5,3 @@ steps:
   - '-c'
   - |
     gcloud app deploy ts-server/app.yaml --project=npm-module-registry-381816
-
-options:
-  timeout: 7200s # 2 hours in seconds
