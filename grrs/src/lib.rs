@@ -1536,7 +1536,7 @@ mod tests {
 
         let status = response.status();
         if status != correct_status {
-            println!(format!("Incorrect status from response ${status}"));
+            println!("Incorrect status from response {}", status);
             assert_eq!(response.status(), !correct_status);
             return;
         }
