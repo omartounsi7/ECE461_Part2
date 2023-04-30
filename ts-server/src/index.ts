@@ -1019,6 +1019,7 @@ app.get('/package/:id/upload_info', async (req, res) => {
   // Get the package information by id
   const packageRepo = await getRepoData(packageID);
   res.send({"name": packageRepo.name, "date": packageRepo["creation-date"]});
+  return;
 });
 
 
@@ -1125,25 +1126,6 @@ async function authentication(req: any, res: any) {
 app.put('/authenticate', authentication);
 
 
-
-/*
-    The following characters are being escaped:
-
-    Single quote (')
-    Double quote (")
-    Semicolon (;)
-    Right single quotation mark (’)
-    Right double quotation mark (”)
-    Exclamation mark (!)
-    Underscore (_)
-    Plus sign (+)
-    At symbol (@)
-    Asterisk (*)
-    Ampersand (&)
-    Hash symbol (#)
-    Backslash (\)
-    Hyphen (-)
-*/
 function sanitizeInput(input: string) {
     // Define a regular expression to escape any potentially dangerous characters
     const injectionRegex = /['";’”!_+@*&#\\-]/g;
@@ -1189,6 +1171,7 @@ async function logPackageAction(userName: string, isAdmin: boolean, packageRepo:
     const jsonString = JSON.stringify(packageAction);
     // Updates the packageAction field of a package in the datastore for the given repository ID.
     await updateRepoPackageAction(Number(packageRepo.ID), jsonString);
+    return;
 }
 
 
@@ -1211,6 +1194,7 @@ async function logPackageActionEntry(action: string, req: any, metadata: any) {
   
    // Package Action: STRING
     await logPackageAction(userName, isAdmin, metadata, action);
+    return;
 }
 
 
