@@ -16,17 +16,17 @@ RUN apt-get update && apt-get install -y build-essential
 RUN apt-get update && apt-get install -y make
 
 # Install Python
-RUN apt-get update && apt-get install -y python3
-ENV PYTHON /usr/bin/python3
+RUN apt-get update && apt-get install -y python
+ENV PYTHON /usr/bin/python
 
 # Install Python dependencies
-RUN pip3 install multidict
-RUN pip3 install gql
-RUN pip3 install requests
-RUN pip3 install regex
-RUN pip3 install PyGithub
-RUN pip3 install requests_toolbelt
-RUN pip3 install coverage
+RUN pip install multidict
+RUN pip install gql
+RUN pip install requests
+RUN pip install regex
+RUN pip install PyGithub
+RUN pip install requests_toolbelt
+RUN pip install coverage
 
 # Install Rust
 RUN apt-get update && apt-get install -y curl && \
