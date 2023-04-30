@@ -244,7 +244,7 @@ app.post('/package', async (req, res) => {
         }
         
         if (result.message.includes("package.json file is missing")){
-            return res.status(400).send({message: 'package.json file is missing'});      
+            return res.status(400).send({message: 'Package.json file is missing'});      
         }
         
         if (result.message.includes("Failed to add repository:")){
@@ -264,7 +264,7 @@ app.post('/package', async (req, res) => {
         }
 
         if (result.message.includes("Error parsing package.json file")){
-            return res.status(400).send({message: result.message});
+            return res.status(400).send({message: "Error parsing package.json file/Missing package.json file"});
         }
 
         if (result.message.includes("Success")){
@@ -366,12 +366,6 @@ app.post('/package', async (req, res) => {
                     return res.status(409).send({message:'Bad Request: Package exists already'});
                 }
                 
-                if (result.message.includes("package.json file is missing")){
-                    // Remove the locally downloaded GitHub directory
-                    fs.rmdirSync(cloneDir, { recursive: true });
-                    return res.status(400).send({message:'Bad Request: package.json file is missing'});      
-                }
-                
                 if (result.message.includes("Failed to add repository:")){
                     // Remove the locally downloaded GitHub directory
                     fs.rmdirSync(cloneDir, { recursive: true });
@@ -399,7 +393,7 @@ app.post('/package', async (req, res) => {
                 if (result.message.includes("Error parsing package.json file")){
                     // Remove the locally downloaded GitHub directory
                     fs.rmdirSync(cloneDir, { recursive: true });
-                    return res.status(400).send({message: result.message});
+                    return res.status(400).send({message: "Error parsing package.json file/Missing package.json file"});
                 }
 
                 if (result.message.includes("Success")){
@@ -536,11 +530,7 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
         } catch (err: any) {
             // The package.json file does not exist in the zip file
             // Return an appropriate HTTP error code like 400 Bad Request
-            if (err.message === "Cannot read properties of null (reading 'async')") {
-                return { statusCode: 400, message: 'package.json file is missing' };
-            } else {
-                return { statusCode: 400, message: 'Error parsing package.json file: ' + err.message };
-            }
+            return { statusCode: 400, message: 'Error parsing package.json file/Missing package.json file' };
         }
 
         if (packageName === undefined || packageVersion === undefined) {
@@ -709,12 +699,7 @@ async function decodeBase64OnUpdate(base64String: string, JSProgram: string, res
         } catch (err: any) {
             // The package.json file does not exist in the zip file
             // Return an appropriate HTTP error code like 400 Bad Request
-            if (err.message === "Cannot read properties of null (reading 'async')") {
-                return { statusCode: 400, message: 'package.json file is missing' };
-            } else {
-                console.log('Error parsing package.json file: ' + err.message)
-                return { statusCode: 400, message: 'Error parsing package.json file or package.json file is missing'};
-            }
+            return { statusCode: 400, message: 'Error parsing package.json file/Missing package.json file' };
         }
 
         if (packageName === undefined || packageVersion === undefined) {
@@ -764,6 +749,7 @@ app.get('/package/:id', async (req, res) => {
 
     const result = await doesIdExistInKind(MODULE_KIND, id)
     if(!result){
+        console.log("true")
         return res.status(404).send({message: "Package does not exist."});
     }
 
@@ -850,10 +836,6 @@ app.put('/package/:id', async (req, res) => {
 
             if (result.message.includes("homepage URL is missing in package.json")){
                 return res.status(400).send({message: result.message});
-            }
-            
-            if (result.message.includes("package.json file is missing")){
-                return res.status(400).send({message: 'Package.json file is missing'});      
             }
     
             if (result.message.includes("Failed to get package name or version from package.json")){
@@ -959,12 +941,6 @@ app.put('/package/:id', async (req, res) => {
                         return res.status(400).send({message: result.message});
                     }
                     
-                    if (result.message.includes("package.json file is missing")){
-                        // Remove the locally downloaded GitHub directory
-                        fs.rmdirSync(cloneDir, { recursive: true });
-                        return res.status(400).send({message:'Bad Request: package.json file is missing'});      
-                    }
-
                     if (result.message.includes("Failed to get package name or version from package.json")){
                         // Remove the locally downloaded GitHub directory
                         fs.rmdirSync(cloneDir, { recursive: true });
@@ -974,7 +950,7 @@ app.put('/package/:id', async (req, res) => {
                     if (result.message.includes("Error parsing package.json file")){
                         // Remove the locally downloaded GitHub directory
                         fs.rmdirSync(cloneDir, { recursive: true });
-                        return res.status(400).send({message: result.message});
+                        return res.status(400).send({message: "Error parsing package.json file/Missing package.json file"});
                     }
 
                     if (result.message.includes("Success")){
@@ -1270,6 +1246,7 @@ app.post('/package/byRegEx', async (req, res) => {
     }
     // Check if the 'regex' field is present in the request body
     const regex = req.body["RegEx"];
+    console.log(regex)
     if (!regex) { 
         return res.status(400).json({ message: 'Malformed JSON: Request must include a regex field.' });
     }
@@ -1281,25 +1258,30 @@ app.post('/package/byRegEx', async (req, res) => {
     // Retrieve all packages from the datastore
     const allPackages = await getAllRepos();
 
+    console.log(allPackages)
     try {
-        const results = allPackages.filter(async (pkg: any) => {
-            // Retrieve the readme content
-            if(pkg.name === undefined || pkg["metaData"]["Version"] === undefined) {
-                return res.status(400).json({ message: 'There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.' });
-            }
-
-            // if readme is not provided, ignore it in regex search
-            if (pkg.readme === undefined) {
-                return new RegExp(regex).test(pkg.name);
-            } else {
-                // extract the readme content from google cloud storage
-                let readme_content = await getCloudStoragefileAsUTF8(pkg.readme, MODULE_STORAGE_BUCKET);
+        const filteredResults = await Promise.all(
+            allPackages.map(async (pkg: any) => {
+              if (pkg.name === undefined || pkg["metaData"]["Version"] === undefined) {
+                throw new Error('There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.');
+              }
+              if (pkg.readme === undefined) {
+                if (new RegExp(regex).test(pkg.name)) {
+                    return new RegExp(regex).test(pkg.name);
+                }
+              
+              } else {
+                const readme_content = await getCloudStoragefileAsUTF8(pkg.readme, MODULE_STORAGE_BUCKET);
                 return new RegExp(regex).test(pkg.name) || new RegExp(regex).test(readme_content);
-            }
-        });
+              }
+            })
+          );
+          
+        const passingPackages = allPackages.filter((pkg:any, i:any) => filteredResults[i]);
+        console.log(passingPackages);
 
         // Extract the name and version of each matching package
-        const response = results.map((pkg: { name: any; version: any; }) => {
+        const response = passingPackages.map((pkg: { name: any; version: any; }) => {
             return {
                 Name: pkg.name,
                 Version: pkg.version
