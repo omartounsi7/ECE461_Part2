@@ -903,7 +903,7 @@ app.delete('/package/byName/:name', async (req, res) => {
         return;
     }
     // get package name from header
-    const packageName = req.params.name;
+    const packageName: string = req.params.name;
 
     if (!packageName){
         return res.status(400).json({message: 'Package Name is required'});
@@ -912,14 +912,14 @@ app.delete('/package/byName/:name', async (req, res) => {
     // Check if the package name adheres to the naming conventions
     if (!nameConv(packageName) || packageName === '*') {
         // 400 - invalid package name
-        res.status(400).json({message: 'Invalid package name'});
+        return res.status(400).json({message: 'Invalid package name'});
     } else {
         // Retrieve all packages from the datastore with that package name
         const allPackages = await findReposByName(packageName);
 
         if (allPackages.length === 0) {
             // 404 - package does not exist
-            res.status(404).json({message: 'Package does not exist'});
+            return res.status(404).json({message: 'Package does not exist'});
         } else {
             // Iterates over each package
             for (const pkg of allPackages) {
@@ -930,7 +930,7 @@ app.delete('/package/byName/:name', async (req, res) => {
                 await deleteRepo(Number(id));
             }
             // 200 - package successfully deleted
-            res.status(200).json({ message: `All versions of package ${packageName} have been deleted` });
+            return res.status(200).json({ message: `All versions of package ${packageName} have been deleted` });
         }
     }
 });
@@ -951,6 +951,10 @@ app.post('/package/byRegEx', async (req, res) => {
     const regex = req.body["RegEx"];
     if (!regex) { 
         return res.status(400).json({ message: 'Malformed JSON: Request must include a regex field.' });
+    }
+
+    if (regex === '*') { 
+        return res.status(400).json({ message: 'Invalid Regex: Regex cannot just be a *' });
     }
     
     // Retrieve all packages from the datastore
