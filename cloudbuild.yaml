@@ -1,9 +1,7 @@
-timeout: 7200s # 2 hours in seconds
-
 steps:
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   args:
   - '-c'
   - |
-    gcloud app deploy ts-server/app.yaml --project=npm-module-registry-381816
+    gcloud app deploy ts-server/app.yaml --project=npm-module-registry-381816 --quiet --stop-previous-version --no-promote --verbosity=debug --timeout=1800s
