@@ -52,8 +52,8 @@ ENV PORT 8080
 # Make the container's port 8080 available to the outside world
 EXPOSE 8080
 
-# Start Nginx 
-CMD [ "service", "nginx" , "start"]
+# Set the entrypoint to start Nginx
+ENTRYPOINT ["nginx", "-g", "daemon off;"]
 
 # Start the server
 CMD [ "npm", "run" , "server"]
