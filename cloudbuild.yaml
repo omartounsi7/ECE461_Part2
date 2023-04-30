@@ -1,3 +1,5 @@
+timeout: 7200s # 2 hours in seconds
+
 steps:
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
@@ -5,6 +7,3 @@ steps:
   - '-c'
   - |
     gcloud app deploy ts-server/app.yaml --project=npm-module-registry-381816
-
-options:
-  timeout: 7200s # 2 hours in seconds
