@@ -108,11 +108,12 @@
             <button onclick="toggleDiv(1)">Upload Module</button>
             <button onclick="toggleDiv(2)">Download Module</button>
             <button onclick="toggleDiv(3)">Update Module</button>
-            <button onclick="toggleDiv(4)">Delete Module </button>
-            <button onclick="toggleDiv(5)">Register User</button>
-            <button onclick="toggleDiv(6)">Regex</button>
-            <button onclick="toggleDiv(7)">Delete Account</button>
-            <button onclick="toggleDiv(8)">Reset Registry</button>
+            <button onclick="toggleDiv(4)">Module History</button>
+            <button onclick="toggleDiv(5)">Delete Module </button>
+            <button onclick="toggleDiv(6)">Register User</button>
+            <button onclick="toggleDiv(7)">Regex</button>
+            <button onclick="toggleDiv(8)">Delete Account</button>
+            <button onclick="toggleDiv(9)">Reset Registry</button>
             <button onclick="logOut()">Log Out</button>
         </nav>
     </header>
@@ -168,6 +169,16 @@
         <input type="url" id="upload-url" class="input-text">
         <br>
         <button type="button" class="submit-button" onclick="updateModule()">Update Module</button>
+      </form>
+    </div>
+
+    <div id="log-history" class="endpoint-div">
+      <h2 style="margin-right: 20px;">Package History</h2>
+      <form>
+        <label for="package-name-input">Enter package name:</label>
+        <input type="text" id="package-name-input" class="input-text">
+        <button type="button" class="submit-button" onclick="getPackageHistory()">Get History</button>
+        <div id="package-history"></div>
       </form>
     </div>
     
@@ -246,7 +257,8 @@
       let deleteUser = document.getElementById("delete-account");
       let resetRegistry = document.getElementById("reset-registry");
       let downloadPack = document.getElementById("package-download");
-      let allDivs = [packageSearchDiv, uploadModuleDiv, downloadPack, updateModuleDiv, deleteModuleDiv, registerModuleDiv, regexDiv, deleteUser, resetRegistry];
+      let logHistory = document.getElementById("log-history");
+      let allDivs = [packageSearchDiv, uploadModuleDiv, downloadPack, updateModuleDiv, logHistory, deleteModuleDiv, registerModuleDiv, regexDiv, deleteUser, resetRegistry];
       
       
       function showDiv(div) {
@@ -667,8 +679,63 @@
         packageID.value = "";
       }
 
+      async function getPackageHistory() {
+        // Get the form fields
+        const packageName = document.getElementById('package-name-input');
 
+        if (!packageName.value) {
+          alert('Please provide a package name');
+          return;
+        }
 
+        const response = await fetch('/package/byName/' + packageName.value, {
+          method: 'GET',
+          headers: {
+            'X-Authorization': localStorage.getItem('authToken')
+          }
+        });
+
+        const data = await response.json();
+        
+        // Get the HTML element to display the results
+        const resultDiv = document.getElementById('package-history');
+
+        // Error Message only defined when error occurs
+        const errorMessage = data.message;
+
+        const success_value = await handleResponseError(response, errorMessage);
+        if (!success_value) {
+          return;
+        }
+
+        // Clear any previous results
+        resultDiv.innerHTML = '';
+
+        // Loop through each element in the data list and create an HTML element for it
+        for (const element of data) {
+          const name = element.PackageMetadata.Name;
+          const version = element.PackageMetadata.Version;
+          const ID = element.PackageMetadata.ID;
+          const date = element.Date;
+          const user = element.User.name;
+          const admin = element.User.isAdmin;
+          const action = element.Action;
+
+          const listItem = document.createElement('div');
+          listItem.innerHTML = `
+            <br>
+            <strong>Package Name:</strong> ${name}<br>
+            <strong>Version:</strong> ${version}<br>
+            <strong>Package ID:</strong> ${ID}<br>
+            <strong>Date:</strong> ${date}<br>
+            <strong>User:</strong> ${user}<br>
+            <strong>Is Admin:</strong> ${admin}<br>
+            <strong>Action:</strong> ${action}<br>
+            <hr>
+          `;
+          resultDiv.appendChild(listItem);
+        }
+      }
 
       // package search
       function submitPackageSearch() {

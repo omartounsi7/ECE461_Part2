@@ -572,7 +572,7 @@ app.get('/package/:id', async (req, res) => {
     let metaData = packageInfo.metaData;
 
     // ACTION: DOWNLOAD
-    // await logPackageActionEntry("DOWNLOAD", req, metaData);
+    await logPackageActionEntry("DOWNLOAD", req, metaData);
 
     await incrementDownloadCount(req.params.id);
 
@@ -713,7 +713,6 @@ app.get('/packageMeta/:id', async (req, res) => {
 
     // retreieves the package metadata
     const packageMetaData = entry["metaData"];
-    console.log(packageMetaData)
     
     return res.status(200).json(packageMetaData);
 });
@@ -760,12 +759,8 @@ app.get('/package/:id/rate', async (req, res) => {
     }
     // Download the package entity
     const packageRepo = await getRepoData(packageID);
-    //const userName = "Max";
-    //const isAdmin = true;
-    //logPackageAction(userName, isAdmin, packageRepo.metaData, "RATE");
 
     // Needed for Rate
-    console.log(packageRepo.url);
     const url = packageRepo.url;
 
     // Write the url to a file called URLs.txt
@@ -858,27 +853,32 @@ app.get('/package/byName/:name', async (req, res) => {
       // Check if the package name adheres to the naming conventions
       if (!nameConv(packageName) || packageName === '*') {
         // 400 - invalid package name
-        res.status(400).json({message: 'Invalid package name'});
+        return res.status(400).json({message: 'Invalid package name'});
       } else {
         // Retrieve all packages from the datastore with that package name
         const allPackages = await findReposByName(packageName);
+        console.log(allPackages)
     
         if (allPackages.length === 0) {
             // 404 - package does not exist
-            res.status(404).json({message: 'Package does not exist'});
+            return res.status(404).json({message: 'Package does not exist'});
         } else {
-            // Combine the packageAction fields of all packages into a single array
-            const combinedActions = allPackages.reduce((acc: string | any[], pkg: { packageAction: any; }) => {
-                return acc.concat(pkg.packageAction);
+             // Combine the packageAction fields of all packages into a single array
+            const combinedActions = allPackages.reduce((acc:any, pkg:any) => {
+                const packageActions = pkg.packageAction.map((action:any) => {
+                    // Parse the stringified packageAction object
+                    return JSON.parse(action);
+                });
+                return acc.concat(packageActions);
             }, []);
 
             // 200 - list of combined packageAction fields
-            res.status(200).json(combinedActions);
+            return res.status(200).json(combinedActions);
         }
       }
     } catch (error) {
       // 400 - malformed JSON or invalid authentiation
-      res.status(400).json({message: 'Bad request'});
+      return res.status(400).json({message: 'Bad request'});
     }
 });
 

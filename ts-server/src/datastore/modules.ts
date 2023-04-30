@@ -72,8 +72,7 @@ async function addRepo(repoData: {[key: string]: any}): Promise<string | undefin
     const key = getModuleKey();
     const repo = {
         key: key,
-        data: repoData,
-        excludeFromIndexes: ['readme']
+        data: repoData
     };
 
     await datastore.save(repo);
@@ -95,8 +94,7 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}) {
     Object.assign(entity, newData);
     await datastore.save({
         key: key,
-        data: entity,
-        excludeFromIndexes: ['readme']
+        data: entity
     });
 }
 
@@ -119,8 +117,7 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}) {
     entity.packageAction = packageActions;
     await datastore.save({
         key: key,
-        data: entity,
-        excludeFromIndexes: ['readme']
+        data: entity
     });
 }
 
@@ -141,8 +138,7 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}) {
 
     await datastore.save({
         key: key,
-        data: entity,
-        excludeFromIndexes: ['readme']
+        data: entity
     });
 }
 
@@ -162,8 +158,7 @@ async function incrementDownloadCount(packageID: string): Promise<void> {
 
     await datastore.save({
         key: key,
-        data: entity,
-        excludeFromIndexes: ['readme']
+        data: entity
     });
 }
 
