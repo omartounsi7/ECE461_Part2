@@ -230,12 +230,14 @@ async function findReposByName(name: string) {
 async function findReposByNameAndVersion(name: string, version: string) {
     // get version type using regex (exact[1.2.3], bounded[1.2.3-2.1.0], Carat[^1.2.3], Tilde[~1.2.0])
 
+    let matched_repos = [];
+    
     if (version.search(/^[~|^]?\d+\.\d+\.\d+(-([a-zA-Z]+)(.*))?$/) == 0) { // exact,carat,tilde
         const query = datastore
             .createQuery(NAMESPACE, MODULE_KIND)
             .filter('name', '=', name)
             .filter('version', '=', version);
-        return (await datastore.runQuery(query))[0];
+        matched_repos = await datastore.runQuery(query);
 
     } else if(version.search(/^\d+\.\d+\.\d+-\d+\.\d+\.\d+$/) == 0) { // bounded
         // can there be bounds with carat or tilde versions?
@@ -245,11 +247,11 @@ async function findReposByNameAndVersion(name: string, version: string) {
             .filter("name", "=", name)
             .filter("version", ">=", range[0])
             .filter("version", "<=", range[1]);
-        return (await datastore.runQuery(query))[0];
+         matched_repos = await datastore.runQuery(query);
     } else { // version invalid
-        const myList: any[] = [];
-        return myList
+        return -1;
     }
+    return matched_repos.length > 0 ? matched_repos[0] : [];
 }
 
 

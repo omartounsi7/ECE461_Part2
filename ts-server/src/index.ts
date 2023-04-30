@@ -141,8 +141,8 @@ app.post('/packages', async (req, res) => {
                 });
                 for (const version of matches) {
                     let matched_repos = await findReposByNameAndVersion(name, version);
-                    if(matched_repos.length === 1 && matched_repos[0] === "invalid version") {
-                        res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
+                    if(matched_repos === -1) {
+                        res.status(400).send("Invalid Version Format");
                         return;
                     }
                     matched_repos.forEach((repo: any) => {
@@ -272,6 +272,11 @@ app.post('/package', async (req, res) => {
         if (result.message.includes("Failed to get package name or version from package.json")){
             return res.status(400).send({message: result.message});
         }
+
+        if (result.message.includes("Invalid Version Format")){
+            return res.status(400).send({message: result.message});
+        }
+
     } 
 
     // Package URL (for use in public ingest) is passed in req.body
@@ -371,6 +376,12 @@ app.post('/package', async (req, res) => {
                 return res.status(400).send({message: result.message});
             }
 
+            if (result.message.includes("Invalid Version Format")){
+                // Remove the locally downloaded GitHub directory
+                fs.rmdirSync(cloneDir, { recursive: true });
+                return res.status(400).send({message: result.message});
+            }
+
             // Remove the locally downloaded GitHub directory
             fs.rmdirSync(cloneDir, { recursive: true });
             //console.log("Success!");
@@ -465,6 +476,9 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
 
         // Checks if package already exists in database
         const result = await findReposByNameAndVersion(packageName, packageVersion);
+        if(result === -1) {
+            return { statusCode: 400, message: 'Invalid Version Format' };
+        }
         if (result.length > 0) {
             // package exists already (409 error code)
             return { statusCode: 409, message: 'Conflict: Package exists already' };
