@@ -172,6 +172,7 @@ app.post('/packages', async (req, res) => {
         }
         // send results here
         res.status(200).json(results);
+        return
     }
 
 
@@ -315,6 +316,7 @@ app.post('/package', async (req, res) => {
         if (netScore < 0.5 || rampUp < 0.5 || correctness < 0.5 || busFactor < 0.5 || responsiveMaintainer < 0.5 ||
             license < 0.5 || codeReview < 0.5 || version < 0.5) {
             res.status(424).send({message: 'Package is not uploaded due to the disqualified rating'});
+            return
         } 
         
         const parts = url.split('/');
@@ -581,6 +583,7 @@ app.get('/package/:id', async (req, res) => {
 
     if(packageInfo.name === undefined || packageInfo.version === undefined || packageInfo.metaData === undefined) {
         res.status(400).send("There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.")
+        return;
     }
 
     let module = await getModuleFromCloudStorage(packageInfo.name, packageInfo.version, ZIP_FILETYPE, MODULE_STORAGE_BUCKET);
@@ -828,13 +831,16 @@ app.get('/package/:id/rate', async (req, res) => {
       if (busFactor && correctness && rampUp && responsiveMaintainer && license && version && codeReview && netScore) {
         // Send the response object to the client
         res.status(200).send(responseObject);
+        return;
       } else {
         // 500: The package rating system choked on at least one of the metrics.
         res.status(500).send({error: 'The package rating system choked on at least one of the metrics'});
+        return;
       }
     } catch (error) {
       // If there was an error parsing the JSON string
       res.status(400).send({ error: 'Malformed json' });
+      return;
     }
 });
 
@@ -1269,11 +1275,11 @@ app.get("/popularity/:id", async (req, res) => {
         return;
     }
     let id = Number(req.params.id);
-    if(isNaN(id)) { res.status(404).send("ID does not exist."); }
+    if(isNaN(id)) { return res.status(404).send("ID does not exist."); }
     let packageInfo = await  getRepoData(id);
     let download_count = Number(packageInfo.downloads);
     let body = { "downloads": download_count }
-    res.status(200).json(body);
+    return res.status(200).json(body);
 });
 
 /* * * * * * * * * * * * * * *
