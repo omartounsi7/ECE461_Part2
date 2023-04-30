@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import path from 'path';
 import * as ffi from 'ffi-napi';
 import {getSecret, JWT_AUTH_SECRET} from "./cloud-storage/secret-key";
@@ -7,12 +7,9 @@ import {getSecret, JWT_AUTH_SECRET} from "./cloud-storage/secret-key";
 // npm install --save ffi-napi @types/ffi-napi
 import {
     addRepo,
-    updateRepo,
     deleteRepo,
     findReposByName,
-    getModuleKey,
     findReposByNameAndVersion,
-    getAllReposPagenated,
     getAllRepos,
     updateMetaData,
     updateRepoPackageAction,
@@ -23,27 +20,20 @@ import {
     incrementDownloadCount
 } from "./datastore/modules";
 //import { addUser } from "./datastore/users";
-import {deleteEntity, doesIdExistInKind, resetKind} from "./datastore/datastore";
-import {datastore, MODULE_KIND, USER_KIND, NAMESPACE} from "./datastore/ds_config";
-import { MODULE_STORAGE_BUCKET, SECRET_STORAGE_BUCKET, storage } from "./cloud-storage/cs_config";
+import {doesIdExistInKind, resetKind} from "./datastore/datastore";
+import {MODULE_KIND, USER_KIND} from "./datastore/ds_config";
+import { MODULE_STORAGE_BUCKET, SECRET_STORAGE_BUCKET } from "./cloud-storage/cs_config";
 import { uploadModuleToCloudStorage, uploadBase64FileToCloudStorage, getCloudStoragefileAsUTF8, getModuleFromCloudStorage, cloudStorageFilePathBuilder, deleteModuleFromCloudStorage, resetCloudStorage, ZIP_FILETYPE, TXT_FILETYPE } from "./cloud-storage/cloud-storage";
-import {base64ToFile, fileToBase64} from "./util";
 import { addUser , findUserByName, userLogin, updateApiCounter, deleteUser} from "./datastore/users"
 import { logRequest } from "./cloud-storage/logging";
+
 const fs = require('fs');
 const JSZip = require('jszip');
-const zlib = require('zlib');
 const { promisify } = require('util');
 const zipdir = require('zip-dir');
 const { execSync } = require('child_process');
 const jwt = require("jsonwebtoken");
-
-
-// Imports the npm package
-import dotenv from "dotenv"; 
-// Loads environment variables into process.env
-dotenv.config(); 
-
+const bodyParser = require('body-parser');
 /* * * * * * * * * * *
  * global variables  *
  * * * * * * * * * * */
@@ -53,7 +43,6 @@ const HTML_PATH = ASSETS_PATH + "/html";
 const app = express();
 const port = 8080;
 
-const bodyParser = require('body-parser');
 // Increase the payload size limit to 1 gigabyte
 app.use(bodyParser.json({ limit: '100gb' }));
 
@@ -114,7 +103,7 @@ app.post('/packages', async (req, res) => {
     // validate post request
     if (typeof queries === undefined || offset === undefined) {
         // invalid request
-        res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
+        res.status(400).send({message:"There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid."});
         return;
     } else {
         let packages: {Version: any, Name: any, ID: any}[] = [];
@@ -122,7 +111,7 @@ app.post('/packages', async (req, res) => {
          // do db actions
         let offset_num = Number(offset);
         if(isNaN(offset_num)) {
-            res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
+            res.status(400).send({message:"There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid."});
             return;
         }
         try {
@@ -130,7 +119,7 @@ app.post('/packages', async (req, res) => {
                 let versions = e["Version"];
                 let name = e["Name"];
                 if(versions === undefined || name === undefined) {
-                    res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
+                    res.status(400).send({message:"There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid."});
                     return;
                 }
                 // console.log(e)
@@ -143,7 +132,7 @@ app.post('/packages', async (req, res) => {
                 for (const version of matches) {
                     let matched_repos = await findReposByNameAndVersion(name, version);
                     if(matched_repos === -1) {
-                        res.status(400).send("Invalid Version Format");
+                        res.status(400).send({message:"Invalid Version Format"});
                         return;
                     }
                     matched_repos.forEach((repo: any) => {
@@ -158,7 +147,7 @@ app.post('/packages', async (req, res) => {
                 }
             }
         } catch(e: any) {
-            res.status(400).send("There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.");
+            res.status(400).send({message:"There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid."});
             //console.log(e)
             return;
         }
@@ -246,7 +235,6 @@ app.post('/package', async (req, res) => {
         const result = await decodeBase64(base64String, JSProgram, res, req);
         //console.log('Error in decodeBase64:', result.message);
 
-
         if (result.message.includes("homepage URL is missing in package.json")){
             return res.status(400).send({message: result.message});
         }
@@ -258,16 +246,12 @@ app.post('/package', async (req, res) => {
         if (result.message.includes("package.json file is missing")){
             return res.status(400).send({message: 'package.json file is missing'});      
         }
-
-        if (result.message.includes("package.json file is probably missing")){
-            return res.status(400).send({message: 'package.json file is probably missing'});      
-        }
         
         if (result.message.includes("Failed to add repository:")){
             return res.status(400).send({message: result.message});
         }
 
-        if (result.message.includes("An error occurred while updating metadata:")){
+        if (result.message.includes("Error updating metadata:")){
             return res.status(400).send({message: result.message});
         }
 
@@ -279,6 +263,33 @@ app.post('/package', async (req, res) => {
             return res.status(400).send({message: result.message});
         }
 
+        if (result.message.includes("Error parsing package.json file")){
+            return res.status(400).send({message: result.message});
+        }
+
+        if (result.message.includes("Success")){
+            return;
+        }
+
+        if (result.message.includes("Error uploading readme file:")){
+            return res.status(400).send({message: result.message});
+        }
+
+        if (result.message.includes("Error checking if package exists:")){
+            return res.status(400).send({message: result.message});
+        }
+
+        if (result.message.includes("Error uploading package to cloud storage:")){
+            return res.status(400).send({message: result.message});
+        }
+
+        if (result.message.includes("Error decoding Base64 string:")){
+            return res.status(400).send({message: result.message});
+        }
+
+        if (result.message.includes("Error loading zip file:")){
+            return res.status(400).send({message: result.message});
+        }
     } 
 
     // Package URL (for use in public ingest) is passed in req.body
@@ -316,91 +327,130 @@ app.post('/package', async (req, res) => {
         if (netScore < 0.5 || rampUp < 0.5 || correctness < 0.5 || busFactor < 0.5 || responsiveMaintainer < 0.5 ||
             license < 0.5 || codeReview < 0.5 || version < 0.5) {
             res.status(424).send({message: 'Package is not uploaded due to the disqualified rating'});
-            return
+            return;
         } 
         
-        const parts = url.split('/');
-        const cloneDir = './' + parts[parts.length - 1];
-        const zipdirAsync = promisify(zipdir);
-        
-        let base64String;
-
         try {
-            // Clone the GitHub package locally
-            execSync(`git clone ${url} ${cloneDir}`);
-
-            // Remove the .git directory
-            const gitDir = `${cloneDir}/.git`;
-            if (fs.existsSync(gitDir)) {
-                fs.rmSync(gitDir, { recursive: true, force: true });
-            }
-            // Create a zipped file
-            const buffer: Buffer = await zipdirAsync(cloneDir, { saveTo: cloneDir + '.zip' });
-
-            // Encode the zipped file to a Base64-encoded string
-            base64String = Buffer.from(buffer).toString('base64');
+            const parts = url.split('/');
+            const cloneDir = './' + parts[parts.length - 1];
+            const zipdirAsync = promisify(zipdir);
             
-            const result = await decodeBase64(base64String, JSProgram, res, req);
-            //console.log('Error in decodeBase64:', result.message);
+            let base64String;
 
-            if (result.message.includes("homepage URL is missing in package.json")){
-                // Remove the locally downloaded GitHub directory
-                fs.rmdirSync(cloneDir, { recursive: true });
-                return res.status(400).send({message: result.message});
-            }
-            
-            if (result.message.includes("Package exists already")){
-                // Remove the locally downloaded GitHub directory
-                fs.rmdirSync(cloneDir, { recursive: true });
-                return res.status(409).send({message:'Bad Request: Package exists already'});
-            }
-            
-            if (result.message.includes("package.json file is missing")){
-                // Remove the locally downloaded GitHub directory
-                fs.rmdirSync(cloneDir, { recursive: true });
-                return res.status(400).send({message:'Bad Request: package.json file is missing'});      
-            }
-            
-            if (result.message.includes("Failed to add repository:")){
-                // Remove the locally downloaded GitHub directory
-                fs.rmdirSync(cloneDir, { recursive: true });
-                return res.status(400).send({message: result.message});
-            }
+            try {
+                // Clones the GitHub package locally
+                execSync(`git clone ${url} ${cloneDir}`);
 
-            if (result.message.includes("An error occurred while updating metadata:")){
-                // Remove the locally downloaded GitHub directory
-                fs.rmdirSync(cloneDir, { recursive: true });
-                return res.status(400).send({message: result.message});
+                // Removes the .git directory
+                const gitDir = `${cloneDir}/.git`;
+                if (fs.existsSync(gitDir)) {
+                    fs.rmSync(gitDir, { recursive: true, force: true });
+                }
+                // Creates a zipped file
+                const buffer: Buffer = await zipdirAsync(cloneDir, { saveTo: cloneDir + '.zip' });
+
+                // Encodes the zipped file to a Base64-encoded string
+                base64String = Buffer.from(buffer).toString('base64');
+                
+                const result = await decodeBase64(base64String, JSProgram, res, req);
+                            
+                if (result.message.includes("homepage URL is missing in package.json")){
+                    // Remove the locally downloaded GitHub directory
+                    fs.rmdirSync(cloneDir, { recursive: true });
+                    return res.status(400).send({message: result.message});
+                }
+                
+                if (result.message.includes("Package exists already")){
+                    // Remove the locally downloaded GitHub directory
+                    fs.rmdirSync(cloneDir, { recursive: true });
+                    return res.status(409).send({message:'Bad Request: Package exists already'});
+                }
+                
+                if (result.message.includes("package.json file is missing")){
+                    // Remove the locally downloaded GitHub directory
+                    fs.rmdirSync(cloneDir, { recursive: true });
+                    return res.status(400).send({message:'Bad Request: package.json file is missing'});      
+                }
+                
+                if (result.message.includes("Failed to add repository:")){
+                    // Remove the locally downloaded GitHub directory
+                    fs.rmdirSync(cloneDir, { recursive: true });
+                    return res.status(400).send({message: result.message});
+                }
+
+                if (result.message.includes("Error updating metadata:")){
+                    // Remove the locally downloaded GitHub directory
+                    fs.rmdirSync(cloneDir, { recursive: true });
+                    return res.status(400).send({message: result.message});
+                }
+
+                if (result.message.includes("Failed to get package name or version from package.json")){
+                    // Remove the locally downloaded GitHub directory
+                    fs.rmdirSync(cloneDir, { recursive: true });
+                    return res.status(400).send({message: result.message});
+                }
+
+                if (result.message.includes("Invalid Version Format")){
+                    // Remove the locally downloaded GitHub directory
+                    fs.rmdirSync(cloneDir, { recursive: true });
+                    return res.status(400).send({message: result.message});
+                }
+
+                if (result.message.includes("Error parsing package.json file")){
+                    // Remove the locally downloaded GitHub directory
+                    fs.rmdirSync(cloneDir, { recursive: true });
+                    return res.status(400).send({message: result.message});
+                }
+
+                if (result.message.includes("Success")){
+                    // Remove the locally downloaded GitHub directory
+                    fs.rmdirSync(cloneDir, { recursive: true });
+                    //console.log("Success!");
+                    return;
+                }
+
+                if (result.message.includes("Error uploading readme file:")){
+                    // Remove the locally downloaded GitHub directory
+                    fs.rmdirSync(cloneDir, { recursive: true });
+                    return res.status(400).send({message: result.message});
+                }
+
+                if (result.message.includes("Error checking if package exists:")){
+                    // Remove the locally downloaded GitHub directory
+                    fs.rmdirSync(cloneDir, { recursive: true });
+                    return res.status(400).send({message: result.message});
+                }
+
+                if (result.message.includes("Error uploading package to cloud storage:")){
+                    // Remove the locally downloaded GitHub directory
+                    fs.rmdirSync(cloneDir, { recursive: true });
+                    return res.status(400).send({message: result.message});
+                }
+
+                if (result.message.includes("Error decoding Base64 string:")){
+                    // Remove the locally downloaded GitHub directory
+                    fs.rmdirSync(cloneDir, { recursive: true });
+                    return res.status(400).send({message: result.message});
+                }
+
+                if (result.message.includes("Error loading zip file:")){
+                    // Remove the locally downloaded GitHub directory
+                    fs.rmdirSync(cloneDir, { recursive: true });
+                    return res.status(400).send({message: result.message});
+                }
+
+            } catch (err: any) {
+                return res.status(400).send({message: 'Error creating zip file: ' + err.message });
             }
-
-            if (result.message.includes("Failed to get package name or version from package.json")){
-                // Remove the locally downloaded GitHub directory
-                fs.rmdirSync(cloneDir, { recursive: true });
-                return res.status(400).send({message: result.message});
-            }
-
-            if (result.message.includes("Invalid Version Format")){
-                // Remove the locally downloaded GitHub directory
-                fs.rmdirSync(cloneDir, { recursive: true });
-                return res.status(400).send({message: result.message});
-            }
-
-            // Remove the locally downloaded GitHub directory
-            fs.rmdirSync(cloneDir, { recursive: true });
-            //console.log("Success!");
-
-        } catch (error: any) {}
+        } catch (err: any) {
+            res.status(424).send({message: 'Error encountered encoding Base64 string: '});
+            return;
+        }
     }
 });
 
 // npm install jszip @types/jszip
 async function decodeBase64(base64String: string, JSProgram: string, res: any, req: any) {
-
-    // Decode the Base64 string
-    const buffer = Buffer.from(base64String, 'base64');
-
-    // Load the zip file using JSZip
-    const zip = await JSZip.loadAsync(buffer);
 
     // Will store the package name from package.json
     let packageName;
@@ -417,7 +467,24 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
     // Will store `homepage` URL (links to the GitHub repository) from package.json
     let packageURL;
 
-    try {    
+    // Will store the new package ID
+    let newPackageID;
+
+    // Will store the new metadata contents
+    let metadata;
+
+    try {
+        // Decode the Base64 string
+        const buffer = Buffer.from(base64String, 'base64');
+
+        let zip;
+        try {
+            // Load the zip file using JSZip
+            zip = await JSZip.loadAsync(buffer);
+        } catch (err: any) {
+            return { statusCode: 400, message: 'Error loading zip file: ' + err.message };
+        }
+
         let packageJsonFiles: any[] = [];
         let readmeFiles: any[] = [];
 
@@ -448,106 +515,234 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
             });
             readmeFile = readmeFiles[0];
         }
-                
-        // Extract the package.json file
-        const packageJsonContent = await packageJsonFile.async('string');
 
-        // Parse the package.json content as a JSON object
-        const packageJson = JSON.parse(packageJsonContent);
-        
-        // Extract the name and version fields from package.json
-        packageName = packageJson.name;
-        packageVersion = packageJson.version;
+        try {
+            // Extract the package.json file
+            const packageJsonContent = await packageJsonFile.async('string');
 
-        // Extract`homepage` URL (links to the GitHub repository) from package.json
-        packageURL = packageJson.homepage;
+            // Parse the package.json content as a JSON object
+            const packageJson = JSON.parse(packageJsonContent);
 
-        if (!packageURL) {
-            return { statusCode: 400, message: 'Bad Request: homepage URL is missing in package.json' };
+            // Extract the name and version fields from package.json
+            packageName = packageJson.name;
+            packageVersion = packageJson.version;
+
+            // Extract`homepage` URL (links to the GitHub repository) from package.json
+            packageURL = packageJson.homepage;
+
+            if (!packageURL) {
+                return { statusCode: 400, message: 'Bad Request: homepage URL is missing in package.json' };
+            }
+        } catch (err: any) {
+            // The package.json file does not exist in the zip file
+            // Return an appropriate HTTP error code like 400 Bad Request
+            if (err.message === "Cannot read properties of null (reading 'async')") {
+                return { statusCode: 400, message: 'package.json file is missing' };
+            } else {
+                return { statusCode: 400, message: 'Error parsing package.json file: ' + err.message };
+            }
+        }
+
+        if (packageName === undefined || packageVersion === undefined) {
+            return { statusCode: 400, message: "Failed to get package name or version from package.json" };
         }
 
         if (readmeFile) {
-            if (packageName === undefined || packageVersion === undefined) {
-                return { statusCode: 400, message: "Failed to get package name or version from package.json" };
+            try {
+                readmeContent = await readmeFile.async('text');
+                await uploadModuleToCloudStorage(packageName, packageVersion, TXT_FILETYPE, readmeContent, MODULE_STORAGE_BUCKET);
+                readmePath = cloudStorageFilePathBuilder(packageName + "." + TXT_FILETYPE, packageVersion);
+            } catch (err: any) {
+                return { statusCode: 400, message: 'Error uploading readme file: ' + err.message };
             }
-            // readmeContent will be saved on Google Cloud Storage in a .txt file
-            readmeContent = await readmeFile.async('text');   
-            await uploadModuleToCloudStorage(packageName, packageVersion, TXT_FILETYPE, readmeContent, MODULE_STORAGE_BUCKET);
-            readmePath = cloudStorageFilePathBuilder(packageName + "." + TXT_FILETYPE, packageVersion);
         }
 
-
-        // Checks if package already exists in database
-        const result = await findReposByNameAndVersion(packageName, packageVersion);
-        if(result === -1) {
-            return { statusCode: 400, message: 'Invalid Version Format' };
-        }
-        if (result.length > 0) {
-            // package exists already (409 error code)
-            return { statusCode: 409, message: 'Conflict: Package exists already' };
-        }
-
-    } catch (error: any) { // specify the type of the error variable
-        if ((error.message === "Cannot read properties of null (reading 'async')") || (error.message === "No package.json file found in the zip archive")) {
-            // The package.json file does not exist in the zip file
-            // Return an appropriate HTTP error code like 400 Bad Request
-            return { statusCode: 400, message: 'package.json file is missing' };
-        }
-        return { statusCode: 400, message: 'package.json file is probably missing' };
-    }
-
-    if (packageName === undefined || packageVersion === undefined) {
-        return { statusCode: 400, message: "Failed to get package name or version from package.json" };
-    }
-    const cloudStoragePath = cloudStorageFilePathBuilder(packageName + ".zip", packageVersion);
-
-    let newPackageID;
-    let metadata;
-    try {
-        let data = createRepoData(packageName, packageVersion, new Date().toISOString(), packageURL, undefined, readmePath, undefined, cloudStoragePath)
-        // attempt to create and save new package to database
-        newPackageID = await addRepo(data);
-    } catch (error: any) {
-        // console.log(`Failed to add repository: ${error.message}`);
-        return { statusCode: 400, message: `Failed to add repository: ${error.message}` };
-    }
-
-    // Create a JavaScript object with the metadata
-    metadata = {
-        "Name": packageName,
-        "Version": packageVersion,
-        "ID": newPackageID
-    };
-
-    if (newPackageID && newPackageID.length > 0) {
         try {
-            await updateMetaData(newPackageID, metadata);
-        } catch (error: any) {
-            return { statusCode: 400, message: `An error occurred while updating metadata: ${error.message}` };
+            // Checks if package already exists in database
+            const result = await findReposByNameAndVersion(packageName, packageVersion);
+            if(result === -1) {
+                return { statusCode: 400, message: 'Invalid Version Format' };
+            }
+            if (result.length > 0) {
+                return { statusCode: 409, message: 'Conflict: Package exists already' };
+            }
+        } catch (err: any) {
+            return { statusCode: 400, message: 'Error checking if package exists: ' + err.message };
         }
-    }
 
-    await logPackageActionEntry("CREATE", req, metadata);
+        try {
+            const cloudStoragePath = cloudStorageFilePathBuilder(packageName + ".zip", packageVersion);
+            // attempt to create and save new package to database
+            let data = createRepoData(packageName, packageVersion, new Date().toISOString(), packageURL, undefined, readmePath, undefined, cloudStoragePath)
+            newPackageID = await addRepo(data);
+        } catch (err: any) {
+            return { statusCode: 400, message: 'Failed to add repository: ' + err.message };
+        }
 
-    // Define response JSON object
-    const responseObject = {
-        "metadata": {
+        // Create a JavaScript object with the metadata
+        metadata = {
             "Name": packageName,
             "Version": packageVersion,
             "ID": newPackageID
-        },
-        "data": {
-            "Content": base64String,
-            "JSProgram": JSProgram
+        };
+
+        if (newPackageID && newPackageID.length > 0) {
+            try {
+                // update meta data field in firestore
+                await updateMetaData(newPackageID, metadata);
+            } catch (err: any) {
+                return { statusCode: 400, message: 'Error updating metadata: ' + err.message };
+            }
         }
+
+        // logs user action for this package
+        await logPackageActionEntry("CREATE", req, metadata);
+
+        // Define response JSON object
+        const responseObject = {
+            "metadata": {
+                "Name": packageName,
+                "Version": packageVersion,
+                "ID": newPackageID
+            },
+            "data": {
+                "Content": base64String,
+                "JSProgram": JSProgram
+            }
+        };
+
+        try {
+            // Uploads module to Google Cloud Storage
+            await uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, base64String, MODULE_STORAGE_BUCKET);
+        } catch (err: any) {
+            return { statusCode: 400, message: 'Error uploading package to cloud storage: ' + err.message };
+        }
+        
+        // 201 Success. Check the ID in the returned metadata for the official ID.
+        res.status(201).json(responseObject);
+        return { statusCode: 201, message: "Success" };
+    } catch (err: any) {
+        // if something errors in-between
+        return { statusCode: 400, message: 'Error decoding Base64 string: ' + err.message };
     }
+}
 
-    // Uploads module to Google Cloud Storage
-    await uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, base64String, MODULE_STORAGE_BUCKET);
 
-    // 201 Success. Check the ID in the returned metadata for the official ID.
-    res.status(201).json(responseObject);
-    return { statusCode: 201, message: "Success" };
+// npm install jszip @types/jszip
+async function decodeBase64OnUpdate(base64String: string, JSProgram: string, res: any, req: any) {
+
+    // Will store the package name from package.json
+    let packageName;
+
+    // Will store the package version from package.json
+    let packageVersion;
+
+    // Will store the README path of the uploaded package
+    let readmePath;
+
+    // Will store the README content of the uploaded package
+    let readmeContent;
+
+    // Will store `homepage` URL (links to the GitHub repository) from package.json
+    let packageURL;
+
+    try {
+        // Decode the Base64 string
+        const buffer = Buffer.from(base64String, 'base64');
+
+        let zip;
+        try {
+            // Load the zip file using JSZip
+            zip = await JSZip.loadAsync(buffer);
+        } catch (err: any) {
+            return { statusCode: 400, message: 'Error loading zip file: ' + err.message };
+        }
+
+        let packageJsonFiles: any[] = [];
+        let readmeFiles: any[] = [];
+
+        zip.forEach((relativePath: any, zipEntry: any) => {
+            if (relativePath.endsWith('package.json')) {
+                packageJsonFiles.push(zipEntry);
+            }
+            if (relativePath.endsWith('README.md')) {
+                readmeFiles.push(zipEntry);
+            }
+        });
+
+        let packageJsonFile: any;
+        let readmeFile: any;
+
+        // Choose the package.json file closest to the root folder
+        if (packageJsonFiles.length > 0) {
+            packageJsonFiles.sort((a, b) => {
+                return a.name.split('/').length - b.name.split('/').length;
+            });
+            packageJsonFile = packageJsonFiles[0];
+        }
+
+        // Choose the README.md file closest to the root folder
+        if (readmeFiles.length > 0) {
+            readmeFiles.sort((a, b) => {
+                return a.name.split('/').length - b.name.split('/').length;
+            });
+            readmeFile = readmeFiles[0];
+        }
+
+        try {
+            // Extract the package.json file
+            const packageJsonContent = await packageJsonFile.async('string');
+
+            // Parse the package.json content as a JSON object
+            const packageJson = JSON.parse(packageJsonContent);
+
+            // Extract the name and version fields from package.json
+            packageName = packageJson.name;
+            packageVersion = packageJson.version;
+
+            // Extract`homepage` URL (links to the GitHub repository) from package.json
+            packageURL = packageJson.homepage;
+
+            if (!packageURL) {
+                return { statusCode: 400, message: 'Bad Request: homepage URL is missing in package.json' };
+            }
+        } catch (err: any) {
+            // The package.json file does not exist in the zip file
+            // Return an appropriate HTTP error code like 400 Bad Request
+            if (err.message === "Cannot read properties of null (reading 'async')") {
+                return { statusCode: 400, message: 'package.json file is missing' };
+            } else {
+                return { statusCode: 400, message: 'Error parsing package.json file: ' + err.message };
+            }
+        }
+
+        if (packageName === undefined || packageVersion === undefined) {
+            return { statusCode: 400, message: "Failed to get package name or version from package.json" };
+        }
+
+        if (readmeFile) {
+            try {
+                readmeContent = await readmeFile.async('text');
+                await uploadModuleToCloudStorage(packageName, packageVersion, TXT_FILETYPE, readmeContent, MODULE_STORAGE_BUCKET);
+                readmePath = cloudStorageFilePathBuilder(packageName + "." + TXT_FILETYPE, packageVersion);
+            } catch (err: any) {
+                return { statusCode: 400, message: 'Error uploading readme file: ' + err.message };
+            }
+        }
+
+        try {
+            // Uploads module to Google Cloud Storage
+            await uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, base64String, MODULE_STORAGE_BUCKET);
+        } catch (err: any) {
+            return { statusCode: 400, message: 'Error uploading package to cloud storage: ' + err.message };
+        }
+
+        // 201 Success.
+        return { statusCode: 201, message: "Success" };
+    } catch (err: any) {
+        // if something errors in-between
+        return { statusCode: 400, message: 'Error decoding Base64 string: ' + err.message };
+    }
 }
 
 // Download Endpoint (For download you should only set the Content field.)
@@ -615,13 +810,13 @@ app.put('/package/:id', async (req, res) => {
     // On package update, exactly one field should be set.
     // The package contents (from PackageData) will replace the previous contents.
     const packageContents = req.body["data"]["Content"];
-    const packageURL = req.body["data"]["URL"];
+    const url = req.body["data"]["URL"];
     const JSProgram = req.body["data"]["JSProgram"];
 
     // On package upload, either Content or URL should be set. If both are set, returns 400.
-    if (packageContents && packageURL) {
+    if (packageContents && url) {
         return res.status(400).send({message: "Both 'Content' and 'URL' cannot be provided at the same time."});
-    } else if (!packageContents && !packageURL) {
+    } else if (!packageContents && !url) {
         return res.status(400).send({message: "Either 'Content' or 'URL' must be provided."});
     }
 
@@ -649,69 +844,189 @@ app.put('/package/:id', async (req, res) => {
         // if packageContents field is set
         if (packageContents) {
 
-            // CHECK if packageContents are LEGIT
+            // Verify that the new 64-based encoded packageContents are legit!
+            const result = await decodeBase64OnUpdate(packageContents, JSProgram, res, req);
 
-
-
-
-            // Uploads module to Google Cloud Storage
-            if (packageName === undefined || packageVersion === undefined) {
-                res.status(400).json({ message: "Failed to get package name or version" });
-                return;
+            if (result.message.includes("homepage URL is missing in package.json")){
+                return res.status(400).send({message: result.message});
             }
-            await uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, packageContents, MODULE_STORAGE_BUCKET);
+            
+            if (result.message.includes("package.json file is missing")){
+                return res.status(400).send({message: 'package.json file is missing'});      
+            }
+    
+            if (result.message.includes("Failed to get package name or version from package.json")){
+                return res.status(400).send({message: result.message});
+            }
+    
+            if (result.message.includes("Error parsing package.json file")){
+                return res.status(400).send({message: result.message});
+            }
+    
+            if (result.message.includes("Error uploading readme file:")){
+                return res.status(400).send({message: result.message});
+            }
+    
+            if (result.message.includes("Error uploading package to cloud storage:")){
+                return res.status(400).send({message: result.message});
+            }
+    
+            if (result.message.includes("Error decoding Base64 string:")){
+                return res.status(400).send({message: result.message});
+            }
+    
+            if (result.message.includes("Error loading zip file:")){
+                return res.status(400).send({message: result.message});
+            }
 
-            // ACTION: UPDATE
-            await logPackageActionEntry("UPDATE", req, req.body["metadata"]);
+            if (result.message.includes("Success")){
+                // ACTION: UPDATE
+                await logPackageActionEntry("UPDATE", req, req.body["metadata"]);
 
-            // 200: Version is updated.
-            // Package contents from PackageData schema will replace previous contents
-            return res.status(200).json({ message: "Version is updated" });
-        }
+                // 200: Version is updated.
+                // Package contents from PackageData schema will replace previous contents
+                return res.status(200).json({ message: "Version is updated" });
+            }
+        } 
 
         // if packageURL field is set
-        if (packageURL) {
+        if (url) {
+            // 1. DO RATING of Package URL (for use in public ingest).
+            // Write the url to a file called URLs.txt
+            fs.writeFileSync('URLs.txt', url);
 
-            // CHECK if packageURL is ingestible
+            // Define the type signature of the Rust function
+            const handle_url_file = ffi.Library('./target/release/libgrrs', {
+                'handle_url_file': ['void', ['string', 'string', 'int']]
+            }).handle_url_file;
+
+            // Call the Rust function and output the result to the console
+            handle_url_file("URLs.txt", "example.log", 1);
+
+            // Read the contents of the metrics.txt file
+            const metrics = fs.readFileSync('metrics.txt', 'utf-8');
+            
+            // Parse the JSON string into a JavaScript object
+            const metricsObject = JSON.parse(metrics);
+            
+            // Extract the properties and convert the values to their numeric form
+            const netScore = parseFloat(metricsObject.NET_SCORE);
+            const rampUp = parseFloat(metricsObject.RAMP_UP_SCORE);
+            const correctness = parseFloat(metricsObject.CORRECTNESS_SCORE);
+            const busFactor = parseFloat(metricsObject.BUS_FACTOR_SCORE);
+            const responsiveMaintainer = parseFloat(metricsObject.RESPONSIVE_MAINTAINER_SCORE);
+            const license = parseFloat(metricsObject.LICENSE_SCORE);
+            const codeReview = parseFloat(metricsObject.CODE_REVIEW);
+            const version = parseFloat(metricsObject.Version_Pinning);
+
+            // Check if the package meets the required scores
+            if (netScore < 0.5 || rampUp < 0.5 || correctness < 0.5 || busFactor < 0.5 || responsiveMaintainer < 0.5 ||
+                license < 0.5 || codeReview < 0.5 || version < 0.5) {
+                res.status(424).send({message: 'Package is not uploaded due to the disqualified rating'});
+                return;
+            } 
+            
+            try {
+                const parts = url.split('/');
+                const cloneDir = './' + parts[parts.length - 1];
+                const zipdirAsync = promisify(zipdir);
+                
+                let base64String;
+
+                try {
+                    // Clones the GitHub package locally
+                    execSync(`git clone ${url} ${cloneDir}`);
+
+                    // Removes the .git directory
+                    const gitDir = `${cloneDir}/.git`;
+                    if (fs.existsSync(gitDir)) {
+                        fs.rmSync(gitDir, { recursive: true, force: true });
+                    }
+                    // Creates a zipped file
+                    const buffer: Buffer = await zipdirAsync(cloneDir, { saveTo: cloneDir + '.zip' });
+
+                    // Encodes the zipped file to a Base64-encoded string
+                    base64String = Buffer.from(buffer).toString('base64');
 
 
+                    // Verify that the new 64-based encoded packageContents are legit!
+                    const result = await decodeBase64OnUpdate(base64String, JSProgram, res, req);
+                                
+                    if (result.message.includes("homepage URL is missing in package.json")){
+                        // Remove the locally downloaded GitHub directory
+                        fs.rmdirSync(cloneDir, { recursive: true });
+                        return res.status(400).send({message: result.message});
+                    }
+                    
+                    if (result.message.includes("package.json file is missing")){
+                        // Remove the locally downloaded GitHub directory
+                        fs.rmdirSync(cloneDir, { recursive: true });
+                        return res.status(400).send({message:'Bad Request: package.json file is missing'});      
+                    }
 
+                    if (result.message.includes("Failed to get package name or version from package.json")){
+                        // Remove the locally downloaded GitHub directory
+                        fs.rmdirSync(cloneDir, { recursive: true });
+                        return res.status(400).send({message: result.message});
+                    }
 
+                    if (result.message.includes("Error parsing package.json file")){
+                        // Remove the locally downloaded GitHub directory
+                        fs.rmdirSync(cloneDir, { recursive: true });
+                        return res.status(400).send({message: result.message});
+                    }
 
-            const parts = packageURL.split('/');
-            const cloneDir = './' + parts[parts.length - 1];
-            const zipdirAsync = promisify(zipdir);
+                    if (result.message.includes("Success")){
+                        // Remove the locally downloaded GitHub directory
+                        fs.rmdirSync(cloneDir, { recursive: true });
+                        //console.log("Success!");
 
-            // Clone the GitHub package locally
-            execSync(`git clone ${packageURL} ${cloneDir}`);
+                        // ACTION: UPDATE
+                        await logPackageActionEntry("UPDATE", req, req.body["metadata"]);
 
-            // Remove the .git directory
-            const gitDir = `${cloneDir}/.git`;
-            if (fs.existsSync(gitDir)) {
-                fs.rmSync(gitDir, { recursive: true, force: true });
-            }
-            // Create a zipped file
-            const buffer: Buffer = await zipdirAsync(cloneDir, { saveTo: cloneDir + '.zip' });
+                        // 200 Version is updated.
+                        // the package contents from PackageData schema will replace previous contents
+                        return res.status(200).json({ message: "Version is updated" });
+                    }
 
-            // Encode the zipped file to a Base64-encoded string
-            let base64Contents = Buffer.from(buffer).toString('base64');
+                    if (result.message.includes("Error uploading readme file:")){
+                        // Remove the locally downloaded GitHub directory
+                        fs.rmdirSync(cloneDir, { recursive: true });
+                        return res.status(400).send({message: result.message});
+                    }
 
-            if (packageName === undefined || packageVersion === undefined) {
-                res.status(400).json( { message: "Failed to get package name or version"} );
+                    if (result.message.includes("Error uploading package to cloud storage:")){
+                        // Remove the locally downloaded GitHub directory
+                        fs.rmdirSync(cloneDir, { recursive: true });
+                        return res.status(400).send({message: result.message});
+                    }
+
+                    if (result.message.includes("Error decoding Base64 string:")){
+                        // Remove the locally downloaded GitHub directory
+                        fs.rmdirSync(cloneDir, { recursive: true });
+                        return res.status(400).send({message: result.message});
+                    }
+
+                    if (result.message.includes("Error loading zip file:")){
+                        // Remove the locally downloaded GitHub directory
+                        fs.rmdirSync(cloneDir, { recursive: true });
+                        return res.status(400).send({message: result.message});
+                    }
+
+                } catch (err: any) {
+                    return res.status(400).send({message: 'Error creating zip file: ' + err.message });
+                }
+            } catch (err: any) {
+                res.status(424).send({message: 'Error encountered encoding Base64 string: '});
                 return;
             }
-            await uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, base64Contents, MODULE_STORAGE_BUCKET);
-            
-            // ACTION: UPDATE
-            await logPackageActionEntry("UPDATE", req, req.body["metadata"]);
-
-            // 200 Version is updated.
-            // the package contents from PackageData schema will replace previous contents
-            return res.status(200).json({ message: "Version is updated" });
         }
+
+    } else {
+        return res.status(404).json({ message: "Package Metadata mismatch with provided data" });
     }
 
-    return res.status(404).json({ message: "Package Metadata mismatch with provided data" });
+
 });
 
 // Update Endpoint Helper Function (Client Side)
@@ -749,7 +1064,6 @@ app.delete('/package/:id', async (req, res) => {
     }
 
     const record = await findModuleById(Number(id));
-    // console.log(record)
     if (record) {
         await deleteRepo(Number(id));
         await deleteModuleFromCloudStorage(record.cloudStoragePath, MODULE_STORAGE_BUCKET);
@@ -834,12 +1148,12 @@ app.get('/package/:id/rate', async (req, res) => {
         return;
       } else {
         // 500: The package rating system choked on at least one of the metrics.
-        res.status(500).send({error: 'The package rating system choked on at least one of the metrics'});
+        res.status(500).send({message: 'The package rating system choked on at least one of the metrics'});
         return;
       }
     } catch (error) {
       // If there was an error parsing the JSON string
-      res.status(400).send({ error: 'Malformed json' });
+      res.status(400).send({ message: 'Malformed json in Rate' });
       return;
     }
 });
@@ -968,12 +1282,19 @@ app.post('/package/byRegEx', async (req, res) => {
 
     try {
         const results = allPackages.filter(async (pkg: any) => {
-        // Retrieve the readme content
-        if(pkg.name === undefined || pkg["metaData"]["Version"] === undefined) {
-            return res.status(400).json({ message: 'There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.' });
-        }
-        let readme_content = await getCloudStoragefileAsUTF8(pkg.cloudStoragePath, MODULE_STORAGE_BUCKET);
-        return new RegExp(regex).test(pkg.name) || new RegExp(regex).test(readme_content);
+            // Retrieve the readme content
+            if(pkg.name === undefined || pkg["metaData"]["Version"] === undefined) {
+                return res.status(400).json({ message: 'There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.' });
+            }
+
+            // if readme is not provided, ignore it in regex search
+            if (pkg.readme === undefined) {
+                return new RegExp(regex).test(pkg.name);
+            } else {
+                // extract the readme content from google cloud storage
+                let readme_content = await getCloudStoragefileAsUTF8(pkg.readme, MODULE_STORAGE_BUCKET);
+                return new RegExp(regex).test(pkg.name) || new RegExp(regex).test(readme_content);
+            }
         });
 
         // Extract the name and version of each matching package
@@ -1013,7 +1334,7 @@ app.get('/package/:id/upload_info', async (req, res) => {
   const result = await doesIdExistInKind(MODULE_KIND, packageID)
   if(!result){
       // 404: Package does not exist.
-      res.status(404).send({error: 'Package does not exist'});
+      res.status(404).send({message: 'Package does not exist'});
       return;
   }
   // Get the package information by id
@@ -1021,8 +1342,6 @@ app.get('/package/:id/upload_info', async (req, res) => {
   res.send({"name": packageRepo.name, "date": packageRepo["creation-date"]});
   return;
 });
-
-
 
 
 async function authenticateJWT(req: any, res: any) {
@@ -1248,6 +1567,7 @@ app.delete('/user', async (req, res) => {
     }
 });
 
+// Non-baseline requirement
 app.get("/popularity/:id", async (req, res) => {
     await logRequest("get", "/popularity/:id", req);
     if(!await authenticateJWT(req, res)) {
@@ -1255,11 +1575,11 @@ app.get("/popularity/:id", async (req, res) => {
     }
     // returns the download count of a module
     if(req.params.id === undefined) {
-        res.status(400).send("Malformed request.");
+        res.status(400).send({message:"Malformed request."});
         return;
     }
     let id = Number(req.params.id);
-    if(isNaN(id)) { return res.status(404).send("ID does not exist."); }
+    if(isNaN(id)) { return res.status(404).send({message:"ID does not exist."}); }
     let packageInfo = await  getRepoData(id);
     let download_count = Number(packageInfo.downloads);
     let body = { "downloads": download_count }
@@ -1270,14 +1590,7 @@ app.get("/popularity/:id", async (req, res) => {
  * Website Serving endpoints *
  * * * * * * * * * * * * * * */
 
-/*
-app.put("/", async (req, res) => {
-    await addUser('kevin', 'kevin' , true);
-    await addUser('max', 'max' , true);
-    await addUser('lemon', 'drop' , true);
-});
-*/
-
+// Helper Function
 app.put("/secret", async (req, res) => {
     await uploadBase64FileToCloudStorage("jwt_auth.txt", "apple", TXT_FILETYPE, SECRET_STORAGE_BUCKET);
     return res.status(200).send({message: "Secret added successfully"});
