@@ -92,7 +92,7 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}) {
     const [entity] = await datastore.get(key);
     // Merge the new data with the existing data of the entity
     Object.assign(entity, newData);
-    await datastore.save({
+    return await datastore.save({
         key: key,
         data: entity
     });
@@ -115,7 +115,7 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}) {
     packageActions.push(newPackageAction);
     // Update the packageAction field of the entity with the new package actions
     entity.packageAction = packageActions;
-    await datastore.save({
+    return await datastore.save({
         key: key,
         data: entity
     });
@@ -136,7 +136,7 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}) {
     entity.metaData = metaData1;
     console.log(entity.metaData)
 
-    await datastore.save({
+    return await datastore.save({
         key: key,
         data: entity
     });
@@ -156,7 +156,7 @@ async function incrementDownloadCount(packageID: string): Promise<void> {
     entity.downloads = String(curr_downloads);
     // console.log(entity.metaData)
 
-    await datastore.save({
+    return await datastore.save({
         key: key,
         data: entity
     });

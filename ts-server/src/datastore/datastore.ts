@@ -100,6 +100,7 @@ async function resetKind(kind: string) {
     console.log(entities);
     const keys = entities.map((entity: { [x: string]: any; }) => entity[datastore.KEY]);
     await datastore.delete(keys);
+    return;
 }
 
 export { getKey, deleteEntity, getUserKey, resetKind, doesIdExistInKind };

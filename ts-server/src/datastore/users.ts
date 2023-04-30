@@ -129,7 +129,7 @@ async function createAuthToken(id: number, authToken: string) {
     //console.log(entity)
     // Merge the new data with the existing data of the entity
     Object.assign(entity, {authToken: authToken});
-    await datastore.save({
+    return await datastore.save({
         key: key,
         data: entity
     });
