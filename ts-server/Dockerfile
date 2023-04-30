@@ -7,9 +7,6 @@ COPY . /
 # Set the working directory to /app
 WORKDIR /
 
-RUN pwd
-RUN ls
-
 # Install nginx
 RUN apt-get update && \
     apt-get install -y nginx
@@ -36,28 +33,18 @@ RUN pip3 install requests_toolbelt
 RUN pip3 install coverage
 
 # Install Rust
-RUN apt-get update && apt-get install -y curl && \
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
-    . $HOME/.cargo/env && \
-    rustup default stable
-
-# Build the TypeScript application
-WORKDIR /grrs
-
-RUN pwd
-RUN ls
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Build the Rust program
-#RUN cargo install grcov
+WORKDIR /grrs
+RUN cargo install grcov
 RUN cargo build --release
 
 COPY grrs/target/release/libmylib.so /ts-server/target/release/libmylib.so
 
 # Build the TypeScript application
 WORKDIR /ts-server
-
-RUN pwd
-RUN ls
 
 # Install any needed packages
 RUN npm install express
