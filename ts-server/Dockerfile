@@ -7,13 +7,17 @@ COPY . /
 # Set the working directory to /app
 WORKDIR /
 
+RUN pwd
+RUN ls
+
 # Install nginx
 RUN apt-get update && \
     apt-get install -y nginx
 
-# Install Make
+# Install some stuff
 RUN apt-get update && apt-get install -y build-essential
 RUN apt-get update && apt-get install -y make
+RUN apt-get update && apt-get install -y curl
 
 # Install Python and pip
 RUN apt-get update && apt-get install -y python3-pip
@@ -40,14 +44,20 @@ RUN apt-get update && apt-get install -y curl && \
 # Build the TypeScript application
 WORKDIR /grrs
 
+RUN pwd
+RUN ls
+
 # Build the Rust program
-RUN cargo install grcov
+#RUN cargo install grcov
 RUN cargo build --release
 
 COPY grrs/target/release/libmylib.so /ts-server/target/release/libmylib.so
 
 # Build the TypeScript application
 WORKDIR /ts-server
+
+RUN pwd
+RUN ls
 
 # Install any needed packages
 RUN npm install express
