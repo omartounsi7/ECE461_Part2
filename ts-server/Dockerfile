@@ -20,6 +20,9 @@ RUN apt-get update && apt-get install -y python3-pip
 ENV PYTHON /usr/bin/python3
 
 # Install Python dependencies
+RUN pip3 install --upgrade pip3
+RUN pip3 install --upgrade setuptools
+RUN pip3 install cffi
 RUN pip3 install multidict
 RUN pip3 install gql
 RUN pip3 install requests
