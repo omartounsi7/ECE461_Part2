@@ -16,8 +16,32 @@ RUN apt-get update && apt-get install -y build-essential
 RUN apt-get update && apt-get install -y make
 
 # Install Python
-RUN apt-get update && apt-get install -y python
-ENV PYTHON /usr/bin/python
+RUN apt-get update && apt-get install -y python3
+ENV PYTHON /usr/bin/python3
+
+# Install Python dependencies
+RUN pip3 install multidict
+RUN pip3 install gql
+RUN pip3 install requests
+RUN pip3 install regex
+RUN pip3 install PyGithub
+RUN pip3 install requests_toolbelt
+RUN pip3 install coverage
+
+# Install Rust
+RUN apt-get update && apt-get install -y curl && \
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
+    . $HOME/.cargo/env && \
+    rustup default stable
+
+# Build the Rust program
+COPY grrs /ts-server/grrs
+WORKDIR /ts-server/grrs
+RUN cargo install grcov
+RUN cargo build --release
+
+# Build the TypeScript application
+WORKDIR /ts-server
 
 # Install any needed packages
 RUN npm install express
@@ -57,4 +81,3 @@ CMD [ "service", "nginx" , "start"]
 
 # Start the server
 CMD [ "npm", "run" , "server"]
-
