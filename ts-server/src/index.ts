@@ -487,7 +487,7 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
     let newPackageID;
     let metadata;
     try {
-        let data = createRepoData(packageName, packageVersion, new Date().toJSON(), packageURL, undefined, readmePath, undefined, cloudStoragePath)
+        let data = createRepoData(packageName, packageVersion, new Date().toISOString(), packageURL, undefined, readmePath, undefined, cloudStoragePath)
         // attempt to create and save new package to database
         newPackageID = await addRepo(data);
     } catch (error: any) {
@@ -1152,7 +1152,7 @@ function sanitizeInput(input: string) {
 
 // Follows the structure of the PackageHistoryEntry Schema
 async function logPackageAction(userName: string, isAdmin: boolean, packageRepo: any, action: string) {
-    const now = new Date();
+    const now = new Date().toISOString();
     const packageAction = {
       User: {
         name: userName,
