@@ -5,6 +5,3 @@ runtime_config:
   nodejs_version: '14'
 
 entrypoint: node src/index.js
-
-files:
-  - "src/libgrrs.so"
