@@ -1127,7 +1127,7 @@ app.get('/package/:id/rate', async (req, res) => {
       const license = parseFloat(metricsObject.LICENSE_SCORE);
       const codeReview = parseFloat(metricsObject.CODE_REVIEW);
       const version = parseFloat(metricsObject.Version_Pinning);
-    
+     
       // Construct the response object
       const responseObject = {
         BusFactor: busFactor,
@@ -1146,12 +1146,10 @@ app.get('/package/:id/rate', async (req, res) => {
       // 200: Only send a 200 response if each metric was computed successfully
       if (busFactor && correctness && rampUp && responsiveMaintainer && license && version && codeReview && netScore) {
         // Send the response object to the client
-        res.status(200).send(responseObject);
-        return;
+        return res.status(200).json(responseObject);
       } else {
         // 500: The package rating system choked on at least one of the metrics.
-        res.status(500).send({message: 'The package rating system choked on at least one of the metrics'});
-        return;
+        return res.status(500).send({message: 'The package rating system choked on at least one of the metrics'});
       }
     } catch (error) {
       // If there was an error parsing the JSON string
