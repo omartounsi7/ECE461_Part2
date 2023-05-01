@@ -16,6 +16,7 @@ import {
     createRepoData,
     findModuleById,
     getRepoData,
+    changeUrlField,
     getPopularityInfo,
     incrementDownloadCount
 } from "./datastore/modules";
@@ -619,7 +620,7 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
 
 
 // npm install jszip @types/jszip
-async function decodeBase64OnUpdate(base64String: string, JSProgram: string, res: any, req: any) {
+async function decodeBase64OnUpdate(base64String: string, JSProgram: string, res: any, req: any, packageID: string) {
 
     // Will store the package name from package.json
     let packageName;
@@ -706,6 +707,13 @@ async function decodeBase64OnUpdate(base64String: string, JSProgram: string, res
             return { statusCode: 400, message: "Failed to get package name or version from package.json" };
         }
 
+        try {
+            // Uploads module to Google Cloud Storage
+            await uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, base64String, MODULE_STORAGE_BUCKET);
+        } catch (err: any) {
+            return { statusCode: 400, message: 'Error uploading package to cloud storage: ' + err.message };
+        }
+
         if (readmeFile) {
             try {
                 readmeContent = await readmeFile.async('text');
@@ -716,9 +724,10 @@ async function decodeBase64OnUpdate(base64String: string, JSProgram: string, res
             }
         }
 
-        try {
-            // Uploads module to Google Cloud Storage
-            await uploadModuleToCloudStorage(packageName, packageVersion, ZIP_FILETYPE, base64String, MODULE_STORAGE_BUCKET);
+        try {  
+            // Call the changeUrlField function in modules.ts to change the URL 
+            // field with the URL field extracted from the ReadMe
+            await changeUrlField(packageID, packageURL);
         } catch (err: any) {
             return { statusCode: 400, message: 'Error uploading package to cloud storage: ' + err.message };
         }
@@ -749,7 +758,6 @@ app.get('/package/:id', async (req, res) => {
 
     const result = await doesIdExistInKind(MODULE_KIND, id)
     if(!result){
-        console.log("true")
         return res.status(404).send({message: "Package does not exist."});
     }
 
@@ -832,7 +840,7 @@ app.put('/package/:id', async (req, res) => {
         if (packageContents) {
 
             // Verify that the new 64-based encoded packageContents are legit!
-            const result = await decodeBase64OnUpdate(packageContents, JSProgram, res, req);
+            const result = await decodeBase64OnUpdate(packageContents, JSProgram, res, req, packageID);
 
             if (result.message.includes("homepage URL is missing in package.json")){
                 return res.status(400).send({message: result.message});
@@ -933,7 +941,7 @@ app.put('/package/:id', async (req, res) => {
 
 
                     // Verify that the new 64-based encoded packageContents are legit!
-                    const result = await decodeBase64OnUpdate(base64String, JSProgram, res, req);
+                    const result = await decodeBase64OnUpdate(base64String, JSProgram, res, req, packageID);
                                 
                     if (result.message.includes("homepage URL is missing in package.json")){
                         // Remove the locally downloaded GitHub directory
@@ -1150,9 +1158,9 @@ function nameConv(name: string): boolean {
 // Return the history of this package (all versions).
 app.get('/package/byName/:name', async (req, res) => {
     await logRequest("get", "/package/byName/:name", req);
-    if(!await authenticateJWT(req, res)) {
-        return;
-    }
+    //if(!await authenticateJWT(req, res)) {
+    //    return;
+    //}
 
     try {
       // get package name from header
@@ -1258,7 +1266,6 @@ app.post('/package/byRegEx', async (req, res) => {
     // Retrieve all packages from the datastore
     const allPackages = await getAllRepos();
 
-    console.log(allPackages)
     try {
         const filteredResults = await Promise.all(
             allPackages.map(async (pkg: any) => {
@@ -1278,7 +1285,6 @@ app.post('/package/byRegEx', async (req, res) => {
           );
           
         const passingPackages = allPackages.filter((pkg:any, i:any) => filteredResults[i]);
-        console.log(passingPackages);
 
         // Extract the name and version of each matching package
         const response = passingPackages.map((pkg: { name: any; version: any; }) => {

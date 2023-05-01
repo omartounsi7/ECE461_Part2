@@ -162,6 +162,20 @@ async function incrementDownloadCount(packageID: string): Promise<void> {
     });
 }
 
+async function changeUrlField(packageID: string, packageURL: string): Promise<void> {
+    // Get the datastore key for the repository ID
+   const key = getModuleKey(Number(packageID));
+   // Get the entity associated with the datastore key
+   const [entity] = await datastore.get(key);
+   // Update the metaData field of the entity with the new metaData
+   entity.url = packageURL
+   return await datastore.save({
+       key: key,
+       data: entity
+   });
+}
+
+
 /**
  *
  * @param PackageQuery
@@ -363,5 +377,5 @@ async function getPopularityInfo(repoID: number) {
 
 
 // functions to be used by the API endpoints
-export { createRepoData, addRepo, getModuleKey, updateRepo, deleteRepo, searchRepos, findReposByName, findReposByNameAndVersion,findModuleById, updateMetaData, getAllReposPagenated, getAllRepos, updateRepoPackageAction, getPopularityInfo, getRepoData, incrementDownloadCount};
+export { createRepoData, addRepo,changeUrlField, getModuleKey, updateRepo, deleteRepo, searchRepos, findReposByName, findReposByNameAndVersion,findModuleById, updateMetaData, getAllReposPagenated, getAllRepos, updateRepoPackageAction, getPopularityInfo, getRepoData, incrementDownloadCount};
 
