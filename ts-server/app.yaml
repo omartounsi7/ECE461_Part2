@@ -6,5 +6,6 @@ runtime_config:
 
 entrypoint: node src/index.js
 
-files:
-  - "src/libgrrs.so"
+# Include files in the deployment package
+includes:
+  - libgrrs.so
