@@ -5,7 +5,3 @@ runtime_config:
   nodejs_version: '14'
 
 entrypoint: node src/index.js
-
-# Include files in the deployment package
-includes:
-  - src/libgrrs.so
