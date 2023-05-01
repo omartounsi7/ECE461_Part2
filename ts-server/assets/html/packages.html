@@ -382,6 +382,12 @@
             return;
           }
 
+          // Package ID cannot be 0
+          if (moduleTextUser.value === '0') {
+            alert('Package ID cannot be 0');
+            return;
+          }
+
           const response = await fetch('/package/' + moduleTextUser.value, {
             method: 'DELETE',
             headers: {
@@ -524,6 +530,12 @@
           return;
         }
 
+        // Package ID cannot be 0
+        if (packageID.value === '0') {
+          alert('Package ID cannot be 0');
+          return;
+        }
+
         // Check that package ID only contains numbers
         const filter = /^[0-9]+$/;
         if (!filter.test(packageID.value)) {
@@ -582,6 +594,12 @@
         // Check that all fields have been populated
         if (!packageID.value) {
           alert('Please provide a package ID');
+          return;
+        }
+
+        // Package ID cannot be 0
+        if (packageID.value === '0') {
+          alert('Package ID cannot be 0');
           return;
         }
 
