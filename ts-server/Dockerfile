@@ -54,8 +54,10 @@ COPY nginx.conf /etc/nginx/nginx.conf
 ENV PORT 8080
 
 # Expose ports for Nginx and your Node.js application
-EXPOSE 80
+#EXPOSE 80
 EXPOSE 8080
 
+CMD ["npm", "run", "server"]
+
 # Start Nginx and your Node.js application using pm2
-CMD ["pm2-runtime", "start", "npm", "--", "run", "start:pm2"]
+# CMD ["pm2-runtime", "start", "npm", "--", "run", "start:pm2"]
