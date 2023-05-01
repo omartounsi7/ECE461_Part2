@@ -19,6 +19,9 @@ RUN apt-get update && apt-get install -y make
 RUN apt-get update && apt-get install -y python
 ENV PYTHON /usr/bin/python
 
+# Install pm2
+RUN npm install pm2 -g
+
 # Install any needed packages
 RUN npm install express
 RUN npm install path
@@ -49,12 +52,9 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Set the environment variable to tell the runtime that it's running in a container
 ENV PORT 8080
 
-# Make the container's port 8080 available to the outside world
+# Expose ports for Nginx and your Node.js application
+EXPOSE 80
 EXPOSE 8080
 
-# Start Nginx 
-CMD [ "service", "nginx" , "start"]
-
-# Start the server
-CMD [ "npm", "run" , "server"]
-
+# Start Nginx and your Node.js application using pm2
+CMD ["pm2-runtime", "start", "npm", "--", "run", "start:pm2"]
