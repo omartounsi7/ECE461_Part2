@@ -44,6 +44,7 @@ RUN npm install child_process
 RUN npm install rimraf
 
 # Build the TypeScript application
+RUN npm run clean
 RUN npm run build
 
 # Copy the Nginx configuration file
