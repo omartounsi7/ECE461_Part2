@@ -8,4 +8,4 @@ entrypoint: node src/index.js
 
 # Include files in the deployment package
 includes:
-  - libgrrs.so
+  - src/libgrrs.so
