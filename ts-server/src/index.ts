@@ -1158,9 +1158,9 @@ function nameConv(name: string): boolean {
 // Return the history of this package (all versions).
 app.get('/package/byName/:name', async (req, res) => {
     await logRequest("get", "/package/byName/:name", req);
-    //if(!await authenticateJWT(req, res)) {
-    //    return;
-    //}
+    if(!await authenticateJWT(req, res)) {
+        return;
+    }
 
     try {
       // get package name from header
