@@ -112,8 +112,9 @@
             <button onclick="toggleDiv(5)">Delete Module </button>
             <button onclick="toggleDiv(6)">Register User</button>
             <button onclick="toggleDiv(7)">Regex</button>
-            <button onclick="toggleDiv(8)">Delete Account</button>
-            <button onclick="toggleDiv(9)">Reset Registry</button>
+            <button onclick="toggleDiv(8)">Rate Module</button>
+            <button onclick="toggleDiv(9)">Delete Account</button>
+            <button onclick="toggleDiv(10)">Reset Registry</button>
             <button onclick="logOut()">Log Out</button>
         </nav>
     </header>
@@ -145,52 +146,62 @@
       </div>
   
       <div id="upload-module" class="endpoint-div">
-        <h2 style="margin-right: 20px;">Upload Module</h2>
+          <h2 style="margin-right: 20px;">Upload Module</h2>
+          <form>
+              <label for="module-upload-file">Upload your module as a zip file</label>
+              <input type="file" id="module-upload-file" accept=".zip" class="input-file" />
+              <label for="module-upload-url">OR provide a URL of your module</label>
+              <input type="url" id="module-upload-url" class="input-text">
+              <button type="button" class="submit-button" onclick="submitUploadModule()">Upload Module</button>
+              <div id="id-display" style="display: none;"></div>
+          </form>
+      </div>
+
+      <div id="update-module" class="endpoint-div">
+        <h2 style="margin-right: 20px;">Update Module</h2>
         <form>
-            <label for="module-upload-file">Upload your module as a zip file</label>
-            <input type="file" id="module-upload-file" accept=".zip" class="input-file" />
-            <label for="module-upload-url">OR provide a URL of your module</label>
-            <input type="url" id="module-upload-url" class="input-text">
-            <button type="button" class="submit-button" onclick="submitUploadModule()">Upload Module</button>
-            <div id="id-display" style="display: none;"></div>
+          <label for="package-id">Enter exisiting package ID:</label>
+          <input type="text" id="package-id" class="input-text">
+          <br>
+          <label for="upload-file">Upload new module as a zip file:</label>
+          <input type="file" id="upload-file" accept=".zip" class="input-file" />
+          <br>
+          <label for="upload-url">Or provide a URL of new module:</label>
+          <input type="url" id="upload-url" class="input-text">
+          <br>
+          <button type="button" class="submit-button" onclick="updateModule()">Update Module</button>
         </form>
-    </div>
+      </div>
 
-    <div id="update-module" class="endpoint-div">
-      <h2 style="margin-right: 20px;">Update Module</h2>
-      <form>
-        <label for="package-id">Enter exisiting package ID:</label>
-        <input type="text" id="package-id" class="input-text">
-        <br>
-        <label for="upload-file">Upload new module as a zip file:</label>
-        <input type="file" id="upload-file" accept=".zip" class="input-file" />
-        <br>
-        <label for="upload-url">Or provide a URL of new module:</label>
-        <input type="url" id="upload-url" class="input-text">
-        <br>
-        <button type="button" class="submit-button" onclick="updateModule()">Update Module</button>
-      </form>
-    </div>
+      <div id="rate-module" class="endpoint-div">
+        <h2 style="margin-right: 20px;">Rate Module</h2>
+        <form>
+          <label for="package-rate-id">Enter package ID of module you want rated:</label>
+          <input type="text" id="package-rate-id" class="input-text">
+          <br>
+          <button type="button" class="submit-button" onclick="rateModules()">Update Module</button>
+          <div id="ratings"></div>
+        </form>
+      </div>
 
-    <div id="log-history" class="endpoint-div">
-      <h2 style="margin-right: 20px;">Package History</h2>
-      <form>
-        <label for="package-name-input">Enter package name:</label>
-        <input type="text" id="package-name-input" class="input-text">
-        <button type="button" class="submit-button" onclick="getPackageHistory()">Get History</button>
-        <div id="package-history"></div>
-      </form>
-    </div>
-    
-
-    <div id="package-download" class="endpoint-div">
-      <h2 style="margin-right: 20px;">Package Download</h2>
-      <form>
-        <label for="package-id-input">Enter package ID:</label>
-        <input type="text" id="package-id-input" class="input-text">
-        <button type="button" class="submit-button" onclick="downloadPackage()">Download Module</button>
-      </form>
-    </div>
+      <div id="log-history" class="endpoint-div">
+        <h2 style="margin-right: 20px;">Package History</h2>
+        <form>
+          <label for="package-name-input">Enter package name:</label>
+          <input type="text" id="package-name-input" class="input-text">
+          <button type="button" class="submit-button" onclick="getPackageHistory()">Get History</button>
+          <div id="package-history"></div>
+        </form>
+      </div>
+      
+      <div id="package-download" class="endpoint-div">
+        <h2 style="margin-right: 20px;">Package Download</h2>
+        <form>
+          <label for="package-id-input">Enter package ID:</label>
+          <input type="text" id="package-id-input" class="input-text">
+          <button type="button" class="submit-button" onclick="downloadPackage()">Download Module</button>
+        </form>
+      </div>
 
       <div id="delete-module" class="endpoint-div">
         <h2 style="margin-right: 20px;">Delete Module</h2>
@@ -245,6 +256,8 @@
       </div>
       
 
+
+
   </main>
   <script type="module" src="https://cdn.jsdelivr.net/npm/jszip@3.7.1/dist/jszip.min.js"></script>
   <script>
@@ -258,8 +271,8 @@
       let resetRegistry = document.getElementById("reset-registry");
       let downloadPack = document.getElementById("package-download");
       let logHistory = document.getElementById("log-history");
-      let allDivs = [packageSearchDiv, uploadModuleDiv, downloadPack, updateModuleDiv, logHistory, deleteModuleDiv, registerModuleDiv, regexDiv, deleteUser, resetRegistry];
-      
+      let rateModule = document.getElementById("rate-module");
+      let allDivs = [packageSearchDiv, uploadModuleDiv, downloadPack, updateModuleDiv, logHistory, deleteModuleDiv, registerModuleDiv, regexDiv,rateModule, deleteUser, resetRegistry];
       
       function showDiv(div) {
           div.style.display = "flex";
@@ -349,6 +362,10 @@
         } else if (response.status === 406 && errorMessage === true){
           // If the username is already taken, ask the user to reprompt for a new name
           alert('Username is already taken. Please choose a different username.');
+          return false;
+        } else if (response.status === 500){
+          // The package rating system choked on at least one of the metrics for rate
+          alert('The package rating system choked on at least one of the metrics.');
           return false;
         }
         else {
@@ -508,18 +525,6 @@
         }
       }
       
-      /*
-      function checkPasswordInput() {
-        if (!/^[a-zA-Z0-9]*$/.test(passwordInput.value)) {
-            passwordError.style.display = 'block';
-        } else {
-            passwordError.style.display = 'none';
-        }
-      }
-      const passwordInput = document.getElementById('password-input');
-      passwordInput.addEventListener('input', checkPasswordInput);
-      */
-
       async function downloadPackage() {
         // Get the form fields
         const packageID = document.getElementById('package-id-input');
@@ -701,6 +706,101 @@
         urlInput.value = "";
         packageID.value = "";
       }
+
+      async function rateModules() {
+        // Get the form fields
+        const packageID = document.getElementById('package-rate-id');
+
+        // Check that all fields have been populated
+        if (!packageID.value) {
+          alert('Please provide a package ID');
+          return;
+        }
+
+        // Package ID cannot be 0
+        if (packageID.value === '0') {
+          alert('Package ID cannot be 0');
+          return;
+        }
+
+        // Check that package ID only contains numbers
+        const filter = /^[0-9]+$/;
+        if (!filter.test(packageID.value)) {
+          alert('Package ID must contain only numbers');
+          return;
+        }
+
+        const response = await fetch('/package/' + packageID.value + "/rate", {
+          method: 'GET',
+          headers: {
+            'X-Authorization': localStorage.getItem('authToken')
+          }
+        });
+
+        // data received from server
+        const ratings = await response.json();
+
+        // Get the HTML element to display the results
+        const resultDiv = document.getElementById('package-history');
+
+        // Error Message only defined when error occurs
+        const errorMessage = ratings.message;
+
+        const success_value = await handleResponseError(response, errorMessage);
+        if (!success_value) {
+          return;
+        }
+
+        // Access the HTML element to display the ratings
+        const ratingsDiv = document.getElementById('ratings');
+        // Clear any previous results
+        ratingsDiv.innerHTML = '';
+
+        // Will store the metric values
+        const ratingString = `
+          <table>
+            <br>
+            <tr>
+              <td>BusFactor</td>
+              <td>${ratings.BusFactor}</td>
+            </tr>
+            <tr>
+              <td>Correctness</td>
+              <td>${ratings.Correctness}</td>
+            </tr>
+            <tr>
+              <td>RampUp</td>
+              <td>${ratings.RampUp}</td>
+            </tr>
+            <tr>
+              <td>ResponsiveMaintainer  </td>
+              <td>${ratings.ResponsiveMaintainer}</td>
+            </tr>
+            <tr>
+              <td>LicenseScore</td>
+              <td>${ratings.LicenseScore}</td>
+            </tr>
+            <tr>
+              <td>GoodPinningPractice</td>
+              <td>${ratings.GoodPinningPractice}</td>
+            </tr>
+            <tr>
+              <td>PullRequest</td>
+              <td>${ratings.PullRequest}</td>
+            </tr>
+            <tr>
+              <td>NetScore</td>
+              <td>${ratings.NetScore}</td>
+            </tr>
+          </table>
+        `;
+
+        // Set the content of the ratings HTML element to the rating string
+        ratingsDiv.innerHTML = ratingString;
+      }
+
+
+
 
       async function getPackageHistory() {
         // Get the form fields
