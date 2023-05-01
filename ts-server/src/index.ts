@@ -751,6 +751,11 @@ app.get('/package/:id', async (req, res) => {
         return res.status(400).send({message: "There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid."});
     }
 
+    if (req.params.id === '0') {
+        return res.status(400).send({message: "Package ID cannot be 0"});
+    }
+
+
     let id = Number(req.params.id);
     if(isNaN(id)) {
         return res.status(400).send({message: "There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid."});
@@ -801,6 +806,10 @@ app.put('/package/:id', async (req, res) => {
     await logRequest("put", "/package/:id", req);
     if(!await authenticateJWT(req, res)) {
         return;
+    }
+
+    if (req.params.id === '0') {
+        return res.status(400).send({message: "Package ID cannot be 0"});
     }
     // On package update, exactly one field should be set.
     // The package contents (from PackageData) will replace the previous contents.
@@ -1042,6 +1051,10 @@ app.delete('/package/:id', async (req, res) => {
         return;
     }
 
+    if (req.params.id === '0') {
+        return res.status(400).send({message: "Package ID cannot be 0"});
+    }
+
     const id = req.params.id;
     // Check for missing id field in request
     if (!id) {
@@ -1063,6 +1076,10 @@ app.get('/package/:id/rate', async (req, res) => {
     await logRequest("get", "/package/:id/rate", req);
     if(!await authenticateJWT(req, res)) {
         return;
+    }
+
+    if (req.params.id === '0') {
+        return res.status(400).send({message: "Package ID cannot be 0"});
     }
 
     // Extract package ID and authentication token from request params and headers
@@ -1347,7 +1364,7 @@ async function authenticateJWT(req: any, res: any) {
         return false;
     }
     try {
-        const decodedToken = jwt.verify(token, jwtSecret.toString());
+        const decodedToken = jwt.verify(token, jwtSecret);
 
         // Decrement API counter in database by one every time an API endpoint is called
         const apiCounterError = await updateApiCounter(decodedToken.id);
