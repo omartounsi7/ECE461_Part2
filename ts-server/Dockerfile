@@ -8,10 +8,10 @@ WORKDIR /ts-server
 COPY . /ts-server
 
 RUN ls
-RUN ls /src
-RUN ls /grrs
-RUN ls /assets
-RUN ls /node_modules
+RUN ls /ts-server/src
+RUN ls /ts-server/grrs
+RUN ls /ts-server/assets
+RUN ls /ts-server/node_modules
 
 # Install nginx
 RUN apt-get update && \
