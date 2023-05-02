@@ -4,11 +4,6 @@ FROM node:14-slim
 # Copy the current directory contents into the container at /app
 COPY . /glorious-server
 
-RUN pwd
-RUN ls
-RUN ls glorious-server
-RUN ls glorious-server/ts-server
-
 # Install dependencies
 RUN apt-get update \
     && apt-get install -y build-essential \
