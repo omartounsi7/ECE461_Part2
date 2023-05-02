@@ -1,14 +1,11 @@
 # Use an official Rust runtime as a parent image
 FROM rust:1.54-slim AS builder
 
-RUN pwd
-RUN ls
 
 # Copy the current directory contents into the container at /app
 COPY . /ts-server
 
-RUN pwd
-RUN ls
+RUN ls /ts-server
 
 # Builds Rust
 WORKDIR /ts-server/grrs
