@@ -1,22 +1,14 @@
 # Use an official Node.js runtime as a parent image
 FROM node:14-slim
 
-RUN pwd
-RUN ls
-
-RUN mkdir the-app
-RUN cd the-app
-
-COPY . /the-app
-
-RUN pwd
-RUN ls
-
 # Set the working directory to /app
-WORKDIR /the-app/ts-server
+WORKDIR /ts-server
+
+COPY . /ts-server
 
 RUN pwd
-RUN ls
+RUN cd ts-server; ls
+RUN pwd
 
 # Install nginx
 RUN apt-get update && \
@@ -55,14 +47,16 @@ RUN npm install child_process
 RUN npm install rimraf
 
 RUN pwd
-RUN ls
+RUN cd ts-server; ls
+RUN pwd
 
 # Build the TypeScript application
 RUN npm run clean
 RUN npm run build
 
 RUN pwd
-RUN ls
+RUN cd ts-server; ls
+RUN pwd
 
 # Copy the Nginx configuration file
 # COPY nginx.conf /etc/nginx/nginx.conf
