@@ -4,13 +4,19 @@ FROM node:14-slim
 RUN pwd
 RUN ls
 
-COPY . /
+RUN mkdir the-app
+RUN cd the-app
+
+COPY . /the-app
 
 RUN pwd
 RUN ls
 
 # Set the working directory to /app
-WORKDIR /ts-server
+WORKDIR /the-app/ts-server
+
+RUN pwd
+RUN ls
 
 # Install nginx
 RUN apt-get update && \
