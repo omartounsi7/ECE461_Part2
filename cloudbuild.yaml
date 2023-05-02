@@ -1,9 +1,9 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'rust-app', '-f', 'Dockerfile-rust', '.']
+    args: ['build', '-t', 'rust-app', '-f', 'Dockerfile', '.']
 
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'nodejs-app', '-f', 'Dockerfile-nodejs', '.']
+#  - name: 'gcr.io/cloud-builders/docker'
+#    args: ['build', '-t', 'nodejs-app', '-f', 'Dockerfile-nodejs', '.']
 
   - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: 'bash'
