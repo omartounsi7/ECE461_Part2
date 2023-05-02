@@ -6,6 +6,9 @@ RUN ls
 
 COPY . /
 
+RUN pwd
+RUN ls
+
 # Set the working directory to /app
 WORKDIR /ts-server
 
