@@ -61,7 +61,6 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Builds Rust
 WORKDIR /ts-server/grrs
-RUN cargo install grcov
 RUN cargo build --release
 
 RUN pwd
