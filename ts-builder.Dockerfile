@@ -2,7 +2,7 @@
 FROM node:14-slim
 
 # Copy the binary file from the Rust builder container
-COPY --from=rust-builder . /
+COPY --from=rust-builder /glorious-server .
 
 RUN pwd
 RUN ls
@@ -10,6 +10,11 @@ RUN ls glorious-server
 RUN ls glorious-server/ts-server
 
 WORKDIR /glorious-server/ts-server
+
+RUN ls src
+RUN ls grss
+RUN ls grrs/target
+RUN ls grrs/target/release
 
 # Install dependencies
 RUN apt-get update \
@@ -44,3 +49,7 @@ RUN npm install path \
 
 # Build the TypeScript application
 RUN npm run build
+
+RUN pwd
+RUN ls
+RUN ls src
