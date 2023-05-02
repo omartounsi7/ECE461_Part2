@@ -3,8 +3,6 @@ FROM node:14-slim
 
 COPY . /glorious-server
 
-RUN ls
-
 WORKDIR /glorious-server/ts-server
 
 # Install dependencies
@@ -38,15 +36,25 @@ RUN npm install path \
     && npm install zip-dir \
     && npm install child_process
 
-# Build the TypeScript application
-RUN npm run build
-
+RUN pwd
 RUN ls
+RUN ls grrs
+RUN ls src
+RUN ls /grrs/target/release/
+
+RUN mkdir /rust-lib
 
 # Copy the binary file from the Rust builder container
-COPY --from=rust-builder /ts-server/grrs/target/release/libgrrs.so /src
+COPY --from=rust-builder /grrs/target/release/libgrrs.so /src/rust-lib/.
 
+RUN pwd
 RUN ls
+RUN ls grrs
+RUN ls src
+RUN ls /grrs/target/release/
+
+# Build the TypeScript application
+RUN npm run build
 
 ENV PORT 8080
 EXPOSE 8080
