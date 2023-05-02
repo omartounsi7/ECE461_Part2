@@ -1,12 +1,11 @@
 # Use an official Rust runtime as a parent image
 FROM rust:1.54-slim AS builder
 
-
 # Copy the current directory contents into the container at /app
-COPY . /ts-server
+COPY . /glorious-server
 
-RUN ls /ts-server
+RUN ls /glorious-server
 
 # Builds Rust
-WORKDIR /ts-server/grrs
+WORKDIR /glorious-server/ts-server/grrs
 RUN cargo build --release
