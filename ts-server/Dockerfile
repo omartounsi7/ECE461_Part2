@@ -13,13 +13,15 @@ RUN ls /ts-server/src
 RUN ls /ts-server/grrs
 RUN ls /ts-server/grrs/src
 
-# Install Make
-RUN apt-get update && apt-get install -y build-essential
-RUN apt-get update && apt-get install -y make
-RUN apt-get update && apt-get install -y curl
+# Install stuff
+RUN apt-get update
+RUN apt-get install -y build-essential
+RUN apt-get install -y make
+RUN apt-get install -y curl
+RUN apt-get install -y pkg-config
 
 # Install Python and pip
-RUN apt-get update && apt-get install -y python3-pip
+RUN apt-get install -y python3-pip
 ENV PYTHON /usr/bin/python3
 
 # Install Python dependencies
