@@ -19,6 +19,8 @@ RUN apt-get install -y build-essential
 RUN apt-get install -y make
 RUN apt-get install -y curl
 RUN apt-get install -y pkg-config
+RUN apt-get install -y libssl-dev
+RUN apt-get install -y openssl-devel
 
 # Install Python and pip
 RUN apt-get install -y python3-pip
