@@ -1,6 +1,5 @@
 runtime: custom
 env: flex
-dockerfile: Dockerfile
 
 runtime_config:
   nodejs_version: '14'
