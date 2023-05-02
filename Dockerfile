@@ -6,13 +6,6 @@ RUN ls
 
 # Install dependencies
 RUN apt-get update \
-    && apt-get install -y build-essential \
-    && apt-get install -y curl \
-    && apt-get install -y pkg-config \
-    && apt-get install -y libssl-dev
-
-# Install dependencies
-RUN apt-get update \
     && apt-get install -y python3-pip \
     && apt-get install -y libssl-dev
 
