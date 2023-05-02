@@ -4,17 +4,7 @@ FROM node:14-slim
 # Copy the binary file from the Rust builder container
 COPY --from=rust-builder /glorious-server /epic-server
 
-RUN pwd
-RUN ls
-RUN ls epic-server
-RUN ls epic-server/ts-server
-
 WORKDIR /epic-server/ts-server
-
-RUN ls src
-RUN ls grrs
-RUN ls grrs/target
-RUN ls grrs/target/release
 
 # Install dependencies
 RUN apt-get update \
@@ -49,7 +39,3 @@ RUN npm install path \
 
 # Build the TypeScript application
 RUN npm run build
-
-RUN pwd
-RUN ls
-RUN ls src
