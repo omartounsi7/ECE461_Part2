@@ -3,6 +3,10 @@ FROM node:14-slim
 
 COPY . /glorious-server
 
+RUN ls
+
+WORKDIR /glorious-server/ts-server
+
 # Install dependencies
 RUN apt-get update \
     && apt-get install -y build-essential \
@@ -33,8 +37,6 @@ RUN npm install path \
     && npm install util \
     && npm install zip-dir \
     && npm install child_process
-
-WORKDIR /glorious-server/ts-server
 
 # Build the TypeScript application
 RUN npm run build
