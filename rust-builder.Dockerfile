@@ -11,7 +11,13 @@ RUN apt-get update \
     && apt-get install -y pkg-config \
     && apt-get install -y libssl-dev
 
-RUN ls /glorious-server
+# Install dependencies
+RUN apt-get update \
+    && apt-get install -y python3-pip \
+    && apt-get install -y libssl-dev
+
+RUN ls /glorious-server/ts-server
+RUN ls /glorious-server/ts-server/grrs
 
 # Install Rust
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
