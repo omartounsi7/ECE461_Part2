@@ -36,22 +36,8 @@ RUN npm install path \
     && npm install zip-dir \
     && npm install child_process
 
-RUN pwd
-RUN ls
-RUN ls grrs
-RUN ls src
-RUN ls /grrs/target/release/
-
-RUN mkdir /rust-lib
-
 # Copy the binary file from the Rust builder container
-COPY --from=rust-builder /grrs/target/release/libgrrs.so /src/rust-lib/.
-
-RUN pwd
-RUN ls
-RUN ls grrs
-RUN ls src
-RUN ls /grrs/target/release/
+COPY --from=rust-builder /glorious-server/ts-server/grrs/target/release/libgrrs.so /src/rust-lib/.
 
 # Build the TypeScript application
 RUN npm run build
