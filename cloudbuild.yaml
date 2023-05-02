@@ -1,10 +1,7 @@
 steps:
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'rust-builder', '-f', 'rust-builder.Dockerfile', '.']
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   args:
   - '-c'
   - |
     gcloud app deploy app.yaml --project=npm-module-registry-381816
-
