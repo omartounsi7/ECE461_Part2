@@ -7,7 +7,8 @@ WORKDIR /ts-server
 # Copy the current directory contents into the container at /app
 COPY . /ts-server
 
-
+RUN pwd
+RUN ls
 COPY libgrrs.so /ts-server/src/libgrrs.so
 
 # Install nginx
