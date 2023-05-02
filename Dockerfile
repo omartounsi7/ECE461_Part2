@@ -1,12 +1,22 @@
 # Use an official Node.js runtime as a parent image
 FROM node:14-slim
 
-RUN pwd
-RUN ls
+COPY . /glorious-server
+
+# Install dependencies
+RUN apt-get update \
+    && apt-get install -y build-essential \
+    && apt-get install -y curl \
+    && apt-get install -y pkg-config \
+    && apt-get install -y libssl-dev
+
+# Install Python and pip
+RUN apt-get install -y python3-pip
+ENV PYTHON /usr/bin/python3
 
 # Install Python dependencies
-RUN pip3 install gql \
-    && pip3 install requests
+RUN pip3 install gql
+RUN pip3 install requests
 
 # Install Node.js dependencies
 RUN npm install path \
@@ -24,11 +34,17 @@ RUN npm install path \
     && npm install zip-dir \
     && npm install child_process
 
-# Copy the binary file from the Rust builder container
-COPY --from=builder /ts-server/grrs/target/release/grrs /usr/local/bin/grrs
+WORKDIR /glorious-server/ts-server
 
 # Build the TypeScript application
 RUN npm run build
+
+RUN ls
+
+# Copy the binary file from the Rust builder container
+COPY --from=rust-builder /ts-server/grrs/target/release/grrs .
+
+RUN ls
 
 ENV PORT 8080
 EXPOSE 8080
