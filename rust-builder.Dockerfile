@@ -13,9 +13,6 @@ RUN apt-get update \
 # Install dependencies
 RUN apt-get install -y python3-pip 
 
-RUN ls /glorious-server/ts-server
-RUN ls /glorious-server/ts-server/grrs
-
 # Install Rust
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
@@ -23,3 +20,7 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 # Builds Rust
 WORKDIR /glorious-server/ts-server/grrs
 RUN cargo build --release
+
+RUN ls
+RUN ls target
+RUN ls target/release
