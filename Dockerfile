@@ -4,11 +4,6 @@ FROM node:14-slim
 RUN pwd
 RUN ls
 
-# Install dependencies
-RUN apt-get update \
-    && apt-get install -y python3-pip \
-    && apt-get install -y libssl-dev
-
 # Install Python dependencies
 RUN pip3 install gql \
     && pip3 install requests
