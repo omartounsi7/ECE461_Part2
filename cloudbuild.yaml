@@ -8,4 +8,4 @@ steps:
   args:
   - '-c'
   - |
-    gcloud app deploy ts-server/app
+    gcloud app deploy ts-server/app.yaml --project=npm-module-registry-381816
