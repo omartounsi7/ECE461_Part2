@@ -1,4 +1,5 @@
-FROM scratch
+# Use an official Node.js runtime as a parent image
+FROM node:14-slim
 
 # Copy the current directory contents into the container at /app
 COPY . /glorious-server
