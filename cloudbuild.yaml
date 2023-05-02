@@ -1,11 +1,13 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'rust-builder', '-f', 'rust-builder.Dockerfile', '.', '--timeout=1800']
+  args: ['build', '-t', 'rust-builder', '-f', 'rust-builder.Dockerfile', '.']
+  timeout: 3600s
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'ts-server', '.', '--timeout=1800']
+  args: ['build', '-t', 'ts-server', '.']
+  timeout: 3600s
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   args:
   - '-c'
   - |
-    gcloud app deploy ts-server/app.yaml --project=npm-module-registry-381816 --timeout=20m
+    gcloud app deploy ts-server/app.yaml --project=npm-module-registry-381816
