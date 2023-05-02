@@ -2,14 +2,14 @@
 FROM node:14-slim
 
 # Copy the binary file from the Rust builder container
-COPY --from=rust-builder /glorious-server .
+COPY --from=rust-builder /glorious-server /epic-server
 
 RUN pwd
 RUN ls
-RUN ls glorious-server
-RUN ls glorious-server/ts-server
+RUN ls epic-server
+RUN ls epic-server/ts-server
 
-WORKDIR /glorious-server/ts-server
+WORKDIR /epic-server/ts-server
 
 RUN ls src
 RUN ls grss
