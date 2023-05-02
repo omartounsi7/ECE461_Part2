@@ -12,7 +12,7 @@ RUN ls epic-server/ts-server
 WORKDIR /epic-server/ts-server
 
 RUN ls src
-RUN ls grss
+RUN ls grrs
 RUN ls grrs/target
 RUN ls grrs/target/release
 
