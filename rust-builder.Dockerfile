@@ -1,5 +1,5 @@
 # Use an official Rust runtime as a parent image
-FROM rust:nightly-slim AS builder
+FROM rust:1.54-slim AS builder
 
 RUN rustup update && \
     rustup target add x86_64-unknown-linux-musl && \
