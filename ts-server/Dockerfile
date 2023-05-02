@@ -49,7 +49,6 @@ RUN pwd
 RUN ls
 
 # Build the TypeScript application
-RUN npm run clean
 RUN npm run build
 
 RUN pwd
