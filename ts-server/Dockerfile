@@ -16,7 +16,6 @@ COPY . /ts-server
 # Install stuff
 RUN apt-get update
 RUN apt-get install -y build-essential
-RUN apt-get install -y make
 RUN apt-get install -y curl
 RUN apt-get install -y pkg-config
 RUN apt-get install -y libssl-dev
@@ -26,8 +25,8 @@ RUN apt-get install -y python3-pip
 ENV PYTHON /usr/bin/python3
 
 # Install Python dependencies
-RUN pip3 install --upgrade pip
-RUN pip3 install --upgrade setuptools
+#RUN pip3 install --upgrade pip
+#RUN pip3 install --upgrade setuptools
 #RUN pip3 install cffi
 #RUN pip3 install multidict
 RUN pip3 install gql
