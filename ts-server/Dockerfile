@@ -7,23 +7,32 @@ WORKDIR /ts-server
 # Copy the current directory contents into the container at /app
 COPY . /ts-server
 
+RUN pwd
 RUN ls
 RUN ls /ts-server/src
 RUN ls /ts-server/grrs
-RUN ls /ts-server/assets
-RUN ls /ts-server/node_modules
-
-# Install nginx
-RUN apt-get update && \
-    apt-get install -y nginx
+RUN ls /ts-server/grrs/src
 
 # Install Make
 RUN apt-get update && apt-get install -y build-essential
 RUN apt-get update && apt-get install -y make
+RUN apt-get update && apt-get install -y curl
 
-# Install Python
-RUN apt-get update && apt-get install -y python
-ENV PYTHON /usr/bin/python
+# Install Python and pip
+RUN apt-get update && apt-get install -y python3-pip
+ENV PYTHON /usr/bin/python3
+
+# Install Python dependencies
+RUN pip3 install --upgrade pip
+RUN pip3 install --upgrade setuptools
+RUN pip3 install cffi
+RUN pip3 install multidict
+RUN pip3 install gql
+RUN pip3 install requests
+RUN pip3 install regex
+RUN pip3 install PyGithub
+RUN pip3 install requests_toolbelt
+RUN pip3 install coverage
 
 # Install any needed packages
 RUN npm install express
@@ -46,9 +55,37 @@ RUN npm install zip-dir
 RUN npm install child_process
 RUN npm install rimraf
 
+# Install Rust
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Builds Rust
+WORKDIR /ts-server/grrs
+RUN cargo install grcov
+RUN cargo build --release
+
+RUN pwd
+RUN ls src
+RUN ls src/target
+RUN ls src/target/release
+
 # Build the TypeScript application
+WORKDIR /ts-server
+
+RUN pwd
+RUN ls
+RUN ls /ts-server/src
+RUN ls /ts-server/grrs
+RUN ls /ts-server/grrs/src
+
 RUN npm run clean
 RUN npm run build
+
+RUN pwd
+RUN ls
+RUN ls /ts-server/src
+RUN ls /ts-server/grrs
+RUN ls /ts-server/grrs/src
 
 ENV PORT 8080
 EXPOSE 8080
