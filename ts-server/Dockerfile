@@ -4,11 +4,11 @@ FROM node:14-slim
 # Set the working directory to /app
 WORKDIR /ts-server
 
+# Copy the current directory contents into the container at /app
 COPY . /ts-server
 
 RUN pwd
-RUN cd ts-server; ls
-RUN pwd
+RUN ls
 
 # Install nginx
 RUN apt-get update && \
@@ -47,16 +47,14 @@ RUN npm install child_process
 RUN npm install rimraf
 
 RUN pwd
-RUN cd ts-server; ls
-RUN pwd
+RUN ls
 
 # Build the TypeScript application
 RUN npm run clean
 RUN npm run build
 
 RUN pwd
-RUN cd ts-server; ls
-RUN pwd
+RUN ls
 
 # Copy the Nginx configuration file
 # COPY nginx.conf /etc/nginx/nginx.conf
