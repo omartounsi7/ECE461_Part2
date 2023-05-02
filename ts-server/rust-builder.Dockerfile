@@ -1,6 +1,9 @@
 # Use an official Rust runtime as a parent image
 FROM rust:1.54-slim AS builder
 
+# Set the working directory to /app
+WORKDIR /ts-server
+
 # Copy the current directory contents into the container at /app
 COPY . /ts-server
 
