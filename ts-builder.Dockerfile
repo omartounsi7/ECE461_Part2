@@ -7,6 +7,7 @@ COPY --from=rust-builder . /
 RUN pwd
 RUN ls
 RUN ls glorious-server
+RUN ls glorious-server/ts-server
 
 WORKDIR /glorious-server/ts-server
 
