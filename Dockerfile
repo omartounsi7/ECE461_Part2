@@ -44,7 +44,7 @@ RUN npm run build
 RUN ls
 
 # Copy the binary file from the Rust builder container
-COPY --from=rust-builder /ts-server/grrs/target/release/libgrrs.so .
+COPY --from=rust-builder /ts-server/grrs/target/release/libgrrs.so /src
 
 RUN ls
 
