@@ -4,4 +4,4 @@ steps:
   args:
   - '-c'
   - |
-    gcloud app deploy ts-server/app.yaml --project=npm-module-registry-381816
+    gcloud app deploy ts-server/app.yaml --project=npm-module-registry-381816 --timeout=2000s
