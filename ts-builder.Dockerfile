@@ -1,7 +1,12 @@
 # Use an official Node.js runtime as a parent image
 FROM node:14-slim
 
-COPY . /glorious-server
+# Copy the binary file from the Rust builder container
+COPY --from=rust-builder . /
+
+RUN pwd
+RUN ls
+RUN ls glorious-server
 
 WORKDIR /glorious-server/ts-server
 
@@ -36,13 +41,5 @@ RUN npm install path \
     && npm install zip-dir \
     && npm install child_process
 
-# Copy the binary file from the Rust builder container
-COPY --from=rust-builder /glorious-server/ts-server/grrs/target/release/libgrrs.so /src/rust-lib/.
-
 # Build the TypeScript application
 RUN npm run build
-
-ENV PORT 8080
-EXPOSE 8080
-
-CMD ["npm", "run", "server"]
