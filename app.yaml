@@ -4,4 +4,4 @@ env: flex
 runtime_config:
   nodejs_version: '14'
 
-entrypoint: node src/index.js
+entrypoint: node ts-server/src/index.js
