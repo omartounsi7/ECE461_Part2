@@ -20,7 +20,3 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 # Builds Rust
 WORKDIR /glorious-server/ts-server/grrs
 RUN cargo build --release
-
-RUN ls
-RUN ls target
-RUN ls target/release
