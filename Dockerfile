@@ -1,11 +1,11 @@
 # Use an official Node.js runtime as a parent image
 FROM node:14-slim
 
-# Set the working directory to /app
-WORKDIR /ts-server
-
 # Copy the current directory contents into the container at /app
 COPY . /ts-server
+
+# Set the working directory to /app
+WORKDIR /ts-server
 
 # Install dependencies
 RUN apt-get update \
