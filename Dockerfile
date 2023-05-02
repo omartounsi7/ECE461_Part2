@@ -2,13 +2,17 @@
 FROM node:14-slim
 
 # Copy the binary file from the Rust builder container
-COPY --from=rust-builder . /
+COPY --from=ts-builder . /
 
 RUN pwd
 RUN ls
 RUN ls glorious-server
 
 WORKDIR /glorious-server/ts-server
+
+RUN ls grrs
+RUN ls grrs/target
+RUN ls grrs/target/release
 
 ENV PORT 8080
 EXPOSE 8080
