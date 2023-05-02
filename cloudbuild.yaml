@@ -5,3 +5,10 @@ steps:
     args: ['build', '-t', 'ts-builder', '-f', 'ts-builder.Dockerfile', '.']
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'app-image', '-f', 'Dockerfile', '.']
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'app'
+      - 'deploy'
+      - 'app.yaml'
+      - '--image-url=gcr.io/npm-module-registry-381816/app-image'
+      - '--project=npm-module-registry-381816'
