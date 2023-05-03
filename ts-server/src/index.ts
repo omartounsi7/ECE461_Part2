@@ -301,7 +301,7 @@ app.post('/package', async (req, res) => {
         fs.writeFileSync('URLs.txt', url);
 
         // Define the type signature of the Rust function
-        const handle_url_file = ffi.Library('./rust-lib/libgrrs.so', {
+        const handle_url_file = ffi.Library('../grrs/target/release/libgrrs', {
             'handle_url_file': ['void', ['string', 'string', 'int']]
         }).handle_url_file;
 
@@ -896,7 +896,7 @@ app.put('/package/:id', async (req, res) => {
             fs.writeFileSync('URLs.txt', url);
 
             // Define the type signature of the Rust function
-            const handle_url_file = ffi.Library('./rust-lib/libgrrs.so', {
+            const handle_url_file = ffi.Library('../grrs/target/release/libgrrs', {
                 'handle_url_file': ['void', ['string', 'string', 'int']]
             }).handle_url_file;
 
@@ -1101,7 +1101,7 @@ app.get('/package/:id/rate', async (req, res) => {
     fs.writeFileSync('URLs.txt', url);
 
     // Define the type signature of the Rust function
-    const handle_url_file = ffi.Library('./rust-lib/libgrrs.so', {
+    const handle_url_file = ffi.Library('../grrs/target/release/libgrrs', {
       'handle_url_file': ['void', ['string', 'string', 'int']]
     }).handle_url_file;
 
