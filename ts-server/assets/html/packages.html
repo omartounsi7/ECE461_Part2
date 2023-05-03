@@ -85,7 +85,7 @@
     .radio-group input[type="radio"] {
       margin-right: 5px;
     }
-    /* New styles */
+
     #register-user form label,
     #register-user form input[type="text"],
     #register-user form input[type="password"] {
@@ -119,6 +119,7 @@
         </nav>
     </header>
     <main>
+      
       <div id="package-search" class="endpoint-div">
         <h2 style="margin-right: 20px;">Package Search</h2>
         <form>
@@ -132,10 +133,11 @@
           <input type="text" id="pagination-input">
           <br>
           <button type="button" class="submit-button" onclick="submitPackageSearch()">Submit Search</button>
+          <div id="packages-list"></div>
         </form>
+
       </div>
     
-
       <div id="regex-search" class="endpoint-div">
         <h2 style="margin-right: 20px;">Regex Search</h2>
         <form>
@@ -800,9 +802,6 @@
         ratingsDiv.innerHTML = ratingString;
       }
 
-
-
-
       async function getPackageHistory() {
         // Get the form fields
         const packageName = document.getElementById('package-name-input');
@@ -887,7 +886,7 @@
 
           let objectFormatList = []
           // Iterating over each query by user
-          for(let i=0; i<values.length; i++) {
+          for(let i = 0; i < values.length; i++) {
             // Splitting (name, version)
             let [name, version] = values[i].split(", ");
             let objectFormat = {
@@ -908,7 +907,7 @@
 
           // reads the offset header from the response
           const offsetHeader = response.headers.get('offset');
-          const offsetReceived = parseInt(offsetHeader);
+          const offsetReceived = Number(offsetHeader);
           console.log(offsetReceived)
 
           // retrieves the return object
@@ -922,16 +921,45 @@
             return;
           }
 
-          // dispaly results
+          // HTML-element that will show the resulting packages to the user
+          const packagesOutput = document.getElementById("packages-list");
 
-      
+          // creates each package HTML element in json object received by server
+          const packageBoxesHTML = data.map(package => `
+            <div style="border: 1px solid #ccc; border-radius: 5px; margin: 10px; padding: 10px; box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2); transform: translateZ(0);">
+              <p><strong>Version:</strong> ${package.Version}</p>
+              <p><strong>Name:</strong> ${package.Name}</p>
+              <p><strong>ID:</strong> ${package.ID}</p>
+              <p><strong>Popularity:</strong> ${popularityModule(ID)}</p>
+            </div>
+          `).join('');
+          packagesOutput.innerHTML = packageBoxesHTML;
 
+          // alerts the user of the successful retrieval of their packages
+          alert("These are all the packages provided given the pagination constraint");
+      }
 
-          // get input(s)
-          // confirm input(s) are correct
-          // send request
-          // recv request
-          // display results
+      async function popularityModule(ID) {
+        const response2 = await fetch('/popularity/' + ID, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Authorization': localStorage.getItem('authToken'),
+            }
+          });
+          
+          // retrieves the return object
+          const data2 = await response2.json();
+          // Error Message only defined when error occured
+          const errorMessage2 = data2.message;
+
+          const success_value2 = await handleResponseError(response2, errorMessage2);
+          if (!success_value) {
+            return;
+          }
+
+          // return the download count for that modules
+          return data2.download_count;
       }
 
       // upload module

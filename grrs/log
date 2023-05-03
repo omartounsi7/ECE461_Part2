@@ -1,8 +1,0 @@
-[00:00:00.000] (3060) INFO   URL File to run C:\Users\16067\Desktop\ECE461_Part2\URLs.txt
-[00:00:00.000] (3060) DEBUG  File handled Properly
-[00:00:00.001] (3060) INFO   1. https://github.com/jquery/jquery
-[00:00:00.003] (3060) INFO   https://github.com/jquery/jquery is a github URL!
-[00:00:00.004] (3060) INFO   jquery/jquery is the owner repo!
-[00:00:00.005] (3060) INFO   Constructed Package https://github.com/jquery/jquery
-[00:00:00.005] (3060) DEBUG  Running Python
-[00:00:08.815] (3060) DEBUG  Python returned successfully
