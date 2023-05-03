@@ -22,7 +22,7 @@ jobs:
         pip3 install PyGithub
         pip3 install requests_toolbelt
         pip3 install coverage
-        cd grrs/src/test
+        cd ts-server/grrs/src/test
         python3 -m unittest discover -v
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -38,7 +38,7 @@ jobs:
         toolchain: stable
     - name: Build and Test
       run: |
-        cd grrs
+        cd ts-server/grrs
         cargo clean
         cargo install grcov
         cargo build
