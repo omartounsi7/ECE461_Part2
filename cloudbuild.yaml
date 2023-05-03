@@ -3,7 +3,7 @@ steps:
     args: ['build', '-t', 'app-image:v1.0.0', '-f', 'Dockerfile', '.']
     
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['tag', 'app-image', 'gcr.io/npm-module-registry-381816/app-image:v1.0.0']
+    args: ['tag', 'app-image:v1.0.0', 'gcr.io/npm-module-registry-381816/app-image:v1.0.0']
 
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/npm-module-registry-381816/app-image:v1.0.0']
