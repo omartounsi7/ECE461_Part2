@@ -6,6 +6,12 @@ COPY --from=ts-builder /epic-server /grandiose-server
 
 WORKDIR /grandiose-server/ts-server
 
+RUN pwd
+RUN ls
+RUN ls grrs
+RUN ls grrs/target
+RUN ls grrs/target/release
+
 ENV PORT 8080
 EXPOSE 8080
 
