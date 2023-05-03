@@ -5,8 +5,6 @@ FROM node:14-slim
 #COPY --from=ts-builder /epic-server /grandiose-server
 #WORKDIR /grandiose-server/ts-server
 
-
-WORKDIR /ts-server
 COPY . /ts-server
 RUN apt-get update
 RUN apt-get install -y build-essential
@@ -37,6 +35,7 @@ RUN npm install zip-dir
 RUN npm install child_process
 #RUN npm install rimraf
 WORKDIR /ts-server
+RUN ls
 RUN npm run build
 
 
