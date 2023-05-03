@@ -52,7 +52,6 @@ async function findModuleById(id: number): Promise<any> {
     }
 }
 
-
 function getModuleKey(id?: number): Key {
     return getKey(NAMESPACE, MODULE_KIND, id);
 }
@@ -177,46 +176,6 @@ async function changeUrlField(packageID: string, packageURL: string): Promise<vo
    });
 }
 
-
-/**
- *
- * @param PackageQuery
- * Array of Json objects with 2 key value pairs:
- *      Name:       string
- *      version:    string
- *
- * @param package_count
- * The number of packages per page
- *
- * @param offset
- * The offset in the list of packages found
- * start index = offset * package_count
- * end index = (offset + 1) * package_count - 1
- *
- * @example
- * if offset = 1 and package_count = 10
- * and the number of packages found from the PackageQuery is 20:
- * This function will return the packages at indices 10 to 19
- *
- * @return
- * This function returns a list of packages as json objects
- */
-async function searchRepos(PackageQuery: Object, package_count: number, offset: number) {
-    console.log("Unimplemented function 'searchRepos' from './src/datastore/modules.ts' was called.");
-    // create query object
-    let query = datastore.createQuery(NAMESPACE, MODULE_KIND)
-        .filter("name", "in", )
-        .filter("version");
-    // add all filters to query object
-
-    // set limit
-
-    // loop thru results offset number of times
-    for (let i =0; i < offset; i++) {
-
-    }
-    // return the last list of results
-}
 async function findReposByName(name: string) {
     const query = datastore
         .createQuery(NAMESPACE, MODULE_KIND)
@@ -225,8 +184,6 @@ async function findReposByName(name: string) {
     const results = await datastore.runQuery(query);
     return results[0];
 }
-
-
 
 /**
  *
@@ -379,7 +336,6 @@ async function getPopularityInfo(repoID: number) {
     return {'downloads': numDownloads, 'stars': stars}
 }
 
-
 // functions to be used by the API endpoints
-export { createRepoData, addRepo,changeUrlField, getModuleKey, updateRepo, deleteRepo, searchRepos, findReposByName, findReposByNameAndVersion,findModuleById, updateMetaData, getAllReposPagenated, getAllRepos, updateRepoPackageAction, getPopularityInfo, getRepoData, incrementDownloadCount};
+export { createRepoData, addRepo, changeUrlField, getModuleKey, updateRepo, deleteRepo, findReposByName, findReposByNameAndVersion,findModuleById, updateMetaData, getAllReposPagenated, getAllRepos, updateRepoPackageAction, getPopularityInfo, getRepoData, incrementDownloadCount };
 
