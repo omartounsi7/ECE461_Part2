@@ -19,7 +19,6 @@ steps:
       - '--image-url=gcr.io/npm-module-registry-381816/app-image:v1.0.0'
       - '--project=npm-module-registry-381816'
       
-      
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'rust-builder', '-f', 'rust-builder.Dockerfile', '.']
   - name: 'gcr.io/cloud-builders/docker'
