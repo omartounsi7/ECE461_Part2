@@ -124,13 +124,17 @@
         <form>
           <label for="package-search-input">Enter search queries in the format: name,version
             <br> With a new line separating each query
-            <br> Leave blank to query all packages
+            <br> Provide * to query all packages
           </label>
           <textarea id="package-search-input" rows="5" cols="50" class="input-text"></textarea>
+          <br>
+          <label for="pagination-input">Enter pagination:</label>
+          <input type="text" id="pagination-input">
           <br>
           <button type="button" class="submit-button" onclick="submitPackageSearch()">Submit Search</button>
         </form>
       </div>
+    
 
       <div id="regex-search" class="endpoint-div">
         <h2 style="margin-right: 20px;">Regex Search</h2>
@@ -858,13 +862,70 @@
       }
 
       // package search
-      function submitPackageSearch() {
-          // Select the package-search-input element and read its value
+      async function submitPackageSearch() {
+          // Read the value at the package-search-input element
           const packageSearchInput = document.getElementById("package-search-input");
           const searchQueries = packageSearchInput.value;
 
-          // Do something with the searchQueries variable, such as send it to the server for processing
-          console.log(searchQueries);
+          // Read the value at the package-search-input element
+          const paginationInput = document.getElementById("pagination-input");
+          // Provide this for pagination. If not provided, returns the first page of results.
+          let offset = paginationInput.value;
+
+          if (!searchQueries) {
+            alert('Provide some input in the text field');
+            return;
+          }
+        
+          // Provide this for pagination. If not provided, returns the first page of results.
+          if (offset === "0" || !offset){
+            offset = 1
+          }
+
+          // Splitting the input into an array of strings (name, version)
+          let values = searchQueries.split("\n");
+
+          let objectFormatList = []
+          // Iterating over each query by user
+          for(let i=0; i<values.length; i++) {
+            // Splitting (name, version)
+            let [name, version] = values[i].split(", ");
+            let objectFormat = {
+                "Version": version,
+                "Name": name
+            }
+            objectFormatList.push(objectFormat)
+          }
+
+          // Calls the package post api endpoint
+          const response = await fetch('/packages?offset=' + offset, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Authorization': localStorage.getItem('authToken'),
+            }
+          });
+
+          // reads the offset header from the response
+          const offsetHeader = response.headers.get('offset');
+          const offsetReceived = parseInt(offsetHeader);
+          console.log(offsetReceived)
+
+          // retrieves the return object
+          const data = await response.json();
+          console.log(data)
+          // Error Message only defined when error occured
+          const errorMessage = data.message;
+
+          const success_value = await handleResponseError(response, errorMessage);
+          if (!success_value) {
+            return;
+          }
+
+          // dispaly results
+
+      
+
 
           // get input(s)
           // confirm input(s) are correct
@@ -898,6 +959,7 @@
             return zip.generateAsync({ type: "base64" });
           });
 
+          // Calls the package post api endpoint
           const response = await fetch('/package/', {
             method: 'POST',
             headers: {
@@ -908,6 +970,7 @@
           });
 
 
+          // retrieves the return object
           const data = await response.json();
           // Error Message only defined when error occured
           const errorMessage = data.message;

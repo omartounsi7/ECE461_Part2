@@ -64,6 +64,45 @@ app.post('/packages', async (req, res) => {
     if(!await authenticateJWT(req, res)) {
         return;
     }
+
+    const provideOffset: any = req.query.offset;
+    let offset: any;
+    if (provideOffset !== undefined) {
+        offset = parseInt(provideOffset);
+    }
+   
+    let results = [
+        {
+          "Version": "1.2.3",
+          "Name": "Underscore",
+          "ID": "underscore"
+        },
+        {
+          "Version": "1.2.3-2.1.0",
+          "Name": "Lodash",
+          "ID": "lodash"
+        },
+        {
+          "Version": "^1.2.3",
+          "Name": "React",
+          "ID": "react"
+        }
+    ]
+
+    // sets the offset header in the response
+    res.header('offset', offset);
+    return res.status(200).json(results);
+});
+
+
+/*
+// Fetch directory of packages
+app.post('/packages', async (req, res) => {
+    await logRequest("post", "/packages", req);
+
+    if(!await authenticateJWT(req, res)) {
+        return;
+    }
     // Overview:
     //  gets any package which fits the request
     //  to enumerate all packages: provide an array with a single PackageQuery whose name is "*"
@@ -170,11 +209,9 @@ app.post('/packages', async (req, res) => {
         results = packages.slice(offset_num * max_per_page, max_per_page);
     }
     // send results here
-    res.status(200).json(results);
-
-    // response
-
+    return res.status(200).json(results);
 });
+*/
 
 // Reset the registry to a system default state (an empty registry with the default user))
 app.delete('/reset', async (req, res) => {
