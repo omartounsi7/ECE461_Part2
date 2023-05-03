@@ -1541,7 +1541,7 @@ app.get('/user/:name', async (req, res) => {
     const results = await findUserByName(name);
     // return a boolean value based on the length of the results
     const boolValue = results.length > 0;
-    return res.status(406).json({ message: boolValue });
+    return res.status(203).json({ message: boolValue });
 });
 
 app.post('/new_user', async (req, res) => {

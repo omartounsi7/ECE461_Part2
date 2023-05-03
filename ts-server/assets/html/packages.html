@@ -365,7 +365,7 @@
           // Redirect the user to the login page
           window.location.href = "/";
           return false
-        } else if (response.status === 406 && errorMessage === true){
+        } else if (response.status === 203 && errorMessage === true){
           // If the username is already taken, ask the user to reprompt for a new name
           alert('Username is already taken. Please choose a different username.');
           return false;
@@ -880,6 +880,12 @@
           if (offset === "0" || !offset){
             offset = 1
           }
+
+          // Provide this for pagination. If not provided, returns the first page of results.
+          if (Number(offset) < 0){
+            alert('Cannot have a negative pagination');
+          }
+
 
           // Splitting the input into an array of strings (name, version)
           let values = searchQueries.split("\n");
