@@ -39,6 +39,7 @@ const bodyParser = require('body-parser');
  * global variables  *
  * * * * * * * * * * */
 
+const libraryPath = path.resolve(__dirname, '../grrs/target/release/libgrrs');
 const ASSETS_PATH = "../assets";
 const HTML_PATH = ASSETS_PATH + "/html";
 const app = express();
@@ -289,7 +290,7 @@ app.post('/package', async (req, res) => {
         fs.writeFileSync('URLs.txt', url);
 
         // Define Rust signature
-        const handle_url_file = ffi.Library('../grrs/target/release/libgrrs', {
+        const handle_url_file = ffi.Library(libraryPath, {
             'handle_url_file': ['void', ['string', 'string', 'int']]
         }).handle_url_file;
 
@@ -894,7 +895,7 @@ app.put('/package/:id', async (req, res) => {
             fs.writeFileSync('URLs.txt', url);
 
             // Define the type signature of the Rust function
-            const handle_url_file = ffi.Library('../grrs/target/release/libgrrs', {
+            const handle_url_file = ffi.Library(libraryPath, {
                 'handle_url_file': ['void', ['string', 'string', 'int']]
             }).handle_url_file;
 
@@ -1105,7 +1106,7 @@ app.get('/package/:id/rate', async (req, res) => {
     fs.writeFileSync('URLs.txt', url);
 
     // Define the type signature of the Rust function
-    const handle_url_file = ffi.Library('../grrs/target/release/libgrrs', {
+    const handle_url_file = ffi.Library(libraryPath, {
       'handle_url_file': ['void', ['string', 'string', 'int']]
     }).handle_url_file;
 
