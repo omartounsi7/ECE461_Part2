@@ -8,9 +8,9 @@ FROM node:14-slim
 
 RUN pwd
 RUN ls
-COPY . /ts-server
+COPY . /labo
 RUN ls
-WORKDIR /ts-server
+WORKDIR /labo/ts-server
 RUN ls
 RUN apt-get update
 RUN apt-get install -y build-essential
