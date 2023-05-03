@@ -59,44 +59,20 @@ app.use(express.static('assets/html'));
 
 // Fetch directory of packages
 app.post('/packages', async (req, res) => {
+    let offset = req.query.offset || 0;
+    console.log(offset);
+    await packages(req, res, offset);
+});
+
+async function packages(req: any, res: any, offset: any) {
     await logRequest("post", "/packages", req);
 
     if(!await authenticateJWT(req, res)) {
         return;
     }
-    // Overview:
-    //  gets any package which fits the request
-    //  to enumerate all packages: provide an array with a single PackageQuery whose name is "*"
-    //  line # refers to the OpenAPI yml file
-
-    // request body (json): line 18, 720
-    //  [{name:str, version:str}]
-    //  name: line 688
-    //  version: line 712
-    // query param
-    //  offset: line 27, 732
-
-    // responses
-    //  default: line 35
-    //      Error: line 513
-    //          code (int32): line 515
-    //          message (str): line 516
-    //  200: line 41
-    //      headers:
-    //          offset (str): line 732
-    //      content (json): line 49
-    //          PackageMetadata: line 535
-    //              name
-    //              version
-    //              ID
-    //  400: line 65
-    //      missing field/ mailformed request
-    //  413: line 66
-    //      too many packages returned
 
     // process request
     let queries = req.body;
-    let offset = req.headers.offset;
 
     // console.log(`Got /package post request`);
 
@@ -136,7 +112,7 @@ app.post('/packages', async (req, res) => {
                 let matches_ = versions.match(regex)
                 let matches: string[] = [];
                 matches_.forEach((match: String) => {
-                        matches.push(match.substring(1, match.length - 1));
+                    matches.push(match.substring(1, match.length - 1));
                 });
                 for (const version of matches) {
                     let matched_repos = await findReposByNameAndVersion(name, version);
@@ -172,9 +148,7 @@ app.post('/packages', async (req, res) => {
     // send results here
     res.status(200).json(results);
 
-    // response
-
-});
+}
 
 // Reset the registry to a system default state (an empty registry with the default user))
 app.delete('/reset', async (req, res) => {
@@ -201,7 +175,7 @@ app.delete('/reset', async (req, res) => {
 
 
 // Upload endpoint and module ingestion
-// (call logPackageAction) ACTION: CREATE 
+// (call logPackageAction) ACTION: CREATE
 app.post('/package', async (req, res) => {
     //console.log("In package")
     await logRequest("post", "/package", req);
@@ -614,7 +588,7 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
         } catch (err: any) {
             return { statusCode: 400, message: 'Error uploading package to cloud storage: ' + err.message };
         }
-        
+
         // 201 Success. Check the ID in the returned metadata for the official ID.
         res.status(201).json(responseObject);
         return { statusCode: 201, message: "Success" };
@@ -730,8 +704,8 @@ async function decodeBase64OnUpdate(base64String: string, JSProgram: string, res
             }
         }
 
-        try {  
-            // Call the changeUrlField function in modules.ts to change the URL 
+        try {
+            // Call the changeUrlField function in modules.ts to change the URL
             // field with the URL field extracted from the ReadMe
             await changeUrlField(packageID, packageURL);
         } catch (err: any) {
