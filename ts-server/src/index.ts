@@ -193,9 +193,7 @@ app.delete('/reset', async (req, res) => {
     return res.status(200).send({message: "Registry is reset"});
 })
 
-
 // Upload endpoint and module ingestion
-// (call logPackageAction) ACTION: CREATE 
 app.post('/package', async (req, res) => {
     //console.log("In package")
     await logRequest("post", "/package", req);
@@ -444,7 +442,6 @@ app.post('/package', async (req, res) => {
     }
 });
 
-// npm install jszip @types/jszip
 async function decodeBase64(base64String: string, JSProgram: string, res: any, req: any) {
 
     // Will store the package name from package.json
@@ -566,6 +563,9 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
             // attempt to create and save new package to database
             let data = createRepoData(packageName, packageVersion, new Date().toISOString(), packageURL, undefined, readmePath, undefined, cloudStoragePath)
             newPackageID = await addRepo(data);
+            if (Number(newPackageID) === 0){
+                throw new Error("ID of 0")
+            }
         } catch (err: any) {
             return { statusCode: 400, message: 'Failed to add repository: ' + err.message };
         }
@@ -577,7 +577,7 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
             "ID": newPackageID
         };
 
-        if (newPackageID && newPackageID.length > 0) {
+        if (newPackageID) {
             try {
                 // update meta data field in firestore
                 await updateMetaData(newPackageID, metadata);
@@ -618,8 +618,6 @@ async function decodeBase64(base64String: string, JSProgram: string, res: any, r
     }
 }
 
-
-// npm install jszip @types/jszip
 async function decodeBase64OnUpdate(base64String: string, JSProgram: string, res: any, req: any, packageID: string) {
 
     // Will store the package name from package.json
@@ -837,10 +835,21 @@ app.put('/package/:id', async (req, res) => {
 
     // The name, version, and ID must match.
     const entry = await findModuleById(id);
+    if (!entry) {
+        return res.status(404).json({ message: "Package does not exist" });
+    }
 
     const packageName = req.body["metadata"]["Name"];
     const packageVersion = req.body["metadata"]["Version"];
-    const packageID = req.body["metadata"]["ID"];
+    const packageID: string = req.body["metadata"]["ID"];
+
+    if (!packageName || !packageVersion || !packageID) {
+        return res.status(400).send({message: "There is missing field(s) in the PackageID"});
+    }
+
+    if (packageID === "0"){
+        return res.status(400).send({message: "Package ID cannot be 0"});
+    }
 
     // The name, version, and ID must match.
     if ((entry.name === packageName) && (entry.version == packageVersion) && (entry.metaData.ID=== packageID)) {
@@ -892,24 +901,24 @@ app.put('/package/:id', async (req, res) => {
         // if packageURL field is set
         if (url) {
             // 1. DO RATING of Package URL (for use in public ingest).
-            // Write the url to a file called URLs.txt
+            // Writes the url to URLs.txt
             fs.writeFileSync('URLs.txt', url);
 
-            // Define the type signature of the Rust function
+            // Defines the Rust function wrapper
             const handle_url_file = ffi.Library('./target/release/libgrrs', {
                 'handle_url_file': ['void', ['string', 'string', 'int']]
             }).handle_url_file;
 
-            // Call the Rust function and output the result to the console
+            // Calls the Rust wrapper function
             handle_url_file("URLs.txt", "example.log", 1);
 
-            // Read the contents of the metrics.txt file
+            // Reads the contents of the metrics.txt file
             const metrics = fs.readFileSync('metrics.txt', 'utf-8');
             
-            // Parse the JSON string into a JavaScript object
+            // Parses the JSON string into a JavaScript object
             const metricsObject = JSON.parse(metrics);
             
-            // Extract the properties and convert the values to their numeric form
+            // Extracts the properties from metricsObject
             const netScore = parseFloat(metricsObject.NET_SCORE);
             const rampUp = parseFloat(metricsObject.RAMP_UP_SCORE);
             const correctness = parseFloat(metricsObject.CORRECTNESS_SCORE);
@@ -919,7 +928,7 @@ app.put('/package/:id', async (req, res) => {
             const codeReview = parseFloat(metricsObject.CODE_REVIEW);
             const version = parseFloat(metricsObject.Version_Pinning);
 
-            // Check if the package meets the required scores
+            // Checks if the package meets the required scores
             if (netScore < 0.5 || rampUp < 0.5 || correctness < 0.5 || busFactor < 0.5 || responsiveMaintainer < 0.5 ||
                 license < 0.5 || codeReview < 0.5 || version < 0.5) {
                 res.status(424).send({message: 'Package is not uploaded due to the disqualified rating'});
@@ -938,7 +947,9 @@ app.put('/package/:id', async (req, res) => {
                     execSync(`git clone ${url} ${cloneDir}`);
 
                     // Removes the .git directory
-                    const gitDir = `${cloneDir}/.git`;
+                    const gitDir = cloneDir + "/.git";
+
+                    // If the directory already exists 
                     if (fs.existsSync(gitDir)) {
                         fs.rmSync(gitDir, { recursive: true, force: true });
                     }
@@ -948,8 +959,7 @@ app.put('/package/:id', async (req, res) => {
                     // Encodes the zipped file to a Base64-encoded string
                     base64String = Buffer.from(buffer).toString('base64');
 
-
-                    // Verify that the new 64-based encoded packageContents are legit!
+                    // Verifies that the new 64-based encoded packageContents are legit!
                     const result = await decodeBase64OnUpdate(base64String, JSProgram, res, req, packageID);
                                 
                     if (result.message.includes("homepage URL is missing in package.json")){
@@ -971,7 +981,7 @@ app.put('/package/:id', async (req, res) => {
                     }
 
                     if (result.message.includes("Success")){
-                        // Remove the locally downloaded GitHub directory
+                        // Removes the locally downloaded GitHub directory
                         fs.rmdirSync(cloneDir, { recursive: true });
                         //console.log("Success!");
 
@@ -979,7 +989,7 @@ app.put('/package/:id', async (req, res) => {
                         await logPackageActionEntry("UPDATE", req, req.body["metadata"]);
 
                         // 200 Version is updated.
-                        // the package contents from PackageData schema will replace previous contents
+                        // The package contents from PackageData schema will replace previous contents
                         return res.status(200).json({ message: "Version is updated" });
                     }
 
@@ -1029,14 +1039,19 @@ app.get('/packageMeta/:id', async (req, res) => {
     if (!id) {
         return res.status(400).json({ message: "There is a missing field in the PackageID" });
     }
+    if (id === 0) {
+        return res.status(400).json({ message: "Package ID cannot be 0" });
+    }
 
     const result = await doesIdExistInKind(MODULE_KIND, id)
     if(!result){
         return res.status(404).json({ message: "Package does not exist" });
     }
-
     // The name, version, and ID must match.
     const entry = await findModuleById(id);
+    if (!entry){
+        return res.status(404).json({ message: "Package does not exist" });
+    }
 
     // retreieves the package metadata
     const packageMetaData = entry["metaData"];
@@ -1181,6 +1196,10 @@ app.get('/package/byName/:name', async (req, res) => {
       // get package name from header
       const packageName = req.params.name;
 
+      if (!packageName){
+        return res.status(400).json({message: 'There is missing field(s) in the PackageName'});
+      }
+
       // PackageName Schema
       // - Names should only use typical "keyboard" characters.
       // - The name "*" is reserved. See the `/packages` API for its meaning.
@@ -1287,12 +1306,14 @@ app.post('/package/byRegEx', async (req, res) => {
               if (pkg.name === undefined || pkg["metaData"]["Version"] === undefined) {
                 throw new Error('There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid.');
               }
+              // If readme is not stored in gcp, test regex on package name only
               if (pkg.readme === undefined) {
                 if (new RegExp(regex).test(pkg.name)) {
                     return new RegExp(regex).test(pkg.name);
                 }
               
               } else {
+                // Retrieve the readme stored from Google Cloud Storage
                 const readme_content = await getCloudStoragefileAsUTF8(pkg.readme, MODULE_STORAGE_BUCKET);
                 return new RegExp(regex).test(pkg.name) || new RegExp(regex).test(readme_content);
               }

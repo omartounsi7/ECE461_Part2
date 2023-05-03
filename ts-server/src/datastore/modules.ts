@@ -47,6 +47,9 @@ async function findModuleById(id: number): Promise<any> {
     if (entity) {
       return entity;
     }
+    else {
+      return false;
+    }
 }
 
 
@@ -134,7 +137,6 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}) {
     const [entity] = await datastore.get(key);
     // Update the metaData field of the entity with the new metaData
     entity.metaData = metaData1;
-    console.log(entity.metaData)
 
     return await datastore.save({
         key: key,
@@ -265,6 +267,8 @@ async function findReposByNameAndVersion(name: string, version: string) {
     } else { // version invalid
         return -1;
     }
+    console.log(matched_repos.length)
+    console.log(matched_repos.length > 0)
     return matched_repos.length > 0 ? matched_repos[0] : [];
 }
 

@@ -555,7 +555,7 @@
           }
         });
 
-        // retrieve response data
+        // Retrieve response data
         const data = await response.json();
 
         // Error Message only defined when error occured
@@ -566,18 +566,15 @@
           return;
         }
 
-        const metadata = JSON.stringify(body_contents["metadata"]);
-        const base64 = JSON.stringify(body_contents["data"]["Content"]);
-        const name = JSON.stringify(body_contents["metadata"]["Name"]);
-
-        // Decode base64 to binary data
-        const base64WithoutQuotes = base64.replace(/"/g, '');
-        const name_new = name.replace(/"/g, '');
+        // Extract the properties from json object
+        const metadata = data["metadata"];
+        const base64 = data["data"]["Content"];
+        const name = data["metadata"]["Name"];
 
         // Create a new download link element
         const downloadLink = document.createElement('a');
-        downloadLink.setAttribute('href', `data:application/zip;base64,${base64WithoutQuotes}`);
-        downloadLink.setAttribute('download', name_new);
+        downloadLink.setAttribute('href', `data:application/zip;base64,${base64}`);
+        downloadLink.setAttribute('download', name);
 
         // Hide the download link element
         downloadLink.style.display = 'none';
