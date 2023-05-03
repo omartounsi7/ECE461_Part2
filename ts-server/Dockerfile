@@ -1,11 +1,13 @@
 # Use an official Node.js runtime as a parent image
 FROM node:14-slim
 
+RUN pwd
+RUN ls
+
+COPY . /
+
 # Set the working directory to /app
 WORKDIR /ts-server
-
-# Copy the current directory contents into the container at /app
-COPY . /ts-server
 
 # Install nginx
 RUN apt-get update && \
@@ -18,6 +20,9 @@ RUN apt-get update && apt-get install -y make
 # Install Python
 RUN apt-get update && apt-get install -y python
 ENV PYTHON /usr/bin/python
+
+# Install pm2
+# RUN npm install pm2 -g
 
 # Install any needed packages
 RUN npm install express
@@ -40,21 +45,27 @@ RUN npm install zip-dir
 RUN npm install child_process
 RUN npm install rimraf
 
+RUN pwd
+RUN ls
+
 # Build the TypeScript application
+RUN npm run clean
 RUN npm run build
 
+RUN pwd
+RUN ls
+
 # Copy the Nginx configuration file
-COPY nginx.conf /etc/nginx/nginx.conf
+# COPY nginx.conf /etc/nginx/nginx.conf
 
 # Set the environment variable to tell the runtime that it's running in a container
 ENV PORT 8080
 
-# Make the container's port 8080 available to the outside world
+# Expose ports for Nginx and your Node.js application
+# EXPOSE 80
 EXPOSE 8080
 
-# Start Nginx 
-CMD [ "service", "nginx" , "start"]
+CMD ["npm", "run", "server"]
 
-# Start the server
-CMD [ "npm", "run" , "server"]
-
+# Start Nginx and your Node.js application using pm2
+# CMD ["pm2-runtime", "start", "npm", "--", "run", "start:pm2"]

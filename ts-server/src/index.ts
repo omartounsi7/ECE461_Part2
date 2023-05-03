@@ -299,7 +299,7 @@ app.post('/package', async (req, res) => {
         fs.writeFileSync('URLs.txt', url);
 
         // Define the type signature of the Rust function
-        const handle_url_file = ffi.Library('./target/release/libgrrs', {
+        const handle_url_file = ffi.Library('libgrrs.so', {
             'handle_url_file': ['void', ['string', 'string', 'int']]
         }).handle_url_file;
 
@@ -753,7 +753,6 @@ app.get('/package/:id', async (req, res) => {
         return res.status(400).send({message: "Package ID cannot be 0"});
     }
 
-
     let id = Number(req.params.id);
     if(isNaN(id)) {
         return res.status(400).send({message: "There is missing field(s) in the PackageID/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid."});
@@ -904,8 +903,8 @@ app.put('/package/:id', async (req, res) => {
             // Writes the url to URLs.txt
             fs.writeFileSync('URLs.txt', url);
 
-            // Defines the Rust function wrapper
-            const handle_url_file = ffi.Library('./target/release/libgrrs', {
+            // Define the type signature of the Rust function
+            const handle_url_file = ffi.Library('libgrrs.so', {
                 'handle_url_file': ['void', ['string', 'string', 'int']]
             }).handle_url_file;
 
@@ -1116,7 +1115,7 @@ app.get('/package/:id/rate', async (req, res) => {
     fs.writeFileSync('URLs.txt', url);
 
     // Define the type signature of the Rust function
-    const handle_url_file = ffi.Library('./target/release/libmylib', {
+    const handle_url_file = ffi.Library('libgrrs.so', {
       'handle_url_file': ['void', ['string', 'string', 'int']]
     }).handle_url_file;
 

@@ -31,7 +31,11 @@ const LOGGER_NAME_PREFIX = "log";
  * });
  */
 async function logRequest(requestType: string, endpoint: string, req: any) {
-    await writeToLog(`${requestType.toUpperCase()} ${endpoint} endpoint called:\n    Headers: ${req.headers === undefined ? "[empty]" : `\n    ${JSON.stringify(req.headers)}`}\n    Body: ${req.body === undefined ? "[empty]" : `\n    ${JSON.stringify(req.body)}`}`);
+    await writeToLog(`${requestType.toUpperCase()} ${endpoint} endpoint called:\n    Headers: ${req.headers === undefined ? "[empty]" : `    ${JSON.stringify(req.headers)}`}\n    Body: ${req.body === undefined ? "[empty]" : `\n    ${JSON.stringify(req.body)}`}`);
+}
+
+async function logResponse(requestType: string, endpoint: string, res: any) {
+    await writeToLog(`${requestType.toUpperCase()} ${endpoint} endpoint response:\n    Status: ${res.statusCode}\n    Body: ${res.body === undefined ? "[empty]" : `\n    ${JSON.stringify(res.body)}`}`);
 }
 
 async function writeToLog(log: any) {
@@ -82,4 +86,4 @@ function getLogFileName() {
 }
 
 
-export { writeToLog, logRequest };
+export { writeToLog, logRequest, logResponse };
