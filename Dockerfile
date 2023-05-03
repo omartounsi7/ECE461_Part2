@@ -8,9 +8,8 @@ WORKDIR /grandiose-server/ts-server
 
 RUN pwd
 RUN ls
-RUN ls grrs
-RUN ls grrs/target
-RUN ls grrs/target/release
+RUN ls src
+RUN cat src/index.js
 
 ENV PORT 8080
 EXPOSE 8080

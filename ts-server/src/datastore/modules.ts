@@ -47,8 +47,10 @@ async function findModuleById(id: number): Promise<any> {
     if (entity) {
       return entity;
     }
+    else {
+      return false;
+    }
 }
-
 
 function getModuleKey(id?: number): Key {
     return getKey(NAMESPACE, MODULE_KIND, id);
@@ -134,7 +136,6 @@ async function updateRepo(repoID: number, newData: {[key: string]: any}) {
     const [entity] = await datastore.get(key);
     // Update the metaData field of the entity with the new metaData
     entity.metaData = metaData1;
-    console.log(entity.metaData)
 
     return await datastore.save({
         key: key,
@@ -204,7 +205,7 @@ async function findReposByNameAndVersion(name: string, version: string) {
 
     let matched_repos = [];
     
-    if (version.search(/^[~|^]?\d+\.\d+\.\d+(-([a-zA-Z]+)(.*))?$/) == 0) { // exact,carat,tilde
+    if (version.search(/^[~|^]?\d+\.\d+\.\d+$/) == 0) { // exact,carat,tilde
         const query = datastore
             .createQuery(NAMESPACE, MODULE_KIND)
             .filter('name', '=', name)

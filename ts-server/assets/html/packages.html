@@ -1,6 +1,9 @@
 <!DOCTYPE html>
-<html>
-<head>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes, maximum-scale=5">
+  </head>
   <title>Modules Registry</title>
   <style>
     body {
@@ -85,7 +88,7 @@
     .radio-group input[type="radio"] {
       margin-right: 5px;
     }
-    /* New styles */
+
     #register-user form label,
     #register-user form input[type="text"],
     #register-user form input[type="password"] {
@@ -119,19 +122,25 @@
         </nav>
     </header>
     <main>
+      
       <div id="package-search" class="endpoint-div">
         <h2 style="margin-right: 20px;">Package Search</h2>
         <form>
           <label for="package-search-input">Enter search queries in the format: name,version
             <br> With a new line separating each query
-            <br> Leave blank to query all packages
+            <br> Provide * to query all packages
           </label>
           <textarea id="package-search-input" rows="5" cols="50" class="input-text"></textarea>
           <br>
+          <label for="pagination-input">Enter pagination:</label>
+          <input type="text" id="pagination-input">
+          <br>
           <button type="button" class="submit-button" onclick="submitPackageSearch()">Submit Search</button>
+          <div id="packages"></div>
         </form>
-      </div>
 
+      </div>
+    
       <div id="regex-search" class="endpoint-div">
         <h2 style="margin-right: 20px;">Regex Search</h2>
         <form>
@@ -324,20 +333,21 @@
             window.location.href = "/";
             return false
           } else if (errorMessage.includes("Invalid Token")) {
-            renderErrorView(errorMessage, 'packages.html');
+            alert(errorMessage);
             return false
           } else if (errorMessage.includes("No Token Provided")) {
-            renderErrorView(errorMessage, 'login.html');
+            alert(errorMessage);
+            window.location.href = "/";
             return false
           } else if (errorMessage.includes("SyntaxError:")) {
-            renderErrorView(errorMessage, 'packages.html');
+            alert(errorMessage);
             return false
           } else {
-            renderErrorView(errorMessage, 'packages.html');
+            alert(errorMessage);
           }
         } else if (response.status === 404) {
             // Error: Package does not exist
-            renderErrorView(errorMessage, 'packages.html');
+            alert(errorMessage);
             return false
         } else if (response.status === 401) {
           // The user does not have the necessary admin privileges to reset the entire registry
@@ -345,11 +355,11 @@
           return false;
         } else if (response.status === 409) {
           // Package already exists.
-          renderErrorView(errorMessage, 'packages.html');
+          alert(errorMessage);
           return false
         } else if (response.status === 424) {
           // Package is not uploaded due to the disqualified rating.
-          renderErrorView(errorMessage, 'packages.html');
+          alert(errorMessage);
           return false
         } else if (response.status === 402) {
           // Session needs to restart, prompt user to log out
@@ -359,7 +369,7 @@
           // Redirect the user to the login page
           window.location.href = "/";
           return false
-        } else if (response.status === 406 && errorMessage === true){
+        } else if (response.status === 203 && errorMessage === true){
           // If the username is already taken, ask the user to reprompt for a new name
           alert('Username is already taken. Please choose a different username.');
           return false;
@@ -555,7 +565,7 @@
           }
         });
 
-        // retrieve response data
+        // Retrieve response data
         const data = await response.json();
 
         // Error Message only defined when error occured
@@ -566,18 +576,15 @@
           return;
         }
 
-        const metadata = JSON.stringify(body_contents["metadata"]);
-        const base64 = JSON.stringify(body_contents["data"]["Content"]);
-        const name = JSON.stringify(body_contents["metadata"]["Name"]);
-
-        // Decode base64 to binary data
-        const base64WithoutQuotes = base64.replace(/"/g, '');
-        const name_new = name.replace(/"/g, '');
+        // Extract the properties from json object
+        const metadata = data["metadata"];
+        const base64 = data["data"]["Content"];
+        const name = data["metadata"]["Name"];
 
         // Create a new download link element
         const downloadLink = document.createElement('a');
-        downloadLink.setAttribute('href', `data:application/zip;base64,${base64WithoutQuotes}`);
-        downloadLink.setAttribute('download', name_new);
+        downloadLink.setAttribute('href', `data:application/zip;base64,${base64}`);
+        downloadLink.setAttribute('download', name);
 
         // Hide the download link element
         downloadLink.style.display = 'none';
@@ -799,9 +806,6 @@
         ratingsDiv.innerHTML = ratingString;
       }
 
-
-
-
       async function getPackageHistory() {
         // Get the form fields
         const packageName = document.getElementById('package-name-input');
@@ -861,19 +865,116 @@
       }
 
       // package search
-      function submitPackageSearch() {
-          // Select the package-search-input element and read its value
+      async function submitPackageSearch() {
+          // Read the value at the package-search-input element
           const packageSearchInput = document.getElementById("package-search-input");
           const searchQueries = packageSearchInput.value;
 
-          // Do something with the searchQueries variable, such as send it to the server for processing
-          console.log(searchQueries);
+          // Read the value at the package-search-input element
+          const paginationInput = document.getElementById("pagination-input");
+          // Provide this for pagination. If not provided, returns the first page of results.
+          let offset = paginationInput.value;
 
-          // get input(s)
-          // confirm input(s) are correct
-          // send request
-          // recv request
-          // display results
+          if (!searchQueries) {
+            alert('Provide some input in the text field');
+            return;
+          }
+        
+          // Provide this for pagination. If not provided, returns the first page of results.
+          if (offset === "0" || !offset){
+            offset = 1
+          }
+
+          // Provide this for pagination. If not provided, returns the first page of results.
+          if (Number(offset) < 0){
+            alert('Cannot have a negative pagination');
+          }
+
+
+          // Splitting the input into an array of strings (name, version)
+          let values = searchQueries.split("\n");
+
+          let objectFormatList = []
+          // Iterating over each query by user
+          for(let i = 0; i < values.length; i++) {
+            // Splitting (name, version)
+            let [name, version] = values[i].split(", ");
+            let objectFormat = {
+                "Version": version,
+                "Name": name
+            }
+            objectFormatList.push(objectFormat)
+          }
+
+          // Calls the package post api endpoint
+          const response = await fetch('/packages?offset=' + offset, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Authorization': localStorage.getItem('authToken')
+            },
+            body: JSON.stringify(objectFormatList)
+          });
+
+          // reads the offset header from the response
+          const offsetHeader = response.headers.get('offset');
+          const offsetReceived = Number(offsetHeader);
+
+          // retrieves the return object
+          const data = await response.json();
+
+          // Error Message only defined when error occured
+          const errorMessage = data.message;
+
+          const success_value = await handleResponseError(response, errorMessage);
+          if (!success_value) {
+            return;
+          }
+
+          // HTML-element that will show the resulting packages to the user
+          const packagesOutput = document.getElementById("packages");
+          
+          // Need to account for async function that will be needed for popularity 
+          let packageBoxesHTML = '';
+          for (const package of data) {
+            const popularity = await popularityModule(package.ID);
+            packageBoxesHTML += `
+              <div style="border: 1px solid #ccc; border-radius: 5px; margin: 10px; padding: 10px; box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2); transform: translateZ(0);">
+                <p><strong>Version:</strong> ${package.Version}</p>
+                <p><strong>Name:</strong> ${package.Name}</p>
+                <p><strong>ID:</strong> ${package.ID}</p>
+                <p><strong>Popularity:</strong> ${popularity}</p>
+              </div>
+            `;
+          }
+          // assign the HTML-element the resulting HTML
+          packagesOutput.innerHTML = packageBoxesHTML;
+
+          // alerts the user of the successful retrieval of their packages
+          alert("These are all the packages provided given the pagination constraint");
+      }
+
+      async function popularityModule(ID) {
+        const response2 = await fetch('/popularity/' + ID, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Authorization': localStorage.getItem('authToken'),
+            }
+          });
+          
+          // retrieves the return object
+          const data2 = await response2.json();
+          // Error Message only defined when error occured
+          const errorMessage2 = data2.message;
+
+          const success_value2 = await handleResponseError(response2, errorMessage2);
+          if (!success_value2) {
+            return;
+          }
+
+          // return the download count for that modules
+          return data2.downloads;
       }
 
       // upload module
@@ -901,6 +1002,7 @@
             return zip.generateAsync({ type: "base64" });
           });
 
+          // Calls the package post api endpoint
           const response = await fetch('/package/', {
             method: 'POST',
             headers: {
@@ -911,6 +1013,7 @@
           });
 
 
+          // retrieves the return object
           const data = await response.json();
           // Error Message only defined when error occured
           const errorMessage = data.message;
@@ -956,40 +1059,6 @@
         }
       }
 
-      // executes the JavaScript within the <script> tags in the fetched error.html file.
-      function executeScripts(element) {
-        // Get all script tags in the element
-        const scripts = element.querySelectorAll('script');
-
-        // Execute each script in the element
-        for (let script of scripts) {
-          const scriptContent = script.innerHTML;
-          const newScript = document.createElement('script');
-          newScript.innerHTML = scriptContent;
-          document.body.appendChild(newScript);
-        }
-      }
-
-      async function renderErrorView(errorMessage, backUrl) {
-        const errorHtmlResponse = await fetch('/error.html');
-        const errorHtml = await errorHtmlResponse.text();
-
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(errorHtml, 'text/html');
-        doc.querySelector('#error-message').setAttribute('data-message', errorMessage);
-        doc.querySelector('#error-message').innerHTML = errorMessage;
-
-        // Set the value of the "data-url" attribute on the #back-url element
-        const backUrlElement = doc.querySelector('#back-url');
-        backUrlElement.setAttribute('data-url', backUrl);
-
-        // Replace the current document's head with the fetched head
-        document.head.innerHTML = doc.head.innerHTML;
-        document.body.innerHTML = doc.documentElement.innerHTML;
-        // Execute scripts in the fetched error.html
-        executeScripts(doc);
-      }
-
       async function submitRegexSearch() {
         let regex = document.getElementById('regex-input').value.trim();
 
@@ -1009,6 +1078,8 @@
         });
 
         const packages = await response.json();
+
+        // only defined when error is present
         const errorMessage = packages.message;
 
         const success_value = await handleResponseError(response, errorMessage)
@@ -1019,6 +1090,7 @@
         const packagesList = document.getElementById('packages-list');
         packagesList.innerHTML = '';
 
+        // displays matched regex packages to user as HTML list elements
         packages.forEach(pkg => {
           const li = document.createElement('li');
           li.textContent = `Name: ${pkg.Name} –– Version: (${pkg.Version})`;

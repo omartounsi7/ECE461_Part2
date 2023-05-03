@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes, maximum-scale=5">
     <title>Login Page</title>
     <style>
 
@@ -76,145 +77,74 @@
       box-shadow: 0 0 10px #f00;
       display: block;
     }
-
-    #errorCode, #errorMessage {
-      margin: 0;
-      padding: 0;
-      font-weight: bold;
-    }
-
     </style>
   </head>
   <body>
-    <div class="login-box">
-      <h1>Login</h1>
-      <form id="loginForm">
-        <div class="form-input">
-          <label for="username">Username:</label>
-          <input type="text" name="username" id="username" class="form-box">
-        </div>
-        <div class="form-input">
-          <label for="password">Password:</label>
-          <input type="password" name="password" id="password" class="form-box">
-        </div>
-        <div class="error-box">
-          <div id="errorMessage"></div>
-          <div id="errorCode"></div>
-        </div>
-        <input type="submit" value="Login">
-      </form>
-    </div>
+    <main>
+      <div class="login-box">
+        <header>
+          <h1>Login</h1>
+        </header>
+        <form id="loginForm">
+          <div class="form-input">
+            <label for="username">Username:</label>
+            <input type="text" name="username" id="username" class="form-box">
+          </div>
+          <div class="form-input">
+            <label for="password">Password:</label>
+            <input type="password" name="password" id="password" class="form-box">
+          </div>
+          <div class="error-box">
+            <div id="errorMessage"></div>
+            <div id="errorCode"></div>
+          </div>
+          <button type="button" class="submit-button" onclick="authentication()" aria-label="Login button">Login</button>
+        </form>
+      </div>
+    </main>
     <script>
-      loginForm.onsubmit = (event) => {
-      event.preventDefault(); // prevent default form submission behavior
 
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      const url = '/authenticate'; // the URL to the API endpoint
-      const errorBox = document.querySelector('.error-box');
-      
-      // Construct the request body as a JSON object
-      const requestBody = {
-          User: {
-              name: username,
-              isAdmin: false
-          },
-          Secret: {
-              password: password
-          }
-      };
+      async function authentication() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const url = '/authenticate'; // the URL to the API endpoint
+        const errorBox = document.querySelector('.error-box');
+        
+        // Construct the request body as a JSON object
+        const requestBody = {
+            User: {
+                name: username,
+                isAdmin: false
+            },
+            Secret: {
+                password: password
+            }
+        };
 
-      const options = {
-          method: 'PUT',
-          headers: {
-              'Content-Type': 'application/json' // set the Content-Type header to 'application/json'
-          },
-          body: JSON.stringify(requestBody), // convert the JavaScript object to a JSON string
-      };
+        const options = {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json' // set the Content-Type header to 'application/json'
+            },
+            body: JSON.stringify(requestBody), // convert the JavaScript object to a JSON string
+        };
 
-    async function renderErrorView(errorMessage, backUrl) {
-      const errorHtmlResponse = await fetch('/error.html');
-      const errorHtml = await errorHtmlResponse.text();
+        // send the PUT request with the form data in the request body
+        const response = await fetch(url, options);
+        const data = await response.json();
 
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(errorHtml, 'text/html');
-      doc.querySelector('#error-message').setAttribute('data-message', errorMessage);
-      doc.querySelector('#error-message').innerHTML = errorMessage;
-
-      // Set the value of the "data-url" attribute on the #back-url element
-      const backUrlElement = doc.querySelector('#back-url');
-      backUrlElement.setAttribute('data-url', backUrl);
-
-      // Replace the current document's head with the fetched head
-      document.head.innerHTML = doc.head.innerHTML;
-      document.body.innerHTML = doc.documentElement.innerHTML;
-      // Execute scripts in the fetched error.html
-      executeScripts(doc);
-    }
-
-    // executes the JavaScript within the <script> tags in the fetched error.html file.
-    function executeScripts(element) {
-      // Get all script tags in the element
-      const scripts = element.querySelectorAll('script');
-
-      // Execute each script in the element
-      for (let script of scripts) {
-        const scriptContent = script.innerHTML;
-        const newScript = document.createElement('script');
-        newScript.innerHTML = scriptContent;
-        document.body.appendChild(newScript);
-      }
-    }
-
-
-    fetch(url, options) // send the PUT request with the form data in the request body
-      .then(response => response.json().then(data => ({response, data})))
-      .then(({response, data}) => {
-        if (data.message && response.status === 401) {
+        if (data.message && response.status !== 200) {
           errorMessage.innerText = "HTTP response status code: " + response.status + "\n" + data.message;
           errorBox.classList.add('active');
         } else {
           // Set the authentication token in local storage
           localStorage.setItem('authToken', data);
 
-          // Get the authentication token from local storage
-          const authToken = localStorage.getItem('authToken');
-
-          // Set up the headers for the fetch request
-          const headers = {
-            'X-Authorization': authToken
-          };
-          
-          fetch('/packages', {
-            method: 'GET',
-            headers: headers
-          })
-          
-          .then(async (response) => {
-            if (!response.ok) {
-              const data = await response.json();
-              const errorMessage = data.message;
-              renderErrorView(errorMessage, '/');
-            } else {
-              // Handle successful response
-              window.location.href = 'packages.html';
-            };
-          })
+          // Handle successful response
+          alert("Redirecting to Module Registry");
+          window.location.href = 'packages.html';
         }
-      })
-      .catch(error => {s
-        if (error.message) {
-          document.getElementById('errorMessage').innerText =  error.message
-          errorBox.classList.add('active');
-        }
-        else {
-          document.getElementById('errorMessage').innerText =  error
-          errorBox.classList.add('active');
-        }
-      });
-
-
-  };
+      };
   </script>
   </body>
 </html>
