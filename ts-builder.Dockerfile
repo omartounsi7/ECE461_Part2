@@ -11,7 +11,8 @@ RUN apt-get update \
     && apt-get install -y build-essential \
     && apt-get install -y curl \
     && apt-get install -y pkg-config \
-    && apt-get install -y libssl-dev
+    && apt-get install -y libssl-dev \
+    && apt-get install -y libpython3.7-dev
 
 # Install Python and pip
 RUN apt-get install -y python3-pip
