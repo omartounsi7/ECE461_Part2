@@ -31,6 +31,8 @@ RUN npm install path \
     && npm install --save ffi-napi  @types/ffi-napi \
     && npm i --save-dev @types/jsonwebtoken \
     && npm i --save-dev @types/bcrypt \
+    && npm install jsonwebtoken \
+    && npm install bcrypt \
     && npm install dotenv --save \
     && npm install fs \
     && npm install jszip \
