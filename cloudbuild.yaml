@@ -11,7 +11,7 @@ steps:
   - name: 'gcr.io/cloud-builders/gcloud'
     args: ['container', 'images', 'list', '--repository=gcr.io/npm-module-registry-381816']
 
-- name: 'gcr.io/cloud-builders/gcloud'
+  - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'app'
       - 'deploy'
@@ -24,4 +24,3 @@ steps:
     args: ['build', '-t', 'rust-builder', '-f', 'rust-builder.Dockerfile', '.']
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'ts-builder', '-f', 'ts-builder.Dockerfile', '.']
-    
