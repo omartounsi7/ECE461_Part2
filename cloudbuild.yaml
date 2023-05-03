@@ -1,13 +1,15 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'rust-builder', '-f', 'rust-builder.Dockerfile', '.']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'ts-builder', '-f', 'ts-builder.Dockerfile', '.']
+  - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'app-image:v1.0.0', '-f', 'Dockerfile', '.']
     
   - name: 'gcr.io/cloud-builders/docker'
     args: ['tag', 'app-image:v1.0.0', 'gcr.io/npm-module-registry-381816/app-image:v1.0.0']
-
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/npm-module-registry-381816/app-image:v1.0.0']
-
   - name: 'gcr.io/cloud-builders/gcloud'
     args: ['container', 'images', 'list', '--repository=gcr.io/npm-module-registry-381816']
 
@@ -18,8 +20,3 @@ steps:
       - 'app.yaml'
       - '--image-url=gcr.io/npm-module-registry-381816/app-image:v1.0.0'
       - '--project=npm-module-registry-381816'
-      
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'rust-builder', '-f', 'rust-builder.Dockerfile', '.']
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'ts-builder', '-f', 'ts-builder.Dockerfile', '.']
