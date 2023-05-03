@@ -1,0 +1,114 @@
+openapi: 3.0.2
+
+info:
+  title: Upload Info API Endpoint And Popularity API Endpoint
+  description: Fetches uploader name and upload date for a given package ID. Returns the download count of a module, specified by ID.
+  version: 1.0.0
+
+paths:
+  /package/{id}/upload_info:
+    get:
+      summary: Fetches uploader name and upload date for a given package ID.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: The ID of the package to fetch the upload info for.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully fetched the package upload info.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: The name of the uploader.
+                  date:
+                    type: string
+                    description: The date of package upload.
+        '404':
+          description: Package does not exist.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message for the non-existent package ID.
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message for the unauthorized request.
+      security:
+        - bearerAuth: []
+
+    x-openapi-router-controller: package
+    operationId: getUploadInfoById
+
+  /popularity/{id}:
+    get:
+      summary: Returns the download count of a module.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: The unique identifier of the module.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: The download count is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  downloads:
+                    type: integer
+                    description: The number of downloads for the specified module.
+        '400':
+          description: Malformed request.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message for the malformed request.
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message for the unauthorized request.
+        '404':
+          description: ID does not exist.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message for the non-existent ID.
+      security:
+        - bearerAuth: []
+
+    x-openapi-router-controller: popularity
+    operationId: getPopularityById
