@@ -1,6 +1,9 @@
 <!DOCTYPE html>
-<html>
-<head>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes, maximum-scale=5">
+  </head>
   <title>Modules Registry</title>
   <style>
     body {
@@ -330,20 +333,21 @@
             window.location.href = "/";
             return false
           } else if (errorMessage.includes("Invalid Token")) {
-            renderErrorView(errorMessage, 'packages.html');
+            alert(errorMessage);
             return false
           } else if (errorMessage.includes("No Token Provided")) {
-            renderErrorView(errorMessage, 'login.html');
+            alert(errorMessage);
+            window.location.href = "/";
             return false
           } else if (errorMessage.includes("SyntaxError:")) {
-            renderErrorView(errorMessage, 'packages.html');
+            alert(errorMessage);
             return false
           } else {
-            renderErrorView(errorMessage, 'packages.html');
+            alert(errorMessage);
           }
         } else if (response.status === 404) {
             // Error: Package does not exist
-            renderErrorView(errorMessage, 'packages.html');
+            alert(errorMessage);
             return false
         } else if (response.status === 401) {
           // The user does not have the necessary admin privileges to reset the entire registry
@@ -351,11 +355,11 @@
           return false;
         } else if (response.status === 409) {
           // Package already exists.
-          renderErrorView(errorMessage, 'packages.html');
+          alert(errorMessage);
           return false
         } else if (response.status === 424) {
           // Package is not uploaded due to the disqualified rating.
-          renderErrorView(errorMessage, 'packages.html');
+          alert(errorMessage);
           return false
         } else if (response.status === 402) {
           // Session needs to restart, prompt user to log out
@@ -1053,40 +1057,6 @@
           // Clear the URL text field
           url.value = "";      
         }
-      }
-
-      // executes the JavaScript within the <script> tags in the fetched error.html file.
-      function executeScripts(element) {
-        // Get all script tags in the element
-        const scripts = element.querySelectorAll('script');
-
-        // Execute each script in the element
-        for (let script of scripts) {
-          const scriptContent = script.innerHTML;
-          const newScript = document.createElement('script');
-          newScript.innerHTML = scriptContent;
-          document.body.appendChild(newScript);
-        }
-      }
-
-      async function renderErrorView(errorMessage, backUrl) {
-        const errorHtmlResponse = await fetch('/error.html');
-        const errorHtml = await errorHtmlResponse.text();
-
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(errorHtml, 'text/html');
-        doc.querySelector('#error-message').setAttribute('data-message', errorMessage);
-        doc.querySelector('#error-message').innerHTML = errorMessage;
-
-        // Set the value of the "data-url" attribute on the #back-url element
-        const backUrlElement = doc.querySelector('#back-url');
-        backUrlElement.setAttribute('data-url', backUrl);
-
-        // Replace the current document's head with the fetched head
-        document.head.innerHTML = doc.head.innerHTML;
-        document.body.innerHTML = doc.documentElement.innerHTML;
-        // Execute scripts in the fetched error.html
-        executeScripts(doc);
       }
 
       async function submitRegexSearch() {

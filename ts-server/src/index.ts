@@ -1610,16 +1610,6 @@ app.put("/secret", async (req, res) => {
     return res.status(200).send({message: "Secret added successfully"});
 });
 
-app.get("/packages", async (req, res) => {
-    await logRequest("get", "/packages", req);
-    if(!await authenticateJWT(req, res)) {
-        return;
-    }
-    //console.log("Redirecting user to packages.html")
-    // server webpage (If successfully logged in, redirect to packages.html)
-    res.status(200).sendFile(path.join(__dirname, HTML_PATH + "/packages.html"));
-});
-
 app.listen(port, () => {
     console.log("The application is listening on port " + port + "!");
 });
