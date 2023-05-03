@@ -95,26 +95,34 @@ app.post('/packages', async (req, res) => {
     //      too many packages returned
 
     // process request
-
     let queries = req.body;
     let offset = req.headers.offset;
 
     // console.log(`Got /package post request`);
 
+    let packages: {Version: any, Name: any, ID: any}[] = [];
+    // there are 1 more more queries and an offset is given. The request is valid.
+    // do db actions
+    let offset_num = Number(offset);
+
     // validate post request
-    if (typeof queries === undefined || offset === undefined) {
+    if (typeof queries === undefined || offset === undefined || !Array.isArray(queries)) {
         // invalid request
         res.status(400).send({message:"There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid."});
         return;
+    }
+    if(isNaN(offset_num)) {
+        res.status(400).send({message:"There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid."});
+        return;
+    }
+
+    if (queries.length === 1 && queries[0]["Name"] === "*") {
+        // iterate over all packages
+        let modules = await getAllRepos();
+        modules.forEach((module: any) => {
+            packages.push({"Version": module["version"], "Name": module["name"], "ID": module["metaData"]["ID"] });
+        });
     } else {
-        let packages: {Version: any, Name: any, ID: any}[] = [];
-        // there are 1 more more queries and an offset is given. The request is valid.
-         // do db actions
-        let offset_num = Number(offset);
-        if(isNaN(offset_num)) {
-            res.status(400).send({message:"There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid."});
-            return;
-        }
         try {
             for (const e of queries) {
                 let versions = e["Version"];
@@ -152,19 +160,17 @@ app.post('/packages', async (req, res) => {
             //console.log(e)
             return;
         }
-        let results;
-        // page nate here
-        const max_per_page = 10;
-        if(packages.length < offset_num * max_per_page) {
-            results = packages.slice(0,10);
-        } else {
-            results = packages.slice(offset_num * max_per_page, max_per_page);
-        }
-        // send results here
-        res.status(200).json(results);
-        return
     }
-
+    let results;
+    // page nate here
+    const max_per_page = 10;
+    if(packages.length < offset_num * max_per_page) {
+        results = packages.slice(0,10);
+    } else {
+        results = packages.slice(offset_num * max_per_page, max_per_page);
+    }
+    // send results here
+    res.status(200).json(results);
 
     // response
 
