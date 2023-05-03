@@ -6,11 +6,8 @@ FROM node:14-slim
 #WORKDIR /grandiose-server/ts-server
 
 
-# Set the working directory to /app
 WORKDIR /ts-server
-# Copy the current directory contents into the container at /app
 COPY . /ts-server
-# Install stuff
 RUN apt-get update
 RUN apt-get install -y build-essential
 RUN apt-get install -y curl
