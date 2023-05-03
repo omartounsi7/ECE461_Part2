@@ -133,7 +133,7 @@
           <input type="text" id="pagination-input">
           <br>
           <button type="button" class="submit-button" onclick="submitPackageSearch()">Submit Search</button>
-          <div id="packages-list"></div>
+          <div id="packages"></div>
         </form>
 
       </div>
@@ -901,18 +901,18 @@
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'X-Authorization': localStorage.getItem('authToken'),
-            }
+              'X-Authorization': localStorage.getItem('authToken')
+            },
+            body: JSON.stringify(objectFormatList)
           });
 
           // reads the offset header from the response
           const offsetHeader = response.headers.get('offset');
           const offsetReceived = Number(offsetHeader);
-          console.log(offsetReceived)
 
           // retrieves the return object
           const data = await response.json();
-          console.log(data)
+
           // Error Message only defined when error occured
           const errorMessage = data.message;
 
@@ -922,17 +922,22 @@
           }
 
           // HTML-element that will show the resulting packages to the user
-          const packagesOutput = document.getElementById("packages-list");
-
-          // creates each package HTML element in json object received by server
-          const packageBoxesHTML = data.map(package => `
-            <div style="border: 1px solid #ccc; border-radius: 5px; margin: 10px; padding: 10px; box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2); transform: translateZ(0);">
-              <p><strong>Version:</strong> ${package.Version}</p>
-              <p><strong>Name:</strong> ${package.Name}</p>
-              <p><strong>ID:</strong> ${package.ID}</p>
-              <p><strong>Popularity:</strong> ${popularityModule(ID)}</p>
-            </div>
-          `).join('');
+          const packagesOutput = document.getElementById("packages");
+          
+          // Need to account for async function that will be needed for popularity 
+          let packageBoxesHTML = '';
+          for (const package of data) {
+            const popularity = await popularityModule(package.ID);
+            packageBoxesHTML += `
+              <div style="border: 1px solid #ccc; border-radius: 5px; margin: 10px; padding: 10px; box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2); transform: translateZ(0);">
+                <p><strong>Version:</strong> ${package.Version}</p>
+                <p><strong>Name:</strong> ${package.Name}</p>
+                <p><strong>ID:</strong> ${package.ID}</p>
+                <p><strong>Popularity:</strong> ${popularity}</p>
+              </div>
+            `;
+          }
+          // assign the HTML-element the resulting HTML
           packagesOutput.innerHTML = packageBoxesHTML;
 
           // alerts the user of the successful retrieval of their packages
@@ -954,12 +959,12 @@
           const errorMessage2 = data2.message;
 
           const success_value2 = await handleResponseError(response2, errorMessage2);
-          if (!success_value) {
+          if (!success_value2) {
             return;
           }
 
           // return the download count for that modules
-          return data2.download_count;
+          return data2.downloads;
       }
 
       // upload module
@@ -1097,6 +1102,8 @@
         });
 
         const packages = await response.json();
+
+        // only defined when error is present
         const errorMessage = packages.message;
 
         const success_value = await handleResponseError(response, errorMessage)
@@ -1107,6 +1114,7 @@
         const packagesList = document.getElementById('packages-list');
         packagesList.innerHTML = '';
 
+        // displays matched regex packages to user as HTML list elements
         packages.forEach(pkg => {
           const li = document.createElement('li');
           li.textContent = `Name: ${pkg.Name} –– Version: (${pkg.Version})`;

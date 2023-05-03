@@ -71,33 +71,6 @@ async function packages(req: any, res: any, offset: any) {
         return;
     }
 
-    let results = [
-        {
-          "Version": "1.2.3",
-          "Name": "Underscore",
-          "ID": "underscore"
-        },
-        {
-          "Version": "1.2.3-2.1.0",
-          "Name": "Lodash",
-          "ID": "lodash"
-        },
-        {
-          "Version": "^1.2.3",
-          "Name": "React",
-          "ID": "react"
-        }
-    ]
-
-     // sets the offset header in the response
-     res.header('offset', offset);
-
-     // send results here
-     return res.status(200).json(results);
-};
-
-/*
-
     // process request
     let queries = req.body;
     let packages: {Version: any, Name: any, ID: any}[] = [];
@@ -105,10 +78,15 @@ async function packages(req: any, res: any, offset: any) {
     let offset_num = Number(offset);
 
     // validate post request
-    if (typeof queries === undefined || offset === undefined || !Array.isArray(queries)) {
+    if (typeof queries === undefined || !Array.isArray(queries)) {
         // invalid request
         res.status(400).send({message:"There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid."});
         return;
+    }
+
+    // if offset is not provided, we return the first page of results
+    if (offset_num === undefined) {
+        offset_num = 0
     }
 
     if (isNaN(offset_num)) {
@@ -116,6 +94,7 @@ async function packages(req: any, res: any, offset: any) {
         return;
     }
 
+    
     if (queries.length === 1 && queries[0]["Name"] === "*") {
         // iterate over all packages
         let modules = await getAllRepos();
@@ -125,39 +104,39 @@ async function packages(req: any, res: any, offset: any) {
     } else {
         try {
             for (const e of queries) {
-                let versions = e["Version"];
+                let version = e["Version"];
                 let name = e["Name"];
-                if(versions === undefined || name === undefined) {
+
+                if(version === undefined || name === undefined) {
                     res.status(400).send({message:"There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid."});
                     return;
                 }
                 // console.log(e)
-                const regex = /\((.*?)\)/g;
-                let matches_ = versions.match(regex)
-                let matches: string[] = [];
-                matches_.forEach((match: String) => {
-                    matches.push(match.substring(1, match.length - 1));
-                });
-                for (const version of matches) {
-                    let matched_repos = await findReposByNameAndVersion(name, version);
-                    if(matched_repos === -1) {
-                        res.status(400).send({message:"Invalid Version Format"});
-                        return;
-                    }
-                    matched_repos.forEach((repo: any) => {
-                        let version = repo["version"];
-                        let id = repo["metaData"]["ID"];
-                        // let id = repo["id"];
-                        // console.log(`found repo: ${name} ${id} ${version}`)
-                        packages.push({"Version": version, "Name": name, "ID": id });
-                        // packages.push(repo["metadata"].clone())
-                        // console.log(`found repo: ${repo["metadata"]}`)
-                    });
+                // const regex = /\((.*?)\)/g;
+                // let matches_ = versions.match(regex)
+                //let matches: string[] = [];
+
+                //matches_.forEach((match: String) => {
+                //    matches.push(match.substring(1, match.length - 1));
+                //});
+
+                let matched_repos = await findReposByNameAndVersion(name, version);
+                if(matched_repos === -1) {
+                    res.status(400).send({message:"Invalid Version Format"});
+                    return;
                 }
+                matched_repos.forEach((repo: any) => {
+                    let version = repo["version"];
+                    let id = repo["metaData"]["ID"];
+                    // let id = repo["id"];
+                    // console.log(`found repo: ${name} ${id} ${version}`)
+                    packages.push({"Version": version, "Name": name, "ID": id });
+                    // packages.push(repo["metadata"].clone())
+                    // console.log(`found repo: ${repo["metadata"]}`)
+                });
             }
         } catch(e: any) {
             res.status(400).send({message:"There is missing field(s) in the PackageQuery/AuthenticationToken or it is formed improperly, or the AuthenticationToken is invalid."});
-            //console.log(e)
             return;
         }
     }
@@ -166,8 +145,10 @@ async function packages(req: any, res: any, offset: any) {
     // pagination logic here
     const max_per_page = 10;
     if (packages.length < offset_num * max_per_page) {
+        //  Starts at index 0 and has a maximum of max_per_page packages. 
         results = packages.slice(0,10);
     } else {
+        //  Starts at index (offset_num * max_per_page) and has a maximum of max_per_page packages. 
         results = packages.slice(offset_num * max_per_page, max_per_page);
     }
 
@@ -177,7 +158,7 @@ async function packages(req: any, res: any, offset: any) {
     // send results here
     return res.status(200).json(results);
 };
-*/
+
 
 // Reset the registry to a system default state (an empty registry with the default user))
 app.delete('/reset', async (req, res) => {
@@ -307,15 +288,15 @@ app.post('/package', async (req, res) => {
         // Write the url to a file called URLs.txt
         fs.writeFileSync('URLs.txt', url);
 
-        // Define the type signature of the Rust function
+        // Define Rust signature
         const handle_url_file = ffi.Library('../grrs/target/release/libgrrs', {
             'handle_url_file': ['void', ['string', 'string', 'int']]
         }).handle_url_file;
 
-        // Call the Rust function and output the result to the console
+        // Call the Rust entry function
         handle_url_file("URLs.txt", "example.log", 1);
 
-        // Read the contents of the metrics.txt file
+        // Read the contents of metrics.txt
         const metrics = fs.readFileSync('metrics.txt', 'utf-8');
         
         // Parse the JSON string into a JavaScript object
@@ -1296,11 +1277,11 @@ app.post('/package/byRegEx', async (req, res) => {
     }
     // Check if the 'regex' field is present in the request body
     const regex = req.body["RegEx"];
-    console.log(regex)
     if (!regex) { 
         return res.status(400).json({ message: 'Malformed JSON: Request must include a regex field.' });
     }
 
+     // Check if the 'regex' is * only
     if (regex === '*') { 
         return res.status(400).json({ message: 'Invalid Regex: Regex cannot just be a *' });
     }
@@ -1327,7 +1308,7 @@ app.post('/package/byRegEx', async (req, res) => {
               }
             })
           );
-          
+        
         const passingPackages = allPackages.filter((pkg:any, i:any) => filteredResults[i]);
 
         // Extract the name and version of each matching package

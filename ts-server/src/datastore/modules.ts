@@ -205,7 +205,7 @@ async function findReposByNameAndVersion(name: string, version: string) {
 
     let matched_repos = [];
     
-    if (version.search(/^[~|^]?\d+\.\d+\.\d+(-([a-zA-Z]+)(.*))?$/) == 0) { // exact,carat,tilde
+    if (version.search(/^[~|^]?\d+\.\d+\.\d+$/) == 0) { // exact,carat,tilde
         const query = datastore
             .createQuery(NAMESPACE, MODULE_KIND)
             .filter('name', '=', name)
@@ -224,8 +224,6 @@ async function findReposByNameAndVersion(name: string, version: string) {
     } else { // version invalid
         return -1;
     }
-    console.log(matched_repos.length)
-    console.log(matched_repos.length > 0)
     return matched_repos.length > 0 ? matched_repos[0] : [];
 }
 
