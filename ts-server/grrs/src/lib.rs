@@ -125,6 +125,7 @@ pub extern fn handle_url_file(url_file_path: String, log_path: String, log_level
                 // might not be needed (or it might be)
                 let mut package = Package::new(line);
                 let python_code = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/api.py"));
+                std::env::set_var("PYTHON_SYS_EXECUTABLE", "/usr/bin/python");
 
                 // log package to be constructed
                 let package_url_string = package.url.get_url();
