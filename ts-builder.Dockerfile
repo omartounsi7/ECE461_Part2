@@ -19,13 +19,6 @@ RUN apt-get update \
 
 ENV PYTHON /usr/bin/python3.7
 
-WORKDIR ..
-WORKDIR ..
-WORKDIR usr/lib
-WORKDIR x86_64-linux-gnu
-RUN ls
-RUN npm run build
-
 # Install Python dependencies
 RUN pip3 install gql \
     && pip3 install requests
