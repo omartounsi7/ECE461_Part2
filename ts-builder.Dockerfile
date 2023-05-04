@@ -17,14 +17,14 @@ RUN apt-get update \
     && apt-get install -y python3.7-dev \
     && apt-get install -y python3-pip
 
+ENV PYTHON /usr/bin/python3.7
+
 WORKDIR ..
 WORKDIR ..
 WORKDIR usr/lib
-WORKDIR x86_64-linux-gnu/:/usr/lib64/
+WORKDIR x86_64-linux-gnu
 RUN ls
-ENV LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu/:/usr/lib64/
-
-ENV PYTHON /usr/bin/python3.7
+RUN npm run build
 
 # Install Python dependencies
 RUN pip3 install gql \
