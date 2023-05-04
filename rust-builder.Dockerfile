@@ -3,10 +3,12 @@ FROM node:14-slim
 
 WORKDIR ..
 WORKDIR ..
-WORKDIR usr
+WORKDIR usr/lib
 RUN ls
-RUN ls lib
-RUN ls lib64
+RUN ls x86_64-linux-gnu
+
+WORKDIR x86_64-linux-gnu/:/usr/lib64/
+RUN ls
 
 # Copy the current directory contents into the container at /app
 COPY . /glorious-server
