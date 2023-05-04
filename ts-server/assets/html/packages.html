@@ -3,14 +3,16 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes, maximum-scale=5">
+    <meta name="description" content="Module Registry Page that allows users to use different API endpoints for usage with their modules">
+    <title>Modules Registry</title>
   </head>
-  <title>Modules Registry</title>
   <style>
     body {
       font-family: Arial, Helvetica, sans-serif;
       margin: 0;
       padding: 0;
     }
+
     .container {
       margin: 0 auto;
       max-width: 800px;
@@ -31,7 +33,7 @@
       padding: 20px;
     }
     .submit-button {
-      background-color: #4CAF50;
+      background-color: #2143a1;
       border: none;
       border-radius: 4px;
       color: white;
@@ -44,16 +46,10 @@
       width: 100%;
     }
 
-    .submit-button:focus {
-      outline: 2px solid blue;
-    }
-
     .submit-button.yes {
       font-size: 14px;
     }
-    .submit-button:hover {
-      background-color: #3e8e41;
-    }
+    
     .input-text {
       border: 1px solid #ccc;
       border-radius: 4px;
@@ -102,23 +98,22 @@
       margin-right: 5px;
     }
   </style>
-</head>
 <body>
     <header>
         <h1>Modules Registry</h1>
         <nav>
-            <button onclick="toggleDiv(0)">Package Search</button>
-            <button onclick="toggleDiv(1)">Upload Module</button>
-            <button onclick="toggleDiv(2)">Download Module</button>
-            <button onclick="toggleDiv(3)">Update Module</button>
-            <button onclick="toggleDiv(4)">Module History</button>
-            <button onclick="toggleDiv(5)">Delete Module </button>
-            <button onclick="toggleDiv(6)">Register User</button>
-            <button onclick="toggleDiv(7)">Regex</button>
-            <button onclick="toggleDiv(8)">Rate Module</button>
-            <button onclick="toggleDiv(9)">Delete Account</button>
-            <button onclick="toggleDiv(10)">Reset Registry</button>
-            <button onclick="logOut()">Log Out</button>
+          <button onclick="toggleDiv(0)" title="Package Search">Package Search</button>
+          <button onclick="toggleDiv(1)" title="Upload Module">Upload Module</button>
+          <button onclick="toggleDiv(2)" title="Download Module">Download Module</button>
+          <button onclick="toggleDiv(3)" title="Update Module">Update Module</button>
+          <button onclick="toggleDiv(4)" title="Module History">Module History</button>
+          <button onclick="toggleDiv(5)" title="Delete Module">Delete Module </button>
+          <button onclick="toggleDiv(6)" title="Register User">Register User</button>
+          <button onclick="toggleDiv(7)" title="Regex">Regex</button>
+          <button onclick="toggleDiv(8)" title="Rate Module">Rate Module</button>
+          <button onclick="toggleDiv(9)" title="Delete Account">Delete Account</button>
+          <button onclick="toggleDiv(10)" title="Reset Registry">Reset Registry</button>
+          <button onclick="logOut()" title="Log Out">Log Out</button>
         </nav>
     </header>
     <main>
@@ -236,15 +231,19 @@
             <label for="password-input">Enter a password:</label>
             <input type="password" id="password-input" size="40" class="input-text" required>
             <span id="password-error" style="color: red; display: none;">Password must only contain alphanumeric characters.</span>
-            <label for="admin-input">Is the user an admin?</label>
-            <div class="radio-group">
+            <label for="admin-input" id="admin-input">Is the user an admin?</label>
+
+            <fieldset>
+              <legend>Choose if you want the new user to be an Admin:</legend>
+              <div class="radio-group">
                 <label class="radio-label">
-                    <input type="radio" name="admin-input" value="yes"> Yes
+                  <input type="radio" name="admin-input" value="yes"> Yes
                 </label>
                 <label class="radio-label">
-                    <input type="radio" name="admin-input" value="no" checked> No
+                  <input type="radio" name="admin-input" value="no" checked> No
                 </label>
-            </div>
+              </div>
+            </fieldset>
             <button type="button" class="submit-button" onclick="submitRegisterUser()">Register User</button>
         </form>
       </div>
