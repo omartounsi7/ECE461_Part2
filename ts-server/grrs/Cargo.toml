@@ -11,10 +11,15 @@ regex = "1"
 lazy_static = "1.4.0"
 serde = { version = "1.0", features = ["derive"]}
 serde_json = "1.0.93"
-pyo3 = { version = "0.18.3", features = ["auto-initialize"] }
 ordered-float = "3.4.0"
 simple-logging = "2.0.2"
 log = "0.4.17"
+
+[dependencies.pyo3]
+git = "https://github.com/pyo3/pyo3"
+
+[features]
+extension-module = ["pyo3/extension-module"]
 
 [lib]
 name = "grrs"
