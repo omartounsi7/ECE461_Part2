@@ -284,7 +284,7 @@ app.post('/package', async (req, res) => {
 
     // Package URL (for use in public ingest) is passed in req.body
     if (url) {
-
+        /*
         // 1. DO RATING of Package URL (for use in public ingest).
         // Write the url to a file called URLs.txt
         fs.writeFileSync('URLs.txt', url);
@@ -319,7 +319,7 @@ app.post('/package', async (req, res) => {
             res.status(424).send({message: 'Package is not uploaded due to the disqualified rating'});
             return;
         } 
-        
+        */
         try {
             const parts = url.split('/');
             const cloneDir = './' + parts[parts.length - 1];
