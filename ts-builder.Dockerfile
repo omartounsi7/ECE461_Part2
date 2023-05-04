@@ -14,7 +14,8 @@ RUN apt-get update \
     && apt-get install -y libssl-dev \
     && apt-get install -y libpython3.7-dev \
     && apt-get install -y python3.7 \
-    && apt-get install -y python3.7-dev
+    && apt-get install -y python3.7-dev \
+    && apt-get install -y python3-pip
 
 ENV PYTHON /usr/bin/python3.7
 
