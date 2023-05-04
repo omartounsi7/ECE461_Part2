@@ -6,6 +6,8 @@ COPY --from=ts-builder /epic-server /grandiose-server
 
 WORKDIR /grandiose-server/ts-server
 
+RUN apt-get install -y git
+
 RUN pwd
 RUN ls
 RUN ls src
