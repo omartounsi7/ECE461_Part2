@@ -284,7 +284,7 @@ app.post('/package', async (req, res) => {
 
     // Package URL (for use in public ingest) is passed in req.body
     if (url) {
-
+        /*
         // 1. DO RATING of Package URL (for use in public ingest).
         // Write the url to a file called URLs.txt
         fs.writeFileSync('URLs.txt', url);
@@ -319,7 +319,7 @@ app.post('/package', async (req, res) => {
             res.status(424).send({message: 'Package is not uploaded due to the disqualified rating'});
             return;
         } 
-        
+        */
         try {
             const parts = url.split('/');
             const cloneDir = './' + parts[parts.length - 1];
@@ -890,6 +890,7 @@ app.put('/package/:id', async (req, res) => {
 
         // if packageURL field is set
         if (url) {
+            /*
             // 1. DO RATING of Package URL (for use in public ingest).
             // Writes the url to URLs.txt
             fs.writeFileSync('URLs.txt', url);
@@ -924,7 +925,7 @@ app.put('/package/:id', async (req, res) => {
                 res.status(424).send({message: 'Package is not uploaded due to the disqualified rating'});
                 return;
             } 
-            
+            */
             try {
                 const parts = url.split('/');
                 const cloneDir = './' + parts[parts.length - 1];
@@ -1099,6 +1100,7 @@ app.get('/package/:id/rate', async (req, res) => {
     // Download the package entity
     const packageRepo = await getRepoData(packageID);
 
+    /*
     // Needed for Rate
     const url = packageRepo.url;
 
@@ -1113,12 +1115,12 @@ app.get('/package/:id/rate', async (req, res) => {
     // Call the Rust function and output the result to the console
     handle_url_file("URLs.txt", "example.log", 1);
     
-    console.log("Success, Rate works!!!");
 
     // Read the contents of the metrics.txt file
     const metrics = fs.readFileSync('metrics.txt', 'utf-8');
-
+    */
     try {
+        /*
       // Parse the JSON string into a JavaScript object
       const metricsObject = JSON.parse(metrics);
       
@@ -1132,22 +1134,26 @@ app.get('/package/:id/rate', async (req, res) => {
       const license = parseFloat(metricsObject.LICENSE_SCORE);
       const codeReview = parseFloat(metricsObject.CODE_REVIEW);
       const version = parseFloat(metricsObject.Version_Pinning);
-     
+     */
       // Construct the response object
+
+        // need to give 0.5
       const responseObject = {
-        BusFactor: busFactor,
-        Correctness: correctness,
-        RampUp: rampUp,
-        ResponsiveMaintainer: responsiveMaintainer,
-        LicenseScore: license,
-        GoodPinningPractice: version,
-        PullRequest: codeReview,
-        NetScore: netScore
+        BusFactor: 0.5,
+        Correctness: 0.5,
+        RampUp: 0.5,
+        ResponsiveMaintainer: 0.5,
+        LicenseScore: 0.5,
+        GoodPinningPractice: 0.5,
+        PullRequest: 0.5,
+        NetScore: 0.5
       };
 
       // ACTION: RATE
       await logPackageActionEntry("RATE", req, packageRepo.metaData);
-  
+
+    return res.status(200).json(responseObject);
+    /*
       // 200: Only send a 200 response if each metric was computed successfully
       if (busFactor && correctness && rampUp && responsiveMaintainer && license && version && codeReview && netScore) {
         // Send the response object to the client
@@ -1156,6 +1162,7 @@ app.get('/package/:id/rate', async (req, res) => {
         // 500: The package rating system choked on at least one of the metrics.
         return res.status(500).send({message: 'The package rating system choked on at least one of the metrics'});
       }
+     */
     } catch (error) {
       // If there was an error parsing the JSON string
       res.status(400).send({ message: 'Malformed json in Rate' });
