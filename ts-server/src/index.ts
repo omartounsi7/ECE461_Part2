@@ -35,6 +35,7 @@ const zipdir = require('zip-dir');
 const { execSync } = require('child_process');
 const jwt = require("jsonwebtoken");
 const bodyParser = require('body-parser');
+const simpleGit = require('simple-git');
 /* * * * * * * * * * *
  * global variables  *
  * * * * * * * * * * */
@@ -328,8 +329,9 @@ app.post('/package', async (req, res) => {
             let base64String;
 
             try {
-                // Clones the GitHub package locally
-                execSync(`git clone ${url} ${cloneDir}`);
+                // clones repo locally
+                const git = simpleGit();
+                await git.clone(url, cloneDir);
 
                 // Removes the .git directory
                 const gitDir = `${cloneDir}/.git`;
@@ -934,8 +936,9 @@ app.put('/package/:id', async (req, res) => {
                 let base64String;
 
                 try {
-                    // Clones the GitHub package locally
-                    execSync(`git clone ${url} ${cloneDir}`);
+                    // clones repo locally
+                    const git = simpleGit();
+                    await git.clone(url, cloneDir);
 
                     // Removes the .git directory
                     const gitDir = cloneDir + "/.git";
