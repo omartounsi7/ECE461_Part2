@@ -27,6 +27,7 @@ RUN pip3 install gql \
 RUN npm install path \
     && npm install typescript ts-node @types/node @types/express --save-dev \
     && npm install express \
+    && npm install simple-git \
     && npm install --save @google-cloud/datastore \
     && npm install --save @google-cloud/secret-manager \
     && npm install --save @google-cloud/storage \
